@@ -1,6 +1,5 @@
-// src/pages/ResumeOptimizationPage.jsx - Ultra Premium with Fixed Circles & Resume View
-import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+// src/pages/ResumeOptimizationPage.jsx - Premium Design with Enhanced Ready to Optimize (FIXED)
+import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Copy, 
@@ -15,44 +14,218 @@ import {
   ArrowRight,
   Star,
   Clock,
-  Download
+  Download,
+  Wand2,
+  Search,
+  ChevronDown,
+  X,
+  CheckCircle2,
+  File,
+  Briefcase,
+  Building2
 } from "lucide-react";
 import "./ResumeOptimizationPage.css";
 import { getResumes } from "../services/resumeService";
 import { getJobDescriptions } from "../services/jobDescriptionService";
 import { optimizeResume } from "../services/resumeOptimizationService";
 
-const copyToClipboard = async (text, setCopySuccess) => {
-  try {
-    await navigator.clipboard.writeText(text);
-    setCopySuccess(true);
-    setTimeout(() => setCopySuccess(false), 3000);
-  } catch (err) {
-    const textarea = document.createElement('textarea');
-    textarea.value = text;
-    document.body.appendChild(textarea);
-    textarea.select();
-    document.execCommand('copy');
-    document.body.removeChild(textarea);
-    setCopySuccess(true);
-    setTimeout(() => setCopySuccess(false), 3000);
-  }
-};
+// ====== PREMIUM DROPDOWN COMPONENT ======
+function PremiumDropdown({ 
+  label, 
+  icon, 
+  options, 
+  value, 
+  onChange, 
+  placeholder,
+  type = 'resume'
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedOption, setSelectedOption] = useState(null);
+  const dropdownRef = useRef(null);
 
-const formatResumeForDisplay = (text) => {
-  if (!text) return "Not available";
-  let formatted = text;
-  const sections = ['Summary', 'Education', 'Experience', 'Projects', 'Skills', 'Certifications', 'Languages'];
-  sections.forEach(section => {
-    const regex = new RegExp(`(${section}:)`, 'gi');
-    formatted = formatted.replace(regex, `\n**${section}:**`);
+  useEffect(() => {
+    if (value && options.length > 0) {
+      const found = options.find(opt => opt.id === Number(value));
+      setSelectedOption(found || null);
+    } else {
+      setSelectedOption(null);
+    }
+  }, [value, options]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const filteredOptions = options.filter(opt => {
+    if (type === 'resume') {
+      return opt.file_name?.toLowerCase().includes(searchTerm.toLowerCase());
+    } else {
+      return opt.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+             opt.company?.toLowerCase().includes(searchTerm.toLowerCase());
+    }
   });
-  formatted = formatted.replace(/•/g, '\n•');
-  formatted = formatted.replace(/- /g, '\n• ');
-  return formatted;
-};
 
-// ScoreRing with proper colorful gradients
+  const handleSelect = (option) => {
+    onChange(option.id.toString());
+    setSelectedOption(option);
+    setIsOpen(false);
+    setSearchTerm("");
+  };
+
+  const getDisplayText = () => {
+    if (!selectedOption) return placeholder;
+    if (type === 'resume') {
+      return selectedOption.file_name;
+    } else {
+      return `${selectedOption.title} at ${selectedOption.company}`;
+    }
+  };
+
+  const getIcon = () => {
+    if (type === 'resume') {
+      return <File size={16} className="dropdown-icon" />;
+    } else {
+      return <Briefcase size={16} className="dropdown-icon" />;
+    }
+  };
+
+  return (
+    <div className="premium-dropdown-wrapper" ref={dropdownRef}>
+      <label className="premium-dropdown-label">
+        <span className="label-icon">{icon}</span>
+        <span className="label-text">{label}</span>
+        <span className="label-required">*</span>
+      </label>
+
+      <motion.div 
+        className={`premium-dropdown-trigger ${isOpen ? 'open' : ''} ${selectedOption ? 'has-value' : ''}`}
+        onClick={() => setIsOpen(!isOpen)}
+        whileHover={{ scale: 1.01 }}
+        whileTap={{ scale: 0.98 }}
+      >
+        <div className="trigger-left">
+          <span className="trigger-icon">{getIcon()}</span>
+          <span className="trigger-text">{getDisplayText()}</span>
+        </div>
+        <div className="trigger-right">
+          {selectedOption && (
+            <span className="trigger-badge">
+              <CheckCircle2 size={14} />
+            </span>
+          )}
+          <motion.div 
+            animate={{ rotate: isOpen ? 180 : 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <ChevronDown size={18} className="trigger-arrow" />
+          </motion.div>
+        </div>
+      </motion.div>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div 
+            className="premium-dropdown-panel"
+            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div className="dropdown-search-wrapper">
+              <Search size={16} className="search-icon" />
+              <input
+                type="text"
+                className="dropdown-search-input"
+                placeholder={`Search ${type === 'resume' ? 'resumes' : 'jobs'}...`}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                autoFocus
+              />
+              {searchTerm && (
+                <X 
+                  size={16} 
+                  className="search-clear" 
+                  onClick={() => setSearchTerm("")}
+                />
+              )}
+            </div>
+
+            <div className="dropdown-options-list">
+              {filteredOptions.length > 0 ? (
+                filteredOptions.map((option, index) => (
+                  <motion.div
+                    key={option.id}
+                    className={`dropdown-option ${selectedOption?.id === option.id ? 'selected' : ''}`}
+                    onClick={() => handleSelect(option)}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.03 }}
+                    whileHover={{ x: 4 }}
+                  >
+                    <div className="option-left">
+                      {type === 'resume' ? (
+                        <FileText size={16} className="option-icon" />
+                      ) : (
+                        <Building2 size={16} className="option-icon" />
+                      )}
+                      <div className="option-info">
+                        <span className="option-title">
+                          {type === 'resume' ? option.file_name : option.title}
+                        </span>
+                        {type === 'job' && (
+                          <span className="option-subtitle">{option.company}</span>
+                        )}
+                      </div>
+                    </div>
+                    {selectedOption?.id === option.id && (
+                      <CheckCircle2 size={18} className="option-check" />
+                    )}
+                  </motion.div>
+                ))
+              ) : (
+                <div className="dropdown-empty">
+                  <span className="empty-icon">🔍</span>
+                  <span className="empty-text">No results found</span>
+                </div>
+              )}
+            </div>
+
+            <div className="dropdown-footer">
+              <span className="footer-count">
+                {filteredOptions.length} {type === 'resume' ? 'resumes' : 'jobs'} available
+              </span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {selectedOption && (
+        <motion.div 
+          className="dropdown-hint"
+          initial={{ opacity: 0, y: -5 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <span className="hint-dot"></span>
+          <span className="hint-text">
+            {type === 'resume' 
+              ? `Selected: ${selectedOption.file_name}` 
+              : `Target: ${selectedOption.title} at ${selectedOption.company}`
+            }
+          </span>
+        </motion.div>
+      )}
+    </div>
+  );
+}
+
+// ====== SCORE RING COMPONENT ======
 function ScoreRing({ label, value, tone, animate, delay = 0 }) {
   const radius = 50;
   const circumference = 2 * Math.PI * radius;
@@ -95,7 +268,6 @@ function ScoreRing({ label, value, tone, animate, delay = 0 }) {
               <stop offset="100%" style={{ stopColor: '#f59e0b' }} />
             </linearGradient>
           </defs>
-          {/* Background track */}
           <circle 
             className="ring-track-premium" 
             cx="60" 
@@ -105,7 +277,6 @@ function ScoreRing({ label, value, tone, animate, delay = 0 }) {
             stroke="rgba(255,255,255,0.05)" 
             strokeWidth="10" 
           />
-          {/* Progress circle */}
           <circle
             className={`ring-progress-premium ring-progress--${tone}`}
             cx="60"
@@ -134,11 +305,41 @@ function ScoreRing({ label, value, tone, animate, delay = 0 }) {
   );
 }
 
+// ====== UTILITY FUNCTIONS ======
+const copyToClipboard = async (text, setCopySuccess) => {
+  try {
+    await navigator.clipboard.writeText(text);
+    setCopySuccess(true);
+    setTimeout(() => setCopySuccess(false), 3000);
+  } catch (err) {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+    setCopySuccess(true);
+    setTimeout(() => setCopySuccess(false), 3000);
+  }
+};
+
+const formatResumeForDisplay = (text) => {
+  if (!text) return "Not available";
+  let formatted = text;
+  const sections = ['Summary', 'Education', 'Experience', 'Projects', 'Skills', 'Certifications', 'Languages'];
+  sections.forEach(section => {
+    const regex = new RegExp(`(${section}:)`, 'gi');
+    formatted = formatted.replace(regex, `\n**${section}:**`);
+  });
+  formatted = formatted.replace(/•/g, '\n•');
+  formatted = formatted.replace(/- /g, '\n• ');
+  return formatted;
+};
+
+// ====== MAIN COMPONENT ======
 export default function ResumeOptimizationPage() {
-  const [searchParams] = useSearchParams();
   const [resumes, setResumes] = useState([]);
   const [jobDescriptions, setJobDescriptions] = useState([]);
-  const [toast, setToast] = useState(null);
   const [selectedResume, setSelectedResume] = useState("");
   const [selectedJobDescription, setSelectedJobDescription] = useState("");
   const [result, setResult] = useState(null);
@@ -146,11 +347,6 @@ export default function ResumeOptimizationPage() {
   const [error, setError] = useState("");
   const [copySuccess, setCopySuccess] = useState(false);
   const [viewMode, setViewMode] = useState('side-by-side');
-
-  const showToast = (message, type = "success") => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
-  };
 
   useEffect(() => {
     loadData();
@@ -162,21 +358,15 @@ export default function ResumeOptimizationPage() {
       const jdResponse = await getJobDescriptions();
       setResumes(resumeResponse);
       setJobDescriptions(jdResponse);
-
-      const resumeIdParam = searchParams.get("resumeId");
-      const jobIdParam = searchParams.get("jobId");
-      if (resumeIdParam) setSelectedResume(resumeIdParam);
-      if (jobIdParam) setSelectedJobDescription(jobIdParam);
     } catch (err) {
       console.error(err);
       setError("Unable to load resumes or job descriptions.");
-      showToast("Unable to load page options.", "error");
     }
   };
 
   const handleOptimize = async () => {
     if (!selectedResume || !selectedJobDescription) {
-      showToast("Please select a resume and a job description.", "error");
+      alert("Please select a resume and a job description.");
       return;
     }
     try {
@@ -218,7 +408,6 @@ export default function ResumeOptimizationPage() {
     ? result.optimizedScore - result.originalScore
     : null;
 
-  // Render Resume View Content
   const renderResumeContent = () => {
     if (!result?.optimizedText) {
       return <p className="resume-empty-text">No optimized content available</p>;
@@ -226,19 +415,15 @@ export default function ResumeOptimizationPage() {
 
     const lines = result.optimizedText.split('\n');
     return lines.map((line, index) => {
-      // Section headers
       if (line.trim().match(/^[A-Za-z\s]+:$/)) {
         return <h4 key={index} className="resume-section-header">{line.trim()}</h4>;
       }
-      // Bullet points
       if (line.trim().startsWith('•') || line.trim().startsWith('-')) {
         return <li key={index} className="resume-bullet">{line.trim().replace(/^[•-]\s*/, '')}</li>;
       }
-      // Empty line
       if (line.trim() === '') {
         return <div key={index} className="resume-spacer"></div>;
       }
-      // Regular text
       return <p key={index} className="resume-text-line">{line}</p>;
     });
   };
@@ -248,67 +433,38 @@ export default function ResumeOptimizationPage() {
       <div className="optimizer-page-content">
         {/* Hero Section */}
         <section className="optimizer-hero-premium">
-          <div className="hero-ambient-glow"></div>
-          <div className="hero-particles">
-            <div className="particle p1"></div>
-            <div className="particle p2"></div>
-            <div className="particle p3"></div>
-            <div className="particle p4"></div>
-            <div className="particle p5"></div>
-          </div>
+          <div className="hero-background-glow"></div>
+          <div className="particle particle-1"></div>
+          <div className="particle particle-2"></div>
+          <div className="particle particle-3"></div>
           
           <div className="optimizer-hero-content">
             <div className="optimizer-hero-left">
-              <motion.div 
-                className="hero-badge-modern"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-              >
-                <span className="badge-pulse"></span>
+              <div className="hero-badge">
+                <span className="badge-dot"></span>
                 <span className="badge-icon">⚡</span>
                 AI-Powered Optimization
-              </motion.div>
+              </div>
               
-              <motion.h1 
-                className="optimizer-hero-title"
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.2 }}
-              >
+              <h1 className="optimizer-hero-title">
                 Transform Your Resume
                 <br />
                 <span className="gradient-text">into an Interview Magnet</span>
-              </motion.h1>
+              </h1>
               
-              <motion.p 
-                className="optimizer-hero-sub"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.4 }}
-              >
+              <p className="optimizer-hero-sub">
                 Pair your resume with a target role. Our AI rewrites weak phrasing,
                 surfaces missing keywords, and boosts your ATS score instantly.
-              </motion.p>
+              </p>
               
-              <motion.div 
-                className="hero-trust-badges"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.6, delay: 0.6 }}
-              >
+              <div className="hero-trust-badges">
                 <span className="trust-badge"><Zap size={14} /> 2,500+ resumes optimized</span>
                 <span className="trust-badge"><Star size={14} /> 94% success rate</span>
                 <span className="trust-badge"><Clock size={14} /> Instant results</span>
-              </motion.div>
+              </div>
             </div>
 
-            <motion.div 
-              className="optimizer-hero-right"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8, delay: 0.3 }}
-            >
+            <div className="optimizer-hero-right">
               <div className="hero-stats-modern">
                 <div className="hero-stat-card">
                   <div className="hero-stat-number">{resumes.length}</div>
@@ -326,11 +482,11 @@ export default function ResumeOptimizationPage() {
                   <div className="hero-stat-bar"><span style={{ width: result ? '100%' : '30%' }}></span></div>
                 </div>
               </div>
-            </motion.div>
+            </div>
           </div>
         </section>
 
-        {/* Control Panel */}
+        {/* Control Panel with Premium Dropdowns */}
         <section className="optimizer-control-premium">
           <div className="control-panel-glow"></div>
           <div className="control-ambient-particles">
@@ -353,70 +509,44 @@ export default function ResumeOptimizationPage() {
               <p className="panel-subtitle">
                 Select your resume and target role to begin the transformation
               </p>
+              <div className="header-stats-mini">
+                <div className="mini-stat-item">
+                  <span className="mini-stat-number">{resumes.length}</span>
+                  <span className="mini-stat-label">Resumes Ready</span>
+                </div>
+                <div className="mini-stat-divider"></div>
+                <div className="mini-stat-item">
+                  <span className="mini-stat-number">{jobDescriptions.length}</span>
+                  <span className="mini-stat-label">Job Targets</span>
+                </div>
+                <div className="mini-stat-divider"></div>
+                <div className="mini-stat-item active">
+                  <span className="mini-stat-dot"></span>
+                  <span className="mini-stat-label">Ready to Optimize</span>
+                </div>
+              </div>
             </div>
 
             <div className="optimizer-control-grid">
-              <div className="optimizer-field">
-                <label className="field-label">
-                  <span className="field-icon">📄</span>
-                  <span className="field-label-text">Resume</span>
-                  <span className="field-required">*</span>
-                </label>
-                <div className="field-wrapper">
-                  <div className="field-icon-prefix">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-                      <polyline points="14 2 14 8 20 8" />
-                    </svg>
-                  </div>
-                  <select
-                    value={selectedResume}
-                    onChange={(e) => setSelectedResume(e.target.value)}
-                    className={`optimizer-select-modern ${selectedResume ? "has-value" : ""}`}
-                  >
-                    <option value="">Choose a resume</option>
-                    {resumes.map((resume) => (
-                      <option key={resume.id} value={resume.id}>
-                        {resume.file_name}
-                      </option>
-                    ))}
-                  </select>
-                  {selectedResume && (
-                    <span className="field-check">✓</span>
-                  )}
-                </div>
-              </div>
+              <PremiumDropdown
+                label="Resume"
+                icon="📄"
+                options={resumes}
+                value={selectedResume}
+                onChange={setSelectedResume}
+                placeholder="Choose a resume"
+                type="resume"
+              />
 
-              <div className="optimizer-field">
-                <label className="field-label">
-                  <span className="field-icon">🎯</span>
-                  <span className="field-label-text">Job Description</span>
-                  <span className="field-required">*</span>
-                </label>
-                <div className="field-wrapper">
-                  <div className="field-icon-prefix">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
-                      <path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16" />
-                    </svg>
-                  </div>
-                  <select
-                    value={selectedJobDescription}
-                    onChange={(e) => setSelectedJobDescription(e.target.value)}
-                    className={`optimizer-select-modern ${selectedJobDescription ? "has-value" : ""}`}
-                  >
-                    <option value="">Choose a target role</option>
-                    {jobDescriptions.map((job) => (
-                      <option key={job.id} value={job.id}>
-                        {job.title} - {job.company}
-                      </option>
-                    ))}
-                  </select>
-                  {selectedJobDescription && (
-                    <span className="field-check">✓</span>
-                  )}
-                </div>
-              </div>
+              <PremiumDropdown
+                label="Job Description"
+                icon="🎯"
+                options={jobDescriptions}
+                value={selectedJobDescription}
+                onChange={setSelectedJobDescription}
+                placeholder="Choose a target role"
+                type="job"
+              />
 
               <motion.button
                 className={`optimizer-btn-modern ${loading ? "loading" : ""} ${selectedResume && selectedJobDescription ? "ready" : ""}`}
@@ -432,7 +562,7 @@ export default function ResumeOptimizationPage() {
                   </>
                 ) : (
                   <>
-                    <Zap className="btn-icon-modern" size={20} />
+                    <Wand2 className="btn-icon-modern" size={20} />
                     <span className="btn-text">Optimize Resume</span>
                     <ArrowRight size={16} className="btn-arrow" />
                   </>
@@ -440,22 +570,198 @@ export default function ResumeOptimizationPage() {
               </motion.button>
             </div>
 
+            {/* ====== ENHANCED READY TO OPTIMIZE SECTION ====== */}
             {selectedResume && selectedJobDescription && (
               <motion.div 
                 className="optimizer-ready-modern"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ 
+                  duration: 0.5, 
+                  delay: 0.2,
+                  type: "spring",
+                  stiffness: 100,
+                  damping: 15
+                }}
+                whileHover={{ 
+                  scale: 1.02,
+                  transition: { duration: 0.2 }
+                }}
               >
-                <div className="ready-indicator">
-                  <span className="ready-dot"></span>
-                  <span className="ready-title">All set! 🚀 Click optimize to transform your resume</span>
+                {/* Glow Background */}
+                <div className="ready-glow-background"></div>
+                
+                {/* Floating Particles */}
+                <div className="ready-particles">
+                  <div className="ready-particle p1"></div>
+                  <div className="ready-particle p2"></div>
+                  <div className="ready-particle p3"></div>
+                  <div className="ready-particle p4"></div>
                 </div>
+
+                <div className="ready-indicator">
+                  <motion.div 
+                    className="ready-icon-wrapper"
+                    animate={{ 
+                      scale: [1, 1.1, 1],
+                      rotate: [0, 5, -5, 0]
+                    }}
+                    transition={{ 
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }}
+                  >
+                    <span className="ready-dot"></span>
+                    <span className="ready-ring"></span>
+                    <motion.span 
+                      className="ready-emoji"
+                      animate={{ 
+                        scale: [1, 1.2, 1],
+                        rotate: [0, 10, -10, 0]
+                      }}
+                      transition={{ 
+                        duration: 1.5,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                    >
+                      🚀
+                    </motion.span>
+                  </motion.div>
+
+                  <motion.div 
+                    className="ready-content"
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3, duration: 0.4 }}
+                  >
+                    <motion.span 
+                      className="ready-title"
+                      animate={{ 
+                        color: ['#f1f5f9', '#a855f7', '#f1f5f9']
+                      }}
+                      transition={{ 
+                        duration: 3,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                    >
+                      ✨ All Set! Ready to Optimize
+                    </motion.span>
+                    <motion.span 
+                      className="ready-sub"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.5 }}
+                    >
+                      <span className="ready-highlight">
+                        {resumes.find(r => r.id === Number(selectedResume))?.file_name}
+                      </span>
+                      <span className="ready-arrow">→</span>
+                      <span className="ready-highlight">
+                        {jobDescriptions.find(j => j.id === Number(selectedJobDescription))?.title}
+                      </span>
+                    </motion.span>
+                  </motion.div>
+
+                  <motion.div 
+                    className="ready-actions"
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ 
+                      delay: 0.6,
+                      type: "spring",
+                      stiffness: 200,
+                      damping: 10
+                    }}
+                  >
+                    <motion.span 
+                      className="ready-badge"
+                      animate={{ 
+                        boxShadow: [
+                          '0 0 20px rgba(16, 185, 129, 0.1)',
+                          '0 0 40px rgba(16, 185, 129, 0.2)',
+                          '0 0 20px rgba(16, 185, 129, 0.1)'
+                        ]
+                      }}
+                      transition={{ 
+                        duration: 2,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                      }}
+                    >
+                      <span className="badge-check">✓</span>
+                      <span className="badge-text">Ready</span>
+                      <motion.span 
+                        className="badge-sparkle"
+                        animate={{ 
+                          opacity: [0, 1, 0],
+                          scale: [0.5, 1.2, 0.5]
+                        }}
+                        transition={{ 
+                          duration: 1.5,
+                          repeat: Infinity,
+                          ease: "easeInOut"
+                        }}
+                      >
+                        ✦
+                      </motion.span>
+                    </motion.span>
+                  </motion.div>
+                </div>
+
+                {/* Quick Stats Bar */}
+                <motion.div 
+                  className="ready-stats-bar"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.7 }}
+                >
+                  <div className="stat-pill">
+                    <span className="stat-pill-icon">📄</span>
+                    <span className="stat-pill-label">Resume</span>
+                    <span className="stat-pill-value">
+                      {resumes.find(r => r.id === Number(selectedResume))?.file_name}
+                    </span>
+                  </div>
+                  <div className="stat-pill-divider"></div>
+                  <div className="stat-pill">
+                    <span className="stat-pill-icon">🎯</span>
+                    <span className="stat-pill-label">Target</span>
+                    <span className="stat-pill-value">
+                      {jobDescriptions.find(j => j.id === Number(selectedJobDescription))?.title}
+                    </span>
+                  </div>
+                  <div className="stat-pill-divider"></div>
+                  <motion.div 
+                    className="stat-pill success"
+                    animate={{ 
+                      backgroundColor: ['rgba(16, 185, 129, 0.04)', 'rgba(16, 185, 129, 0.08)', 'rgba(16, 185, 129, 0.04)']
+                    }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    <span className="stat-pill-icon">⚡</span>
+                    <span className="stat-pill-label">Ready</span>
+                    <span className="stat-pill-value">Match Found</span>
+                  </motion.div>
+                </motion.div>
+
+                {/* Progress Animation */}
+                <motion.div 
+                  className="ready-progress"
+                  initial={{ width: 0 }}
+                  animate={{ width: '100%' }}
+                  transition={{ duration: 1, delay: 0.5 }}
+                >
+                  <div className="ready-progress-bar"></div>
+                </motion.div>
               </motion.div>
             )}
           </div>
         </section>
 
-        {/* Error */}
+        {/* Error Banner */}
         {error && (
           <motion.div 
             className="error-banner-modern"
@@ -512,7 +818,7 @@ export default function ResumeOptimizationPage() {
           </section>
         )}
 
-        {/* RESULTS */}
+        {/* Results */}
         {!loading && result && (
           <AnimatePresence>
             <motion.section 
@@ -687,7 +993,7 @@ export default function ResumeOptimizationPage() {
                 </motion.div>
               )}
 
-              {/* ✅ RESUME VIEW - Fully Functional */}
+              {/* Resume View */}
               {viewMode === 'resume-view' && (
                 <motion.div 
                   className="resume-view-modern"
@@ -695,7 +1001,6 @@ export default function ResumeOptimizationPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
                 >
-                  {/* Resume Header */}
                   <div className="resume-view-header">
                     <div className="resume-view-title">
                       <FileText size={20} />
@@ -717,9 +1022,7 @@ export default function ResumeOptimizationPage() {
                     </div>
                   </div>
 
-                  {/* Resume Content */}
                   <div className="resume-view-content">
-                    {/* Score Badge */}
                     <div className="resume-score-badge">
                       <div className="score-badge-item">
                         <span className="badge-label">ATS Score</span>
@@ -744,14 +1047,12 @@ export default function ResumeOptimizationPage() {
                       </div>
                     </div>
 
-                    {/* Resume Text */}
                     <div className="resume-text-container">
                       <div className="resume-text-content">
                         {renderResumeContent()}
                       </div>
                     </div>
 
-                    {/* AI Suggestions */}
                     {result.recommendations?.length > 0 && (
                       <div className="resume-suggestions">
                         <h4 className="suggestions-title">
@@ -833,12 +1134,6 @@ export default function ResumeOptimizationPage() {
           </AnimatePresence>
         )}
       </div>
-      {toast && (
-        <div className={`toast-premium ${toast.type}`}>
-          <span className="toast-icon">{toast.type === "success" ? "✓" : "ℹ"}</span>
-          <p className="toast-message">{toast.message}</p>
-        </div>
-      )}
     </div>
   );
 }

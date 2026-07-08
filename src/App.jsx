@@ -14,72 +14,55 @@ import JobDescriptionPage from "./pages/JobDescriptionPage";
 import AtsPage from "./pages/AtsPage";
 import InterviewPage from "./pages/InterviewPage";
 import ResumeOptimizationPage from "./pages/ResumeOptimizationPage";
+import ProfilePage from "./pages/ProfilePage";
+
 function Layout() {
   const location = useLocation();
   const hideNavbar =
     location.pathname === "/" ||
     location.pathname === "/login" ||
     location.pathname === "/register";
+
   return (
     <>
       {!hideNavbar && <Navbar />}
       <div className="page-container">
         <Routes>
-          {/* Authentication */}
+          {/* Authentication - No Navbar */}
           <Route path="/" element={<Login />} />
-          <Route
-            path="/login"
-            element={<Login />}
-          />
-          <Route
-            path="/register"
-            element={<Register />}
-          />
-          {/* Dashboard */}
-          <Route
-            path="/dashboard"
-            element={<Dashboard />}
-          />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+
+          {/* Dashboard - With Navbar */}
+          <Route path="/dashboard" element={<Dashboard />} />
+
           {/* Resume Management */}
-          <Route
-            path="/resumes"
-            element={<ResumePage />}
-          />
+          <Route path="/resumes" element={<ResumePage />} />
+
           {/* Job Descriptions */}
-          <Route
-            path="/jobs"
-            element={<JobDescriptionPage />}
-          />
+          <Route path="/jobs" element={<JobDescriptionPage />} />
+
           {/* Interview Questions */}
-          <Route
-            path="/interview"
-            element={<InterviewPage />}
-          />
-          {/* Fallback */}
-          <Route
-            path="*"
-            element={<Navigate to="/login" />}
-          />
+          <Route path="/interview" element={<InterviewPage />} />
+
           {/* Resume Optimizer */}
-          <Route
-             path="/resume-optimizer"
-             element={<ResumeOptimizationPage />}
-           />
-          <Route
-             path="/optimizer"
-             element={<ResumeOptimizationPage />}
-           />
-          <Route
-             path="/ats"
-             element={<AtsPage />}
-           />
-  
-          
+          <Route path="/resume-optimizer" element={<ResumeOptimizationPage />} />
+          <Route path="/optimizer" element={<ResumeOptimizationPage />} />
+
+          {/* ATS */}
+          <Route path="/ats" element={<AtsPage />} />
+
+          {/* Profile Page - With Navbar */}
+          <Route path="/profile" element={<ProfilePage />} />
+
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/dashboard" />} />
         </Routes>
       </div>
     </>
   );
 }
+
 function App() {
   return (
     <BrowserRouter>
@@ -87,4 +70,5 @@ function App() {
     </BrowserRouter>
   );
 }
+
 export default App;

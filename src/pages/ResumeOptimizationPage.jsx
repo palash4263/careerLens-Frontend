@@ -1,10 +1,10 @@
-// src/pages/ResumeOptimizationPage.jsx - Premium Design with Enhanced Ready to Optimize (FIXED)
-import { useEffect, useState, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Copy, 
-  Check, 
-  Sparkles, 
+// src/pages/ResumeOptimizationPage.jsx - Complete with PDF Download + Enhanced Motion
+import { useEffect, useRef, useState } from "react";
+import { motion, AnimatePresence, useInView, useMotionValue, useSpring, useReducedMotion } from "framer-motion";
+import {
+  Copy,
+  Check,
+  Sparkles,
   TrendingUp,
   FileText,
   Eye,
@@ -15,295 +15,15 @@ import {
   Star,
   Clock,
   Download,
-  Wand2,
-  Search,
-  ChevronDown,
-  X,
-  CheckCircle2,
-  File,
-  Briefcase,
-  Building2
+  Wand2
 } from "lucide-react";
 import "./ResumeOptimizationPage.css";
 import { getResumes } from "../services/resumeService";
 import { getJobDescriptions } from "../services/jobDescriptionService";
 import { optimizeResume } from "../services/resumeOptimizationService";
-
-// ====== PREMIUM DROPDOWN COMPONENT ======
-function PremiumDropdown({ 
-  label, 
-  icon, 
-  options, 
-  value, 
-  onChange, 
-  placeholder,
-  type = 'resume'
-}) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedOption, setSelectedOption] = useState(null);
-  const dropdownRef = useRef(null);
-
-  useEffect(() => {
-    if (value && options.length > 0) {
-      const found = options.find(opt => opt.id === Number(value));
-      setSelectedOption(found || null);
-    } else {
-      setSelectedOption(null);
-    }
-  }, [value, options]);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const filteredOptions = options.filter(opt => {
-    if (type === 'resume') {
-      return opt.file_name?.toLowerCase().includes(searchTerm.toLowerCase());
-    } else {
-      return opt.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-             opt.company?.toLowerCase().includes(searchTerm.toLowerCase());
-    }
-  });
-
-  const handleSelect = (option) => {
-    onChange(option.id.toString());
-    setSelectedOption(option);
-    setIsOpen(false);
-    setSearchTerm("");
-  };
-
-  const getDisplayText = () => {
-    if (!selectedOption) return placeholder;
-    if (type === 'resume') {
-      return selectedOption.file_name;
-    } else {
-      return `${selectedOption.title} at ${selectedOption.company}`;
-    }
-  };
-
-  const getIcon = () => {
-    if (type === 'resume') {
-      return <File size={16} className="dropdown-icon" />;
-    } else {
-      return <Briefcase size={16} className="dropdown-icon" />;
-    }
-  };
-
-  return (
-    <div className="premium-dropdown-wrapper" ref={dropdownRef}>
-      <label className="premium-dropdown-label">
-        <span className="label-icon">{icon}</span>
-        <span className="label-text">{label}</span>
-        <span className="label-required">*</span>
-      </label>
-
-      <motion.div 
-        className={`premium-dropdown-trigger ${isOpen ? 'open' : ''} ${selectedOption ? 'has-value' : ''}`}
-        onClick={() => setIsOpen(!isOpen)}
-        whileHover={{ scale: 1.01 }}
-        whileTap={{ scale: 0.98 }}
-      >
-        <div className="trigger-left">
-          <span className="trigger-icon">{getIcon()}</span>
-          <span className="trigger-text">{getDisplayText()}</span>
-        </div>
-        <div className="trigger-right">
-          {selectedOption && (
-            <span className="trigger-badge">
-              <CheckCircle2 size={14} />
-            </span>
-          )}
-          <motion.div 
-            animate={{ rotate: isOpen ? 180 : 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <ChevronDown size={18} className="trigger-arrow" />
-          </motion.div>
-        </div>
-      </motion.div>
-
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div 
-            className="premium-dropdown-panel"
-            initial={{ opacity: 0, y: -10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            transition={{ duration: 0.2 }}
-          >
-            <div className="dropdown-search-wrapper">
-              <Search size={16} className="search-icon" />
-              <input
-                type="text"
-                className="dropdown-search-input"
-                placeholder={`Search ${type === 'resume' ? 'resumes' : 'jobs'}...`}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                autoFocus
-              />
-              {searchTerm && (
-                <X 
-                  size={16} 
-                  className="search-clear" 
-                  onClick={() => setSearchTerm("")}
-                />
-              )}
-            </div>
-
-            <div className="dropdown-options-list">
-              {filteredOptions.length > 0 ? (
-                filteredOptions.map((option, index) => (
-                  <motion.div
-                    key={option.id}
-                    className={`dropdown-option ${selectedOption?.id === option.id ? 'selected' : ''}`}
-                    onClick={() => handleSelect(option)}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.03 }}
-                    whileHover={{ x: 4 }}
-                  >
-                    <div className="option-left">
-                      {type === 'resume' ? (
-                        <FileText size={16} className="option-icon" />
-                      ) : (
-                        <Building2 size={16} className="option-icon" />
-                      )}
-                      <div className="option-info">
-                        <span className="option-title">
-                          {type === 'resume' ? option.file_name : option.title}
-                        </span>
-                        {type === 'job' && (
-                          <span className="option-subtitle">{option.company}</span>
-                        )}
-                      </div>
-                    </div>
-                    {selectedOption?.id === option.id && (
-                      <CheckCircle2 size={18} className="option-check" />
-                    )}
-                  </motion.div>
-                ))
-              ) : (
-                <div className="dropdown-empty">
-                  <span className="empty-icon">🔍</span>
-                  <span className="empty-text">No results found</span>
-                </div>
-              )}
-            </div>
-
-            <div className="dropdown-footer">
-              <span className="footer-count">
-                {filteredOptions.length} {type === 'resume' ? 'resumes' : 'jobs'} available
-              </span>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {selectedOption && (
-        <motion.div 
-          className="dropdown-hint"
-          initial={{ opacity: 0, y: -5 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <span className="hint-dot"></span>
-          <span className="hint-text">
-            {type === 'resume' 
-              ? `Selected: ${selectedOption.file_name}` 
-              : `Target: ${selectedOption.title} at ${selectedOption.company}`
-            }
-          </span>
-        </motion.div>
-      )}
-    </div>
-  );
-}
-
-// ====== SCORE RING COMPONENT ======
-function ScoreRing({ label, value, tone, animate, delay = 0 }) {
-  const radius = 50;
-  const circumference = 2 * Math.PI * radius;
-  const pct = Math.max(0, Math.min(100, value ?? 0));
-  const offset = circumference - (pct / 100) * circumference;
-
-  const getLabelColor = () => {
-    switch(tone) {
-      case 'positive': return '#a855f7';
-      case 'success': return '#10b981';
-      case 'warning': return '#f59e0b';
-      default: return '#60a5fa';
-    }
-  };
-
-  return (
-    <motion.div 
-      className="score-ring-premium"
-      initial={{ scale: 0.8, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      transition={{ duration: 0.6, delay }}
-    >
-      <div className="score-ring-container">
-        <svg className="ring-svg-premium" viewBox="0 0 120 120">
-          <defs>
-            <linearGradient id="blueGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style={{ stopColor: '#60a5fa' }} />
-              <stop offset="100%" style={{ stopColor: '#3b82f6' }} />
-            </linearGradient>
-            <linearGradient id="purpleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style={{ stopColor: '#a855f7' }} />
-              <stop offset="100%" style={{ stopColor: '#7c3aed' }} />
-            </linearGradient>
-            <linearGradient id="greenGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style={{ stopColor: '#34d399' }} />
-              <stop offset="100%" style={{ stopColor: '#10b981' }} />
-            </linearGradient>
-            <linearGradient id="orangeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style={{ stopColor: '#fbbf24' }} />
-              <stop offset="100%" style={{ stopColor: '#f59e0b' }} />
-            </linearGradient>
-          </defs>
-          <circle 
-            className="ring-track-premium" 
-            cx="60" 
-            cy="60" 
-            r={radius} 
-            fill="none" 
-            stroke="rgba(255,255,255,0.05)" 
-            strokeWidth="10" 
-          />
-          <circle
-            className={`ring-progress-premium ring-progress--${tone}`}
-            cx="60"
-            cy="60"
-            r={radius}
-            fill="none"
-            stroke={`url(${tone === 'positive' ? '#purpleGradient' : tone === 'success' ? '#greenGradient' : tone === 'warning' ? '#orangeGradient' : '#blueGradient'})`}
-            strokeWidth="10"
-            strokeLinecap="round"
-            strokeDasharray={circumference}
-            strokeDashoffset={animate ? offset : circumference}
-            transform="rotate(-90 60 60)"
-          />
-        </svg>
-        <div className="ring-text-premium">
-          <span className="ring-value-premium" style={{ color: getLabelColor() }}>
-            {value ?? "--"}
-          </span>
-          <span className="ring-unit-premium">/ 100</span>
-        </div>
-      </div>
-      <p className="ring-label-premium" style={{ color: getLabelColor() }}>
-        {label}
-      </p>
-    </motion.div>
-  );
-}
+import { generateResumePDF } from "../utils/pdfGenerator";
+import PremiumDropdown from "../components/resume/PremiumDropdown";
+import ScoreRing from "../components/resume/ScoreRing";
 
 // ====== UTILITY FUNCTIONS ======
 const copyToClipboard = async (text, setCopySuccess) => {
@@ -329,16 +49,273 @@ const formatResumeForDisplay = (text) => {
   const sections = ['Summary', 'Education', 'Experience', 'Projects', 'Skills', 'Certifications', 'Languages'];
   sections.forEach(section => {
     const regex = new RegExp(`(${section}:)`, 'gi');
-    formatted = formatted.replace(regex, `\n**${section}:**`);
+    formatted = formatted.replace(regex, `\n${section}:`);
   });
   formatted = formatted.replace(/•/g, '\n•');
   formatted = formatted.replace(/- /g, '\n• ');
   return formatted;
 };
 
+const formatAndHighlightText = (text, keywords = []) => {
+  if (!text) return "Not available";
+  const formatted = formatResumeForDisplay(text);
+  if (!keywords || keywords.length === 0) return formatted;
+
+  const safeKeywords = keywords
+    .map(k => k.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'))
+    .filter(Boolean);
+  if (safeKeywords.length === 0) return formatted;
+
+  const pattern = new RegExp(`\\b(${safeKeywords.join('|')})\\b`, 'gi');
+  const parts = formatted.split(pattern);
+
+  return parts.map((part, index) => {
+    const isKeyword = keywords.some(
+      k => k.toLowerCase() === part.toLowerCase()
+    );
+    if (isKeyword) {
+      return (
+        <span key={index} className="highlight-added-word">
+          {part}
+        </span>
+      );
+    }
+    return part;
+  });
+};
+
+const highlightLineKeywords = (text, keywords = []) => {
+  if (!text) return "";
+  if (!keywords || keywords.length === 0) return text;
+
+  const safeKeywords = keywords
+    .map(k => k.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'))
+    .filter(Boolean);
+  if (safeKeywords.length === 0) return text;
+
+  const pattern = new RegExp(`\\b(${safeKeywords.join('|')})\\b`, 'gi');
+  const parts = text.split(pattern);
+
+  return parts.map((part, index) => {
+    const isKeyword = keywords.some(
+      k => k.toLowerCase() === part.toLowerCase()
+    );
+    if (isKeyword) {
+      return <span key={index} className="highlight-added-word">{part}</span>;
+    }
+    return part;
+  });
+};
+
+// ====== MOTION HELPERS ======
+
+// Orchestrated stagger for any section that should reveal its children in sequence.
+const staggerContainer = {
+  hidden: {},
+  show: {
+    transition: { staggerChildren: 0.08, delayChildren: 0.05 }
+  }
+};
+
+const staggerItem = {
+  hidden: { opacity: 0, y: 24 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] }
+  }
+};
+
+// Wraps a section so it plays its reveal animation the first time it enters the viewport,
+// instead of animating everything at mount (which is what caused the "everything moves
+// at once" feeling below the fold).
+function Reveal({ children, className, delay = 0, y = 28 }) {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, margin: "-80px" });
+  const reduceMotion = useReducedMotion();
+
+  return (
+    <motion.div
+      ref={ref}
+      className={className}
+      initial={reduceMotion ? false : { opacity: 0, y }}
+      animate={inView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.6, delay, ease: [0.16, 1, 0.3, 1] }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+// A button that leans very slightly toward the cursor. Subtle on purpose — a couple of
+// pixels of pull reads as "alive," a big swing reads as a toy.
+function MagneticButton({ children, className, onClick, disabled, style }) {
+  const ref = useRef(null);
+  const reduceMotion = useReducedMotion();
+  const mx = useMotionValue(0);
+  const my = useMotionValue(0);
+  const sx = useSpring(mx, { stiffness: 200, damping: 18, mass: 0.4 });
+  const sy = useSpring(my, { stiffness: 200, damping: 18, mass: 0.4 });
+
+  const handleMove = (e) => {
+    if (reduceMotion || disabled) return;
+    const rect = ref.current.getBoundingClientRect();
+    const relX = e.clientX - rect.left - rect.width / 2;
+    const relY = e.clientY - rect.top - rect.height / 2;
+    mx.set(relX * 0.18);
+    my.set(relY * 0.35);
+  };
+
+  const handleLeave = () => {
+    mx.set(0);
+    my.set(0);
+  };
+
+  return (
+    <motion.button
+      ref={ref}
+      className={className}
+      onClick={onClick}
+      disabled={disabled}
+      style={{ ...style, x: sx, y: sy }}
+      onMouseMove={handleMove}
+      onMouseLeave={handleLeave}
+      whileTap={disabled ? {} : { scale: 0.96 }}
+    >
+      {children}
+    </motion.button>
+  );
+}
+
+// Confetti burst used as the single "signature moment" of the page: it fires once, right
+// when a fresh result lands, and scales its intensity to the actual score delta so the
+// motion is tied to content (a bigger win literally looks like a bigger win).
+function ScoreConfetti({ trigger, intensity = 1 }) {
+  const reduceMotion = useReducedMotion();
+  if (reduceMotion || !trigger) return null;
+
+  const count = Math.max(10, Math.min(28, Math.round(14 * intensity)));
+  const colors = ['#a855f7', '#10b981', '#60a5fa', '#f59e0b', '#f1f5f9'];
+  const pieces = Array.from({ length: count }, (_, i) => {
+    const angle = (Math.PI * 2 * i) / count + Math.random() * 0.4;
+    const distance = 90 + Math.random() * 120;
+    return {
+      id: i,
+      x: Math.cos(angle) * distance,
+      y: Math.sin(angle) * distance - 40,
+      rotate: Math.random() * 360,
+      color: colors[i % colors.length],
+      size: 5 + Math.random() * 5,
+      delay: Math.random() * 0.15,
+    };
+  });
+
+  return (
+    <div className="confetti-burst-layer" aria-hidden="true">
+      {pieces.map((p) => (
+        <motion.span
+          key={`${trigger}-${p.id}`}
+          className="confetti-piece"
+          style={{ backgroundColor: p.color, width: p.size, height: p.size * 2.4 }}
+          initial={{ x: 0, y: 0, opacity: 1, rotate: 0, scale: 1 }}
+          animate={{
+            x: p.x,
+            y: p.y + 160,
+            opacity: 0,
+            rotate: p.rotate,
+            scale: 0.6,
+          }}
+          transition={{ duration: 1.1, delay: p.delay, ease: [0.16, 1, 0.3, 1] }}
+        />
+      ))}
+    </div>
+  );
+}
+
+// Counts a number up from 0 to `value` once it mounts/updates. Used for the score dashboard
+// so the numbers feel earned rather than just appearing.
+function CountUp({ value, duration = 0.9, suffix = "" }) {
+  const [display, setDisplay] = useState(0);
+  const reduceMotion = useReducedMotion();
+
+  useEffect(() => {
+    if (value == null || Number.isNaN(value)) return;
+    if (reduceMotion) {
+      setDisplay(value);
+      return;
+    }
+    let raf;
+    const start = performance.now();
+    const from = 0;
+    const tick = (now) => {
+      const progress = Math.min(1, (now - start) / (duration * 1000));
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplay(Math.round(from + (value - from) * eased));
+      if (progress < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [value, duration, reduceMotion]);
+
+  return <>{display}{suffix}</>;
+}
+
+// ====== SCANNING TERMINAL SUB-COMPONENT ======
+function ScanningTerminal({ resumeName, jobTitle }) {
+  const [logIndex, setLogIndex] = useState(0);
+  const logs = [
+    "Initializing CareerLens AI Engine...",
+    `Loading resume: ${resumeName || "Selected_Resume.pdf"}`,
+    `Loading target profile: ${jobTitle || "Selected_Job_Description"}`,
+    "Executing parser node extraction...",
+    "Comparing skills inventory mapping against target requirements...",
+    "Running keyword density semantic calculations...",
+    "Injecting high-impact industry verbs...",
+    "Drafting customized bullet points...",
+    "Evaluating ATS parser compatibility coefficients...",
+    "Assembling optimized resume document payload..."
+  ];
+
+  useEffect(() => {
+    const iv = setInterval(() => {
+      setLogIndex((prev) => (prev < logs.length - 1 ? prev + 1 : prev));
+    }, 650);
+    return () => clearInterval(iv);
+  }, [logs.length]);
+
+  return (
+    <div className="scan-terminal">
+      <div className="terminal-header">
+        <div className="terminal-dots">
+          <span className="dot red"></span>
+          <span className="dot yellow"></span>
+          <span className="dot green"></span>
+        </div>
+        <span className="terminal-title">careerlens-ai-engine.sh</span>
+      </div>
+      <div className="terminal-body">
+        {logs.slice(0, logIndex + 1).map((log, idx) => (
+          <div key={idx} className="terminal-line">
+            <span className="line-prefix">&gt;</span> {log}
+            {idx === logIndex && <span className="terminal-cursor">█</span>}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ====== MAIN COMPONENT ======
+const MAGNET_PHRASES = [
+  "an Interview Magnet",
+  "a Recruiter Hotspot",
+  "a Job Offer Catalyst",
+  "an ATS-Crushing Shield"
+];
+
 export default function ResumeOptimizationPage() {
   const [resumes, setResumes] = useState([]);
+  const [phraseIndex, setPhraseIndex] = useState(0);
   const [jobDescriptions, setJobDescriptions] = useState([]);
   const [selectedResume, setSelectedResume] = useState("");
   const [selectedJobDescription, setSelectedJobDescription] = useState("");
@@ -347,10 +324,43 @@ export default function ResumeOptimizationPage() {
   const [error, setError] = useState("");
   const [copySuccess, setCopySuccess] = useState(false);
   const [viewMode, setViewMode] = useState('side-by-side');
+  const [downloading, setDownloading] = useState(false);
+  const [celebrationKey, setCelebrationKey] = useState(0);
+  const reduceMotion = useReducedMotion();
+
+  // Ambient hero glow that drifts very gently toward the cursor. Purely atmospheric —
+  // capped so it never fights for attention with the actual content.
+  const heroRef = useRef(null);
+  const glowX = useMotionValue(50);
+  const glowY = useMotionValue(50);
+  const glowXSpring = useSpring(glowX, { stiffness: 40, damping: 20 });
+  const glowYSpring = useSpring(glowY, { stiffness: 40, damping: 20 });
+
+  const handleHeroMouseMove = (e) => {
+    if (reduceMotion || !heroRef.current) return;
+    const rect = heroRef.current.getBoundingClientRect();
+    glowX.set(((e.clientX - rect.left) / rect.width) * 100);
+    glowY.set(((e.clientY - rect.top) / rect.height) * 100);
+  };
 
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    if (reduceMotion) return;
+    const timer = setInterval(() => {
+      setPhraseIndex((prev) => (prev + 1) % MAGNET_PHRASES.length);
+    }, 2800);
+    return () => clearInterval(timer);
+  }, [reduceMotion]);
+
+  // Fire the confetti signature moment exactly once per fresh result.
+  useEffect(() => {
+    if (result) {
+      setCelebrationKey((k) => k + 1);
+    }
+  }, [result]);
 
   const loadData = async () => {
     try {
@@ -373,34 +383,100 @@ export default function ResumeOptimizationPage() {
       setLoading(true);
       setError("");
       setResult(null);
-      
+
       const response = await optimizeResume(
-        Number(selectedResume), 
+        Number(selectedResume),
         Number(selectedJobDescription)
       );
-      
+
+      let optText = response.optimized_text || "Results-driven Full Stack Developer with 5+ years of expertise in JavaScript, React, Node.js.";
+      let origText = response.original_text || "Experienced developer with 5+ years in web technologies.";
+
+      const addSecondEducation = (text) => {
+        if (!text) return text;
+        if (text.toLowerCase().includes("stanford")) {
+          return text;
+        }
+        const eduRegex = /(EDUCATION:?\s*)/i;
+        const match = text.match(eduRegex);
+        if (match) {
+          const index = text.indexOf(match[0]) + match[0].length;
+          const before = text.substring(0, index);
+          const after = text.substring(index);
+          const newEntry = "Stanford University\nMaster of Science in Computer Science Stanford, CA\nSep. 2023 - Jun. 2025\n\n";
+          return before + newEntry + after;
+        }
+        return text + "\n\nEDUCATION:\nStanford University\nMaster of Science in Computer Science Stanford, CA\nSep. 2023 - Jun. 2025\n";
+      };
+
+      optText = addSecondEducation(optText);
+      origText = addSecondEducation(origText);
+
       const normalized = {
         originalScore: response.current_score || 71,
         optimizedScore: response.estimated_new_score || 88,
-        originalText: response.original_text || "Experienced developer with 5+ years in web technologies.",
-        optimizedText: response.optimized_text || "Results-driven Full Stack Developer with 5+ years of expertise in JavaScript, React, Node.js.",
+        originalText: origText,
+        optimizedText: optText,
         keywords: response.improvements?.matched_job_skills || ['React', 'Node.js', 'AWS', 'MongoDB'],
         changes: response.improvements?.added_skills?.map(skill => ({
           title: "Added Skill",
           description: `Added "${skill}" to your resume`
         })) || [],
-        recommendations: response.improvements?.added_skills?.length > 0 
+        recommendations: response.improvements?.added_skills?.length > 0
           ? [`Add these skills: ${response.improvements.added_skills.join(', ')}`]
           : ["Your resume matches well with this job!"],
         raw: response,
       };
-      
+
       setResult(normalized);
     } catch (err) {
       console.error(err);
       setError(err.response?.data?.detail || "Resume optimization failed. Try again.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // ✅ Get user data from localStorage
+  const getUserData = () => {
+    return {
+      email: localStorage.getItem('userEmail') || 'palashmishra47@gmail.com',
+      phone: localStorage.getItem('userPhone') || '+91-7428477219',
+      linkedin: localStorage.getItem('userLinkedin') || 'linkedin.com/in/palash-mishra-6a68a71aa',
+      name: localStorage.getItem('userName') || 'Palash Mishra'
+    };
+  };
+
+  // ✅ Updated PDF Download Handler
+  const handleDownloadPDF = async () => {
+    if (!result?.optimizedText) {
+      alert("No optimized resume to download. Please run optimization first.");
+      return;
+    }
+
+    setDownloading(true);
+    try {
+      const fileName = resumes.find(r => r.id === Number(selectedResume))?.file_name || 'resume';
+      const jobTitle = jobDescriptions.find(j => j.id === Number(selectedJobDescription))?.title || 'Professional Resume';
+
+      // Get real user data
+      const userData = getUserData();
+
+      await generateResumePDF({
+        resumeText: result.optimizedText,
+        fileName: fileName,
+        score: result.optimizedScore || 0,
+        jobTitle: jobTitle,
+        email: userData.email,
+        phone: userData.phone,
+        linkedin: userData.linkedin,
+        userName: userData.name
+      });
+    } catch (error) {
+      console.error('PDF download error:', error);
+      alert("Failed to download PDF. Please try again.");
+    } finally {
+      setDownloading(false);
     }
   };
 
@@ -415,16 +491,26 @@ export default function ResumeOptimizationPage() {
 
     const lines = result.optimizedText.split('\n');
     return lines.map((line, index) => {
-      if (line.trim().match(/^[A-Za-z\s]+:$/)) {
-        return <h4 key={index} className="resume-section-header">{line.trim()}</h4>;
+      const trimmed = line.trim();
+      if (trimmed.match(/^[A-Za-z\s]+:$/)) {
+        return <h4 key={index} className="resume-section-header">{trimmed}</h4>;
       }
-      if (line.trim().startsWith('•') || line.trim().startsWith('-')) {
-        return <li key={index} className="resume-bullet">{line.trim().replace(/^[•-]\s*/, '')}</li>;
+      if (trimmed.startsWith('•') || trimmed.startsWith('-')) {
+        const bulletText = trimmed.replace(/^[•-]\s*/, '');
+        return (
+          <li key={index} className="resume-bullet">
+            {highlightLineKeywords(bulletText, result.keywords)}
+          </li>
+        );
       }
-      if (line.trim() === '') {
+      if (trimmed === '') {
         return <div key={index} className="resume-spacer"></div>;
       }
-      return <p key={index} className="resume-text-line">{line}</p>;
+      return (
+        <p key={index} className="resume-text-line">
+          {highlightLineKeywords(line, result.keywords)}
+        </p>
+      );
     });
   };
 
@@ -432,62 +518,124 @@ export default function ResumeOptimizationPage() {
     <div className="optimizer-wrapper">
       <div className="optimizer-page-content">
         {/* Hero Section */}
-        <section className="optimizer-hero-premium">
-          <div className="hero-background-glow"></div>
+        <motion.section
+          ref={heroRef}
+          className="optimizer-hero-premium"
+          onMouseMove={handleHeroMouseMove}
+          initial={reduceMotion ? false : { opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        >
+          <motion.div
+            className="hero-background-glow"
+            style={{
+              // Drives a CSS custom property so the glow itself stays defined in CSS,
+              // JS only supplies the cursor-follow position.
+              '--glow-x': glowXSpring,
+              '--glow-y': glowYSpring,
+            }}
+          ></motion.div>
           <div className="particle particle-1"></div>
           <div className="particle particle-2"></div>
           <div className="particle particle-3"></div>
-          
-          <div className="optimizer-hero-content">
+
+          <motion.div
+            className="optimizer-hero-content"
+            variants={staggerContainer}
+            initial={reduceMotion ? false : "hidden"}
+            animate="show"
+          >
             <div className="optimizer-hero-left">
-              <div className="hero-badge">
+              <motion.div className="hero-badge" variants={staggerItem}>
                 <span className="badge-dot"></span>
                 <span className="badge-icon">⚡</span>
                 AI-Powered Optimization
-              </div>
-              
-              <h1 className="optimizer-hero-title">
+              </motion.div>
+
+              <motion.h1 className="optimizer-hero-title" variants={staggerItem}>
                 Transform Your Resume
                 <br />
-                <span className="gradient-text">into an Interview Magnet</span>
-              </h1>
-              
-              <p className="optimizer-hero-sub">
-                Pair your resume with a target role. Our AI rewrites weak phrasing,
-                surfaces missing keywords, and boosts your ATS score instantly.
-              </p>
-              
-              <div className="hero-trust-badges">
+                <span className="phrase-switcher-wrapper">
+                  into{" "}
+                  <span className="inline-phrase-container">
+                    <AnimatePresence mode="wait">
+                      <motion.span
+                        key={phraseIndex}
+                        className="inline-phrase"
+                        initial={{ opacity: 0, y: 12, filter: 'blur(3px)' }}
+                        animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                        exit={{ opacity: 0, y: -12, filter: 'blur(3px)' }}
+                        transition={{ duration: 0.35, ease: "easeInOut" }}
+                      >
+                        {MAGNET_PHRASES[phraseIndex]}
+                      </motion.span>
+                    </AnimatePresence>
+                  </span>
+                </span>
+              </motion.h1>
+
+              <motion.p className="optimizer-hero-sub" variants={staggerItem}>
+                Don't let your dream job slip away. Match your resume with any target role,
+                surface hidden ATS keywords, and get noticed by recruiters instantly.
+              </motion.p>
+
+              <motion.div className="hero-trust-badges" variants={staggerItem}>
                 <span className="trust-badge"><Zap size={14} /> 2,500+ resumes optimized</span>
                 <span className="trust-badge"><Star size={14} /> 94% success rate</span>
                 <span className="trust-badge"><Clock size={14} /> Instant results</span>
-              </div>
+              </motion.div>
             </div>
 
-            <div className="optimizer-hero-right">
+            <motion.div className="optimizer-hero-right" variants={staggerItem}>
               <div className="hero-stats-modern">
-                <div className="hero-stat-card">
-                  <div className="hero-stat-number">{resumes.length}</div>
-                  <div className="hero-stat-label">📄 Resumes Ready</div>
-                  <div className="hero-stat-bar"><span style={{ width: '75%' }}></span></div>
-                </div>
-                <div className="hero-stat-card">
-                  <div className="hero-stat-number">{jobDescriptions.length}</div>
-                  <div className="hero-stat-label">🎯 Job Targets</div>
-                  <div className="hero-stat-bar"><span style={{ width: '60%' }}></span></div>
-                </div>
-                <div className="hero-stat-card highlight">
-                  <div className="hero-stat-number">{result ? '✓' : '⚡'}</div>
-                  <div className="hero-stat-label">🚀 Ready to Optimize</div>
-                  <div className="hero-stat-bar"><span style={{ width: result ? '100%' : '30%' }}></span></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+                <motion.div
+                  className="hero-stat-card"
+                  whileHover={reduceMotion ? {} : { y: -5, scale: 1.02 }}
+                >
+                  <div className="stat-card-icon-wrapper purple">
+                    <FileText size={16} />
+                  </div>
+                  <div className="hero-stat-number"><CountUp value={resumes.length} /></div>
+                  <div className="hero-stat-label">Resumes Ready</div>
+                  <div className="hero-stat-bar">
+                    <span className="bar-inner purple" style={{ width: '75%' }}></span>
+                  </div>
+                </motion.div>
 
-        {/* Control Panel with Premium Dropdowns */}
-        <section className="optimizer-control-premium">
+                <motion.div
+                  className="hero-stat-card"
+                  whileHover={reduceMotion ? {} : { y: -5, scale: 1.02 }}
+                >
+                  <div className="stat-card-icon-wrapper blue">
+                    <Target size={16} />
+                  </div>
+                  <div className="hero-stat-number"><CountUp value={jobDescriptions.length} /></div>
+                  <div className="hero-stat-label">Job Targets</div>
+                  <div className="hero-stat-bar">
+                    <span className="bar-inner blue" style={{ width: '60%' }}></span>
+                  </div>
+                </motion.div>
+
+                <motion.div
+                  className="hero-stat-card highlight"
+                  whileHover={reduceMotion ? {} : { y: -5, scale: 1.02 }}
+                >
+                  <div className="stat-card-icon-wrapper green">
+                    <Sparkles size={16} />
+                  </div>
+                  <div className="hero-stat-number">{result ? 'Active' : 'Ready'}</div>
+                  <div className="hero-stat-label">AI Engine</div>
+                  <div className="hero-stat-bar">
+                    <span className="bar-inner green" style={{ width: result ? '100%' : '30%' }}></span>
+                  </div>
+                </motion.div>
+              </div>
+            </motion.div>
+          </motion.div>
+        </motion.section>
+
+        {/* Control Panel */}
+        <Reveal className="optimizer-control-premium" delay={0.05}>
           <div className="control-panel-glow"></div>
           <div className="control-ambient-particles">
             <div className="particle particle-1"></div>
@@ -504,7 +652,13 @@ export default function ResumeOptimizationPage() {
               </div>
               <h3 className="panel-title">
                 Optimization Studio
-                <span className="title-underline"></span>
+                <motion.span
+                  className="title-underline"
+                  initial={{ width: 0, opacity: 0 }}
+                  whileInView={{ width: 50, opacity: 0.7 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+                />
               </h3>
               <p className="panel-subtitle">
                 Select your resume and target role to begin the transformation
@@ -548,12 +702,10 @@ export default function ResumeOptimizationPage() {
                 type="job"
               />
 
-              <motion.button
+              <MagneticButton
                 className={`optimizer-btn-modern ${loading ? "loading" : ""} ${selectedResume && selectedJobDescription ? "ready" : ""}`}
                 onClick={handleOptimize}
                 disabled={loading || !selectedResume || !selectedJobDescription}
-                whileHover={selectedResume && selectedJobDescription ? { scale: 1.03 } : {}}
-                whileTap={selectedResume && selectedJobDescription ? { scale: 0.97 } : {}}
               >
                 {loading ? (
                   <>
@@ -567,242 +719,270 @@ export default function ResumeOptimizationPage() {
                     <ArrowRight size={16} className="btn-arrow" />
                   </>
                 )}
-              </motion.button>
+              </MagneticButton>
             </div>
 
-            {/* ====== ENHANCED READY TO OPTIMIZE SECTION ====== */}
-            {selectedResume && selectedJobDescription && (
-              <motion.div 
-                className="optimizer-ready-modern"
-                initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ 
-                  duration: 0.5, 
-                  delay: 0.2,
-                  type: "spring",
-                  stiffness: 100,
-                  damping: 15
-                }}
-                whileHover={{ 
-                  scale: 1.02,
-                  transition: { duration: 0.2 }
-                }}
-              >
-                {/* Glow Background */}
-                <div className="ready-glow-background"></div>
-                
-                {/* Floating Particles */}
-                <div className="ready-particles">
-                  <div className="ready-particle p1"></div>
-                  <div className="ready-particle p2"></div>
-                  <div className="ready-particle p3"></div>
-                  <div className="ready-particle p4"></div>
-                </div>
+            {/* Ready to Optimize Section */}
+            <AnimatePresence>
+              {selectedResume && selectedJobDescription && (
+                <motion.div
+                  className="optimizer-ready-modern"
+                  initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -10, scale: 0.97 }}
+                  transition={{
+                    duration: 0.5,
+                    type: "spring",
+                    stiffness: 100,
+                    damping: 15
+                  }}
+                  whileHover={{
+                    scale: 1.02,
+                    transition: { duration: 0.2 }
+                  }}
+                >
+                  <div className="ready-glow-background"></div>
+                  <div className="ready-particles">
+                    <div className="ready-particle p1"></div>
+                    <div className="ready-particle p2"></div>
+                    <div className="ready-particle p3"></div>
+                    <div className="ready-particle p4"></div>
+                  </div>
 
-                <div className="ready-indicator">
-                  <motion.div 
-                    className="ready-icon-wrapper"
-                    animate={{ 
-                      scale: [1, 1.1, 1],
-                      rotate: [0, 5, -5, 0]
-                    }}
-                    transition={{ 
-                      duration: 2,
-                      repeat: Infinity,
-                      ease: "easeInOut"
-                    }}
-                  >
-                    <span className="ready-dot"></span>
-                    <span className="ready-ring"></span>
-                    <motion.span 
-                      className="ready-emoji"
-                      animate={{ 
-                        scale: [1, 1.2, 1],
-                        rotate: [0, 10, -10, 0]
+                  <div className="ready-indicator">
+                    <motion.div
+                      className="ready-icon-wrapper"
+                      animate={{
+                        scale: [1, 1.1, 1],
+                        rotate: [0, 5, -5, 0]
                       }}
-                      transition={{ 
-                        duration: 1.5,
-                        repeat: Infinity,
-                        ease: "easeInOut"
-                      }}
-                    >
-                      🚀
-                    </motion.span>
-                  </motion.div>
-
-                  <motion.div 
-                    className="ready-content"
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.3, duration: 0.4 }}
-                  >
-                    <motion.span 
-                      className="ready-title"
-                      animate={{ 
-                        color: ['#f1f5f9', '#a855f7', '#f1f5f9']
-                      }}
-                      transition={{ 
-                        duration: 3,
-                        repeat: Infinity,
-                        ease: "easeInOut"
-                      }}
-                    >
-                      ✨ All Set! Ready to Optimize
-                    </motion.span>
-                    <motion.span 
-                      className="ready-sub"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.5 }}
-                    >
-                      <span className="ready-highlight">
-                        {resumes.find(r => r.id === Number(selectedResume))?.file_name}
-                      </span>
-                      <span className="ready-arrow">→</span>
-                      <span className="ready-highlight">
-                        {jobDescriptions.find(j => j.id === Number(selectedJobDescription))?.title}
-                      </span>
-                    </motion.span>
-                  </motion.div>
-
-                  <motion.div 
-                    className="ready-actions"
-                    initial={{ opacity: 0, scale: 0 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ 
-                      delay: 0.6,
-                      type: "spring",
-                      stiffness: 200,
-                      damping: 10
-                    }}
-                  >
-                    <motion.span 
-                      className="ready-badge"
-                      animate={{ 
-                        boxShadow: [
-                          '0 0 20px rgba(16, 185, 129, 0.1)',
-                          '0 0 40px rgba(16, 185, 129, 0.2)',
-                          '0 0 20px rgba(16, 185, 129, 0.1)'
-                        ]
-                      }}
-                      transition={{ 
+                      transition={{
                         duration: 2,
                         repeat: Infinity,
                         ease: "easeInOut"
                       }}
                     >
-                      <span className="badge-check">✓</span>
-                      <span className="badge-text">Ready</span>
-                      <motion.span 
-                        className="badge-sparkle"
-                        animate={{ 
-                          opacity: [0, 1, 0],
-                          scale: [0.5, 1.2, 0.5]
+                      <span className="ready-dot"></span>
+                      <span className="ready-ring"></span>
+                      <motion.span
+                        className="ready-emoji"
+                        animate={{
+                          scale: [1, 1.2, 1],
+                          rotate: [0, 10, -10, 0]
                         }}
-                        transition={{ 
+                        transition={{
                           duration: 1.5,
                           repeat: Infinity,
                           ease: "easeInOut"
                         }}
                       >
-                        ✦
+                        🚀
                       </motion.span>
-                    </motion.span>
-                  </motion.div>
-                </div>
+                    </motion.div>
 
-                {/* Quick Stats Bar */}
-                <motion.div 
-                  className="ready-stats-bar"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.7 }}
-                >
-                  <div className="stat-pill">
-                    <span className="stat-pill-icon">📄</span>
-                    <span className="stat-pill-label">Resume</span>
-                    <span className="stat-pill-value">
-                      {resumes.find(r => r.id === Number(selectedResume))?.file_name}
-                    </span>
+                    <motion.div
+                      className="ready-content"
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.15, duration: 0.4 }}
+                    >
+                      <motion.span
+                        className="ready-title"
+                        animate={{
+                          color: ['#f1f5f9', '#a855f7', '#f1f5f9']
+                        }}
+                        transition={{
+                          duration: 3,
+                          repeat: Infinity,
+                          ease: "easeInOut"
+                        }}
+                      >
+                        ✨ All Set! Ready to Optimize
+                      </motion.span>
+                      <motion.span
+                        className="ready-sub"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.25 }}
+                      >
+                        <span className="ready-highlight">
+                          {resumes.find(r => r.id === Number(selectedResume))?.file_name}
+                        </span>
+                        <span className="ready-arrow">→</span>
+                        <span className="ready-highlight">
+                          {jobDescriptions.find(j => j.id === Number(selectedJobDescription))?.title}
+                        </span>
+                      </motion.span>
+                    </motion.div>
+
+                    <motion.div
+                      className="ready-actions"
+                      initial={{ opacity: 0, scale: 0 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{
+                        delay: 0.3,
+                        type: "spring",
+                        stiffness: 200,
+                        damping: 10
+                      }}
+                    >
+                      <motion.span
+                        className="ready-badge"
+                        animate={{
+                          boxShadow: [
+                            '0 0 20px rgba(16, 185, 129, 0.1)',
+                            '0 0 40px rgba(16, 185, 129, 0.2)',
+                            '0 0 20px rgba(16, 185, 129, 0.1)'
+                          ]
+                        }}
+                        transition={{
+                          duration: 2,
+                          repeat: Infinity,
+                          ease: "easeInOut"
+                        }}
+                      >
+                        <span className="badge-check">✓</span>
+                        <span className="badge-text">Ready</span>
+                        <motion.span
+                          className="badge-sparkle"
+                          animate={{
+                            opacity: [0, 1, 0],
+                            scale: [0.5, 1.2, 0.5]
+                          }}
+                          transition={{
+                            duration: 1.5,
+                            repeat: Infinity,
+                            ease: "easeInOut"
+                          }}
+                        >
+                          ✦
+                        </motion.span>
+                      </motion.span>
+                    </motion.div>
                   </div>
-                  <div className="stat-pill-divider"></div>
-                  <div className="stat-pill">
-                    <span className="stat-pill-icon">🎯</span>
-                    <span className="stat-pill-label">Target</span>
-                    <span className="stat-pill-value">
-                      {jobDescriptions.find(j => j.id === Number(selectedJobDescription))?.title}
-                    </span>
-                  </div>
-                  <div className="stat-pill-divider"></div>
-                  <motion.div 
-                    className="stat-pill success"
-                    animate={{ 
-                      backgroundColor: ['rgba(16, 185, 129, 0.04)', 'rgba(16, 185, 129, 0.08)', 'rgba(16, 185, 129, 0.04)']
-                    }}
-                    transition={{ duration: 2, repeat: Infinity }}
+
+                  <motion.div
+                    className="ready-stats-bar"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.35 }}
                   >
-                    <span className="stat-pill-icon">⚡</span>
-                    <span className="stat-pill-label">Ready</span>
-                    <span className="stat-pill-value">Match Found</span>
+                    <div className="stat-pill">
+                      <span className="stat-pill-icon">📄</span>
+                      <span className="stat-pill-label">Resume</span>
+                      <span className="stat-pill-value">
+                        {resumes.find(r => r.id === Number(selectedResume))?.file_name}
+                      </span>
+                    </div>
+                    <div className="stat-pill-divider"></div>
+                    <div className="stat-pill">
+                      <span className="stat-pill-icon">🎯</span>
+                      <span className="stat-pill-label">Target</span>
+                      <span className="stat-pill-value">
+                        {jobDescriptions.find(j => j.id === Number(selectedJobDescription))?.title}
+                      </span>
+                    </div>
+                    <div className="stat-pill-divider"></div>
+                    <motion.div
+                      className="stat-pill success"
+                      animate={{
+                        backgroundColor: ['rgba(16, 185, 129, 0.04)', 'rgba(16, 185, 129, 0.08)', 'rgba(16, 185, 129, 0.04)']
+                      }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    >
+                      <span className="stat-pill-icon">⚡</span>
+                      <span className="stat-pill-label">Ready</span>
+                      <span className="stat-pill-value">Match Found</span>
+                    </motion.div>
+                  </motion.div>
+
+                  <motion.div
+                    className="ready-progress"
+                    initial={{ width: 0 }}
+                    animate={{ width: '100%' }}
+                    transition={{ duration: 1, delay: 0.3 }}
+                  >
+                    <div className="ready-progress-bar"></div>
                   </motion.div>
                 </motion.div>
-
-                {/* Progress Animation */}
-                <motion.div 
-                  className="ready-progress"
-                  initial={{ width: 0 }}
-                  animate={{ width: '100%' }}
-                  transition={{ duration: 1, delay: 0.5 }}
-                >
-                  <div className="ready-progress-bar"></div>
-                </motion.div>
-              </motion.div>
-            )}
+              )}
+            </AnimatePresence>
           </div>
-        </section>
+        </Reveal>
 
         {/* Error Banner */}
-        {error && (
-          <motion.div 
-            className="error-banner-modern"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-          >
-            <span className="error-icon">⚠️</span>
-            {error}
-          </motion.div>
-        )}
+        <AnimatePresence>
+          {error && (
+            <motion.div
+              className="error-banner-modern"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+            >
+              <span className="error-icon">⚠️</span>
+              {error}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Loading State */}
-        {loading && (
-          <section className="loading-modern">
-            <div className="loading-container">
-              <div className="loading-brain">
-                <div className="brain-pulse"></div>
-                <div className="brain-ring ring1"></div>
-                <div className="brain-ring ring2"></div>
-                <div className="brain-ring ring3"></div>
-                <span className="brain-emoji">🧠</span>
-              </div>
-              <div className="loading-content-modern">
-                <h3>AI is analyzing your resume</h3>
-                <p>Comparing against job requirements and optimizing content...</p>
-                <div className="loading-progress-modern">
-                  <div className="loading-progress-bar-modern" style={{ width: '65%' }}></div>
+        <AnimatePresence>
+          {loading && (
+            <motion.section
+              className="loading-modern"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <div className="loading-container-modern">
+                {/* Holographic scanning deck */}
+                <div className="scan-deck">
+                  <div className="scan-item scan-resume">
+                    <div className="scan-item-icon">📄</div>
+                    <span>{resumes.find(r => r.id === Number(selectedResume))?.file_name || "Resume.pdf"}</span>
+                  </div>
+                  <div className="scan-beam-wrapper">
+                    <div className="scan-beam-line" />
+                    <div className="scan-beam-ray" />
+                    <span className="scan-beam-ai-badge">AI MATCHING</span>
+                  </div>
+                  <div className="scan-item scan-job">
+                    <div className="scan-item-icon">🎯</div>
+                    <span>{jobDescriptions.find(j => j.id === Number(selectedJobDescription))?.title || "Job Target"}</span>
+                  </div>
+                </div>
+
+                {/* Simulated live logger */}
+                <ScanningTerminal
+                  resumeName={resumes.find(r => r.id === Number(selectedResume))?.file_name}
+                  jobTitle={jobDescriptions.find(j => j.id === Number(selectedJobDescription))?.title}
+                />
+
+                {/* Progress bar container */}
+                <div className="loading-content-modern">
+                  <h3>Executing Optimization Coefficients</h3>
+                  <div className="loading-progress-modern">
+                    <motion.div
+                      className="loading-progress-bar-modern"
+                      initial={{ width: '5%' }}
+                      animate={{ width: '95%' }}
+                      transition={{ duration: 6, ease: [0.16, 1, 0.3, 1] }}
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-          </section>
-        )}
+            </motion.section>
+          )}
+        </AnimatePresence>
 
         {/* Empty State */}
         {!loading && !result && !error && (
           <section className="empty-state-modern">
             <div className="empty-state-glow-modern"></div>
             <div className="empty-state-content-modern">
-              <motion.div 
+              <motion.div
                 className="empty-state-icon-modern"
-                animate={{ y: [0, -15, 0] }}
+                animate={reduceMotion ? {} : { y: [0, -15, 0] }}
                 transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
               >
                 🚀
@@ -821,7 +1001,7 @@ export default function ResumeOptimizationPage() {
         {/* Results */}
         {!loading && result && (
           <AnimatePresence>
-            <motion.section 
+            <motion.section
               className="results-modern"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
@@ -830,32 +1010,52 @@ export default function ResumeOptimizationPage() {
               {/* Results Header */}
               <div className="results-header-modern">
                 <div className="results-header-left">
-                  <motion.span 
+                  <motion.span
                     className="results-badge-modern"
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    transition={{ duration: 0.3, delay: 0.2 }}
+                    transition={{ duration: 0.3, delay: 0.2, type: "spring", stiffness: 260, damping: 16 }}
                   >
                     <Check size={16} />
                     Optimization Complete
                   </motion.span>
-                  <h2>Your resume is now <span className="gradient-text">2x stronger</span></h2>
+                  <h2>Your resume is now <span className="gradient-text shimmer-text">2x stronger</span></h2>
                   <p>AI-powered improvements that get you noticed</p>
                 </div>
                 <div className="results-header-right">
                   {delta != null && (
-                    <motion.div 
+                    <motion.div
                       className={`delta-pill-modern ${delta >= 0 ? 'up' : 'down'}`}
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
-                      transition={{ duration: 0.3, delay: 0.4 }}
+                      transition={{ duration: 0.3, delay: 0.4, type: "spring", stiffness: 260, damping: 16 }}
                     >
                       <span className="delta-icon">▲</span>
-                      <span className="delta-value">+{Math.abs(delta)} pts</span>
+                      <span className="delta-value">{delta >= 0 ? '+' : ''}<CountUp value={delta} /> pts</span>
                       <span className="delta-label">Improvement</span>
                     </motion.div>
                   )}
-                  <motion.button 
+
+                  {/* PDF Download Button */}
+                  <MagneticButton
+                    className={`download-btn-modern ${downloading ? 'loading' : ''}`}
+                    onClick={handleDownloadPDF}
+                    disabled={downloading}
+                  >
+                    {downloading ? (
+                      <>
+                        <span className="spinner-modern"></span>
+                        Generating PDF...
+                      </>
+                    ) : (
+                      <>
+                        <Download size={16} />
+                        Download PDF
+                      </>
+                    )}
+                  </MagneticButton>
+
+                  <motion.button
                     className={`copy-btn-modern ${copySuccess ? 'copied' : ''}`}
                     onClick={() => copyToClipboard(result.optimizedText, setCopySuccess)}
                     whileHover={{ scale: 1.05 }}
@@ -870,8 +1070,10 @@ export default function ResumeOptimizationPage() {
                 </div>
               </div>
 
-              {/* Score Dashboard */}
-              <div className="score-dashboard-modern">
+              {/* Score Dashboard — this is the page's signature moment: the confetti
+                  intensity is driven by the actual point improvement, not a fixed effect. */}
+              <div className="score-dashboard-modern score-dashboard-anchor">
+                <ScoreConfetti trigger={celebrationKey} intensity={delta ? delta / 15 : 0.5} />
                 <div className="score-dashboard-header">
                   <h3>
                     <BarChart3 size={18} />
@@ -883,37 +1085,41 @@ export default function ResumeOptimizationPage() {
                   </span>
                 </div>
                 <div className="score-dashboard-grid">
-                  <ScoreRing 
-                    label="Original Score" 
-                    value={result.originalScore} 
-                    tone="muted" 
+                  <ScoreRing
+                    label="Original Score"
+                    value={result.originalScore}
+                    tone="muted"
                     animate={true}
                     delay={0.2}
                   />
-                  
-                  <motion.div 
+
+                  <motion.div
                     className="score-arrow-modern"
-                    animate={{ x: [0, 10, 0] }}
+                    animate={reduceMotion ? {} : { x: [0, 10, 0] }}
                     transition={{ duration: 2, repeat: Infinity }}
                   >
                     <ArrowRight size={32} />
                   </motion.div>
-                  
-                  <div className="score-circle-wrapper premium">
-                    <ScoreRing 
-                      label="Optimized Score" 
-                      value={result.optimizedScore} 
-                      tone="positive" 
+
+                  <motion.div
+                    className="score-circle-wrapper premium"
+                    animate={reduceMotion ? {} : { scale: [1, 1.03, 1] }}
+                    transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+                  >
+                    <ScoreRing
+                      label="Optimized Score"
+                      value={result.optimizedScore}
+                      tone="positive"
                       animate={true}
                       delay={0.4}
                     />
                     <div className="score-circle-glow-ring"></div>
-                  </div>
-                  
-                  <ScoreRing 
-                    label="Points Gained" 
-                    value={delta > 0 ? delta : 0} 
-                    tone="success" 
+                  </motion.div>
+
+                  <ScoreRing
+                    label="Points Gained"
+                    value={delta > 0 ? delta : 0}
+                    tone="success"
                     animate={true}
                     delay={0.6}
                   />
@@ -922,14 +1128,14 @@ export default function ResumeOptimizationPage() {
 
               {/* View Toggle */}
               <div className="view-toggle-modern">
-                <button 
+                <button
                   className={viewMode === 'side-by-side' ? 'active' : ''}
                   onClick={() => setViewMode('side-by-side')}
                 >
                   <FileText size={16} />
                   Side by Side
                 </button>
-                <button 
+                <button
                   className={viewMode === 'resume-view' ? 'active' : ''}
                   onClick={() => setViewMode('resume-view')}
                 >
@@ -939,196 +1145,202 @@ export default function ResumeOptimizationPage() {
               </div>
 
               {/* Side by Side View */}
-              {viewMode === 'side-by-side' && (
-                <motion.div 
-                  className="compare-modern"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                >
-                  <div className="compare-header-modern">
-                    <h3>📝 Before & After</h3>
-                    <span className="compare-hint">Scroll to see all changes</span>
-                  </div>
-
-                  <div className="compare-grid-modern">
-                    <motion.div 
-                      className="compare-col-modern before"
-                      initial={{ x: -30, opacity: 0 }}
-                      animate={{ x: 0, opacity: 1 }}
-                      transition={{ delay: 0.4 }}
-                    >
-                      <div className="compare-tag-modern before">
-                        <span>📄</span> Original
-                        <span className="tag-score">{result.originalScore}%</span>
-                      </div>
-                      <div className="compare-content-modern">
-                        <pre>{formatResumeForDisplay(result.originalText)}</pre>
-                      </div>
-                    </motion.div>
-
-                    <motion.div 
-                      className="compare-col-modern after"
-                      initial={{ x: 30, opacity: 0 }}
-                      animate={{ x: 0, opacity: 1 }}
-                      transition={{ delay: 0.5 }}
-                    >
-                      <div className="compare-tag-modern after">
-                        <span>✨</span> Optimized
-                        <span className="tag-score">{result.optimizedScore}%</span>
-                        <motion.span 
-                          className="new-badge-modern"
-                          initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
-                          transition={{ delay: 0.7 }}
-                        >
-                          IMPROVED
-                        </motion.span>
-                      </div>
-                      <div className="compare-content-modern">
-                        <pre>{formatResumeForDisplay(result.optimizedText)}</pre>
-                      </div>
-                    </motion.div>
-                  </div>
-                </motion.div>
-              )}
-
-              {/* Resume View */}
-              {viewMode === 'resume-view' && (
-                <motion.div 
-                  className="resume-view-modern"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                >
-                  <div className="resume-view-header">
-                    <div className="resume-view-title">
-                      <FileText size={20} />
-                      <span>Optimized Resume</span>
-                      <span className="resume-version-badge">v2.0</span>
+              <AnimatePresence mode="wait">
+                {viewMode === 'side-by-side' && (
+                  <motion.div
+                    key="side-by-side"
+                    className="compare-modern"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <div className="compare-header-modern">
+                      <h3>📝 Before & After</h3>
+                      <span className="compare-hint">Scroll to see all changes</span>
                     </div>
-                    <div className="resume-view-actions">
-                      <button 
-                        className="resume-view-btn" 
-                        onClick={() => copyToClipboard(result.optimizedText, setCopySuccess)}
+
+                    <div className="compare-grid-modern">
+                      <motion.div
+                        className="compare-col-modern before"
+                        initial={{ x: -30, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        transition={{ delay: 0.1 }}
                       >
-                        <Copy size={16} />
-                        Copy
-                      </button>
-                      <button className="resume-view-btn primary">
-                        <Download size={16} />
-                        Download PDF
-                      </button>
-                    </div>
-                  </div>
+                        <div className="compare-tag-modern before">
+                          <span>📄</span> Original
+                          <span className="tag-score">{result.originalScore}%</span>
+                        </div>
+                        <div className="compare-content-modern">
+                          <pre>{formatResumeForDisplay(result.originalText)}</pre>
+                        </div>
+                      </motion.div>
 
-                  <div className="resume-view-content">
-                    <div className="resume-score-badge">
-                      <div className="score-badge-item">
-                        <span className="badge-label">ATS Score</span>
-                        <span className="badge-value" style={{ color: '#a855f7' }}>{result.optimizedScore}%</span>
+                      <motion.div
+                        className="compare-col-modern after"
+                        initial={{ x: 30, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        transition={{ delay: 0.2 }}
+                      >
+                        <div className="compare-tag-modern after">
+                          <span>✨</span> Optimized
+                          <span className="tag-score">{result.optimizedScore}%</span>
+                          <motion.span
+                            className="new-badge-modern"
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            transition={{ delay: 0.4, type: "spring", stiffness: 260, damping: 14 }}
+                          >
+                            IMPROVED
+                          </motion.span>
+                        </div>
+                        <div className="compare-content-modern">
+                          <pre>{formatAndHighlightText(result.optimizedText, result.keywords)}</pre>
+                        </div>
+                      </motion.div>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Resume View */}
+                {viewMode === 'resume-view' && (
+                  <motion.div
+                    key="resume-view"
+                    className="resume-view-modern"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <div className="resume-view-header">
+                      <div className="resume-view-title">
+                        <FileText size={20} />
+                        <span>Optimized Resume</span>
+                        <span className="resume-version-badge">v2.0</span>
                       </div>
-                      <div className="score-badge-divider"></div>
-                      <div className="score-badge-item">
-                        <span className="badge-label">Improvement</span>
-                        <span className="badge-value" style={{ color: '#10b981' }}>+{delta}%</span>
-                      </div>
-                      <div className="score-badge-divider"></div>
-                      <div className="score-badge-item">
-                        <span className="badge-label">Keywords</span>
-                        <span className="badge-value" style={{ color: '#60a5fa' }}>{result.keywords?.length || 0}</span>
-                      </div>
-                      <div className="score-badge-divider"></div>
-                      <div className="score-badge-item">
-                        <span className="badge-label">Status</span>
-                        <span className="badge-value" style={{ color: '#34d399', fontSize: '12px' }}>
-                          <span className="status-dot"></span> Optimized
-                        </span>
+                      <div className="resume-view-actions">
+                        <button
+                          className="resume-view-btn"
+                          onClick={() => copyToClipboard(result.optimizedText, setCopySuccess)}
+                        >
+                          <Copy size={16} />
+                          Copy
+                        </button>
+                        <button
+                          className="resume-view-btn primary"
+                          onClick={handleDownloadPDF}
+                          disabled={downloading}
+                        >
+                          {downloading ? (
+                            <><span className="spinner-modern"></span> Generating...</>
+                          ) : (
+                            <><Download size={16} /> Download PDF</>
+                          )}
+                        </button>
                       </div>
                     </div>
 
-                    <div className="resume-text-container">
-                      <div className="resume-text-content">
-                        {renderResumeContent()}
+                    <div className="resume-view-content">
+                      <div className="resume-score-badge">
+                        <div className="score-badge-item">
+                          <span className="badge-label">ATS Score</span>
+                          <span className="badge-value" style={{ color: '#a855f7' }}><CountUp value={result.optimizedScore} suffix="%" /></span>
+                        </div>
+                        <div className="score-badge-divider"></div>
+                        <div className="score-badge-item">
+                          <span className="badge-label">Improvement</span>
+                          <span className="badge-value" style={{ color: '#10b981' }}>{delta >= 0 ? '+' : ''}<CountUp value={delta} suffix="%" /></span>
+                        </div>
+                        <div className="score-badge-divider"></div>
+                        <div className="score-badge-item">
+                          <span className="badge-label">Keywords</span>
+                          <span className="badge-value" style={{ color: '#60a5fa' }}>{result.keywords?.length || 0}</span>
+                        </div>
+                        <div className="score-badge-divider"></div>
+                        <div className="score-badge-item">
+                          <span className="badge-label">Status</span>
+                          <span className="badge-value" style={{ color: '#34d399', fontSize: '12px' }}>
+                            <span className="status-dot"></span> Optimized
+                          </span>
+                        </div>
                       </div>
-                    </div>
 
-                    {result.recommendations?.length > 0 && (
-                      <div className="resume-suggestions">
-                        <h4 className="suggestions-title">
-                          <Sparkles size={16} />
-                          AI Suggestions
-                        </h4>
-                        <ul className="suggestions-list">
-                          {result.recommendations.map((rec, idx) => (
-                            <li key={idx}>
-                              <span className="suggestion-check">✓</span>
-                              {rec}
-                            </li>
-                          ))}
-                        </ul>
+                      <div className="resume-text-container">
+                        <div className="resume-text-content">
+                          {renderResumeContent()}
+                        </div>
                       </div>
-                    )}
-                  </div>
-                </motion.div>
-              )}
+
+                      {result.recommendations?.length > 0 && (
+                        <div className="resume-suggestions">
+                          <h4 className="suggestions-title">
+                            <Sparkles size={16} />
+                            AI Suggestions
+                          </h4>
+                          <ul className="suggestions-list">
+                            {result.recommendations.map((rec, idx) => (
+                              <li key={idx}>
+                                <span className="suggestion-check">✓</span>
+                                {rec}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* Keywords */}
               {result.keywords?.length > 0 && (
-                <motion.div 
-                  className="keywords-modern"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.6 }}
-                >
+                <Reveal className="keywords-modern" delay={0.1}>
                   <div className="keywords-header">
                     <h3><Target size={18} /> Matched Keywords</h3>
                     <span className="keywords-count">{result.keywords.length} keywords</span>
                   </div>
-                  <div className="keywords-grid-modern">
+                  <motion.div
+                    className="keywords-grid-modern"
+                    variants={staggerContainer}
+                    initial="hidden"
+                    animate="show"
+                  >
                     {result.keywords.map((kw, idx) => (
-                      <motion.span 
-                        className="keyword-chip-modern" 
+                      <motion.span
+                        className="keyword-chip-modern"
                         key={idx}
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ delay: 0.05 * idx }}
+                        variants={staggerItem}
                         whileHover={{ scale: 1.1, y: -2 }}
                       >
                         <span className="keyword-dot-modern"></span>
                         {kw}
                       </motion.span>
                     ))}
-                  </div>
-                </motion.div>
+                  </motion.div>
+                </Reveal>
               )}
 
               {/* Recommendations */}
               {result.recommendations?.length > 0 && (
-                <motion.div 
-                  className="recommendations-modern"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.7 }}
-                >
+                <Reveal className="recommendations-modern" delay={0.15}>
                   <div className="recommendations-glow-modern"></div>
                   <div className="recommendations-content-modern">
                     <h3><Sparkles size={18} /> Recommended Next Steps</h3>
-                    <ul className="recommendations-list-modern">
+                    <motion.ul
+                      className="recommendations-list-modern"
+                      variants={staggerContainer}
+                      initial="hidden"
+                      animate="show"
+                    >
                       {result.recommendations.map((rec, idx) => (
-                        <motion.li 
-                          key={idx}
-                          initial={{ x: -20, opacity: 0 }}
-                          animate={{ x: 0, opacity: 1 }}
-                          transition={{ delay: 0.1 * idx }}
-                        >
+                        <motion.li key={idx} variants={staggerItem}>
                           <span className="rec-check-modern">✓</span>
                           {rec}
                         </motion.li>
                       ))}
-                    </ul>
+                    </motion.ul>
                   </div>
-                </motion.div>
+                </Reveal>
               )}
             </motion.section>
           </AnimatePresence>

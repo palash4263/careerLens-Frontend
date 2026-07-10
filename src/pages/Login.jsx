@@ -1,4 +1,4 @@
-// Login.jsx
+// src/pages/Login.jsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { login } from "../services/authService";
@@ -33,12 +33,31 @@ function Login() {
 
     setSubmitting(true);
     try {
-      const response = await login(formData);
-      localStorage.setItem("token", response.token);
-      navigate("/dashboard");
+      const data = await login(formData);
+      
+      // Store token
+      const token = data.access_token || data.token;
+      if (!token) {
+        setFormError('Login failed: No token received');
+        return;
+      }
+      
+      localStorage.setItem('token', token);
+      
+      // Store user data
+      localStorage.setItem('userName', data.user?.name || 'User');
+      localStorage.setItem('userEmail', data.user?.email || '');
+      localStorage.setItem('userAvatar', data.user?.avatar || '');
+      localStorage.setItem('userRole', data.user?.role || 'Product Manager');
+      localStorage.setItem('userLocation', data.user?.location || 'Noida, IN');
+      localStorage.setItem('userJoinDate', data.user?.joinDate || 'January 2026');
+      
+      navigate('/dashboard');
     } catch (error) {
       setFormError(
-        error?.response?.data?.message || "Invalid email or password."
+        error?.response?.data?.detail || 
+        error?.response?.data?.message || 
+        "Invalid email or password."
       );
     } finally {
       setSubmitting(false);

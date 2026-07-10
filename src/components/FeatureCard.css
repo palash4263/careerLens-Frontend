@@ -1,0 +1,182 @@
+/* ==========================================================================
+   FEATURE CARD — Premium Mouse-Tracking Spotlight Card
+   ========================================================================== */
+
+.fc-root {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 2rem;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+              border-color 0.35s ease,
+              box-shadow 0.35s ease;
+}
+
+.fc-root:hover {
+  transform: translateY(-6px);
+  border-color: rgba(255, 255, 255, 0.13);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+}
+
+/* ── Mouse-tracking spotlight ── */
+.fc-spotlight {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  background: radial-gradient(
+    280px circle at calc(var(--mx, 0.5) * 100%) calc(var(--my, 0.5) * 100%),
+    rgba(255, 255, 255, 0.06) 0%,
+    transparent 70%
+  );
+  border-radius: inherit;
+  z-index: 0;
+}
+.fc-hovered .fc-spotlight { opacity: 1; }
+
+/* ── Top gradient bar ── */
+.fc-topbar {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  opacity: 0.7;
+  transition: opacity 0.35s ease;
+  border-radius: 22px 22px 0 0;
+  z-index: 1;
+}
+.fc-root:hover .fc-topbar { opacity: 1; }
+
+/* ── Ghost number ── */
+.fc-num {
+  position: absolute;
+  top: 1.25rem; right: 1.5rem;
+  font-size: 4rem;
+  font-weight: 900;
+  font-family: 'Outfit', sans-serif;
+  color: rgba(255, 255, 255, 0.04);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  user-select: none;
+  transition: color 0.35s ease;
+  z-index: 0;
+}
+.fc-root:hover .fc-num { color: rgba(255, 255, 255, 0.07); }
+
+/* ── Icon ── */
+.fc-icon-wrap {
+  position: relative;
+  width: 56px; height: 56px;
+  border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  z-index: 1;
+  flex-shrink: 0;
+  transition: transform 0.35s ease, border-color 0.35s ease;
+}
+.fc-root:hover .fc-icon-wrap {
+  transform: scale(1.08);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.fc-icon-glow {
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  filter: blur(12px);
+}
+.fc-root:hover .fc-icon-glow { opacity: 0.4; }
+
+.fc-icon {
+  font-size: 1.6rem;
+  position: relative;
+  z-index: 1;
+  line-height: 1;
+  transition: transform 0.35s ease;
+}
+.fc-root:hover .fc-icon { transform: scale(1.1); }
+
+/* ── Text body ── */
+.fc-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  z-index: 1;
+  flex: 1;
+}
+
+.fc-title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
+  font-family: 'Outfit', sans-serif;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  transition: color 0.25s ease;
+}
+.fc-root:hover .fc-title { color: #fff; }
+
+.fc-desc {
+  margin: 0;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.4);
+  line-height: 1.65;
+  font-weight: 400;
+}
+
+/* ── Footer CTA ── */
+.fc-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 1;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  position: relative;
+}
+
+.fc-cta-line {
+  position: absolute;
+  top: 0; left: 0;
+  height: 1px;
+  width: 0;
+  transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  border-radius: 999px;
+}
+.fc-root:hover .fc-cta-line { width: 100%; }
+
+.fc-cta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 0;
+  transition: color 0.25s ease, gap 0.25s ease;
+  letter-spacing: 0.01em;
+}
+.fc-cta svg {
+  display: block;
+  flex-shrink: 0;
+  transition: transform 0.25s ease;
+}
+.fc-root:hover .fc-cta {
+  color: rgba(255, 255, 255, 0.85);
+  gap: 9px;
+}
+.fc-root:hover .fc-cta svg { transform: translateX(3px); }

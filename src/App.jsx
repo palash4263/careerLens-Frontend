@@ -5,6 +5,7 @@ import {
   Navigate,
   useLocation,
 } from "react-router-dom";
+import { useEffect, useState } from "react";
 import Navbar from "./components/Navbar";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -16,12 +17,46 @@ import InterviewPage from "./pages/InterviewPage";
 import ResumeOptimizationPage from "./pages/ResumeOptimizationPage";
 import ProfilePage from "./pages/ProfilePage";
 
+// ✅ Protected Route wrapper
+function ProtectedRoute({ children }) {
+  const token = localStorage.getItem('token');
+  
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  return children;
+}
+
 function Layout() {
   const location = useLocation();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // ✅ Check if token exists
+    const token = localStorage.getItem('token');
+    setIsAuthenticated(!!token);
+    setLoading(false);
+  }, [location]);
+
   const hideNavbar =
     location.pathname === "/" ||
     location.pathname === "/login" ||
     location.pathname === "/register";
+
+  // ✅ Show nothing while checking authentication
+  if (loading) {
+    return <div style={{ 
+      display: 'flex', 
+      justifyContent: 'center', 
+      alignItems: 'center', 
+      height: '100vh',
+      background: '#0A0A0F',
+      color: '#F1F5F9',
+      fontSize: '1.2rem'
+    }}>Loading...</div>;
+  }
 
   return (
     <>
@@ -33,30 +68,90 @@ function Layout() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
 
-          {/* Dashboard - With Navbar */}
-          <Route path="/dashboard" element={<Dashboard />} />
+          {/* ✅ Protected Routes - With Navbar */}
+          <Route 
+            path="/dashboard" 
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            } 
+          />
 
-          {/* Resume Management */}
-          <Route path="/resumes" element={<ResumePage />} />
+          <Route 
+            path="/resumes" 
+            element={
+              <ProtectedRoute>
+                <ResumePage />
+              </ProtectedRoute>
+            } 
+          />
 
-          {/* Job Descriptions */}
-          <Route path="/jobs" element={<JobDescriptionPage />} />
+          <Route 
+            path="/jobs" 
+            element={
+              <ProtectedRoute>
+                <JobDescriptionPage />
+              </ProtectedRoute>
+            } 
+          />
 
-          {/* Interview Questions */}
-          <Route path="/interview" element={<InterviewPage />} />
+          <Route 
+            path="/interview" 
+            element={
+              <ProtectedRoute>
+                <InterviewPage />
+              </ProtectedRoute>
+            } 
+          />
 
-          {/* Resume Optimizer */}
-          <Route path="/resume-optimizer" element={<ResumeOptimizationPage />} />
-          <Route path="/optimizer" element={<ResumeOptimizationPage />} />
+          <Route 
+            path="/resume-optimizer" 
+            element={
+              <ProtectedRoute>
+                <ResumeOptimizationPage />
+              </ProtectedRoute>
+            } 
+          />
 
-          {/* ATS */}
-          <Route path="/ats" element={<AtsPage />} />
+          <Route 
+            path="/optimizer" 
+            element={
+              <ProtectedRoute>
+                <ResumeOptimizationPage />
+              </ProtectedRoute>
+            } 
+          />
 
-          {/* Profile Page - With Navbar */}
-          <Route path="/profile" element={<ProfilePage />} />
+          <Route 
+            path="/ats" 
+            element={
+              <ProtectedRoute>
+                <AtsPage />
+              </ProtectedRoute>
+            } 
+          />
 
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to="/dashboard" />} />
+          <Route 
+            path="/profile" 
+            element={
+              <ProtectedRoute>
+                <ProfilePage />
+              </ProtectedRoute>
+            } 
+          />
+
+          {/* ✅ If authenticated, redirect to dashboard; otherwise to login */}
+          <Route 
+            path="*" 
+            element={
+              isAuthenticated ? (
+                <Navigate to="/dashboard" />
+              ) : (
+                <Navigate to="/login" />
+              )
+            } 
+          />
         </Routes>
       </div>
     </>

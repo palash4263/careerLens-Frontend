@@ -1,4 +1,4 @@
-// Register.jsx
+// src/pages/Register.jsx
 import { useState } from "react";
 import { register } from "../services/authService";
 import { useNavigate } from "react-router-dom";
@@ -40,8 +40,27 @@ function Register() {
 
     setSubmitting(true);
     try {
-      await register(formData);
-      navigate("/login");
+      const response = await register(formData);
+      
+      // Check for token
+      const token = response.access_token || response.token;
+      if (token) {
+        localStorage.setItem('token', token);
+      }
+      
+      // Store user data
+      const userData = response.user || response.data?.user || {};
+      localStorage.setItem('userName', userData.name || formData.name || 'User');
+      localStorage.setItem('userEmail', userData.email || formData.email || '');
+      localStorage.setItem('userRole', userData.role || 'Product Manager');
+      localStorage.setItem('userLocation', userData.location || 'Noida, IN');
+      localStorage.setItem('userJoinDate', userData.joinDate || 'January 2026');
+      localStorage.setItem('userPhone', userData.phone || '+91 98765 43210');
+      localStorage.setItem('userLinkedin', userData.linkedin || 'linkedin.com/in/username');
+      localStorage.setItem('userBio', userData.bio || 'Passionate professional with years of experience.');
+      localStorage.setItem('userAvatar', userData.avatar || (formData.name ? formData.name.charAt(0) : 'U'));
+      
+      navigate("/dashboard");
     } catch (error) {
       setFormError(
         error?.response?.data?.message || "Something went wrong. Please try again."

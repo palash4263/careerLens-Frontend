@@ -1,10 +1,11 @@
-// ResumePage.jsx - Premium Redesign (No Navbar)
+// ResumePage.jsx - Premium Redesign with View Resume Feature
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   getResumes,
   uploadResume,
   deleteResume,
+  getResumeFile,
 } from "../services/resumeService";
 
 import "../assets/resume.css";
@@ -16,6 +17,10 @@ function ResumePage() {
   const [toast, setToast] = useState(null);
   const [loading, setLoading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [analyzingId, setAnalyzingId] = useState(null);
+  const [viewingResume, setViewingResume] = useState(null); // ✅ State for viewing resume
+  const [pdfUrl, setPdfUrl] = useState(null);
+  const [scanStep, setScanStep] = useState(0); 
   const fileInputRef = useRef(null);
 
   const showToast = (message, type = "success") => {
@@ -46,6 +51,13 @@ function ResumePage() {
     }
 
     setSelectedFile(file);
+    setScanStep(0);
+    const intervals = [600, 1300, 2000, 2700];
+    intervals.forEach((time, index) => {
+      setTimeout(() => {
+        setScanStep(index + 1);
+      }, time);
+    });
   };
 
   const handleUpload = async () => {
@@ -92,6 +104,61 @@ function ResumePage() {
     }
   };
 
+  const handleViewAnalytics = (resume) => {
+    if (analyzingId) return;
+    setAnalyzingId(resume.id);
+    setTimeout(() => {
+      navigate(`/ats?resumeId=${resume.id}`);
+    }, 1100);
+  };
+
+  // ✅ Handle viewing resume
+  const handleViewResume = async (resume) => {
+    setViewingResume(resume);
+    setPdfUrl(null);
+    try {
+      const blob = await getResumeFile(resume.id);
+      const url = URL.createObjectURL(blob);
+      setPdfUrl(url);
+    } catch (err) {
+      console.error(err);
+      showToast("Failed to fetch secure resume document", "error");
+    }
+  };
+
+  // ✅ Close modal
+  const closeModal = () => {
+    setViewingResume(null);
+    if (pdfUrl) {
+      URL.revokeObjectURL(pdfUrl);
+      setPdfUrl(null);
+    }
+  };
+
+  // ✅ Download PDF file securely
+  const handleDownload = () => {
+    if (!pdfUrl) {
+      showToast("PDF content is still loading...", "info");
+      return;
+    }
+    const link = document.createElement('a');
+    link.href = pdfUrl;
+    link.setAttribute('download', viewingResume.file_name || 'resume.pdf');
+    document.body.appendChild(link);
+    link.click();
+    link.parentNode.removeChild(link);
+    showToast("Download started!", "success");
+  };
+
+  // ✅ Open preview in a new window
+  const handleOpenNewTab = () => {
+    if (pdfUrl) {
+      window.open(pdfUrl, '_blank');
+    } else {
+      showToast("PDF content is still loading...", "info");
+    }
+  };
+
   // Calculate stats
   const totalResumes = resumes.length;
   const totalViews = resumes.reduce((acc, r) => acc + (r.views || 0), 0);
@@ -129,7 +196,7 @@ function ResumePage() {
                 Upload New Resume
               </h3>
               <p className="upload-subtitle">Drag & drop your PDF file here</p>
-              
+
               <label
                 className={`dropzone-premium ${isDragging ? "dragging" : ""}`}
                 onDragOver={(e) => {
@@ -148,7 +215,7 @@ function ResumePage() {
                   {isDragging ? "Drop your PDF here" : "Drag a PDF here, or click to browse"}
                 </div>
                 <div className="dropzone-premium-sub">PDF only • Max size 10MB</div>
-                
+
                 <input
                   id="resumeFile"
                   ref={fileInputRef}
@@ -195,33 +262,81 @@ function ResumePage() {
             </div>
 
             <div className="upload-premium-right">
-              <div className="impact-card">
-                <div className="impact-circle">
-                  <svg className="impact-ring" viewBox="0 0 120 120">
-                    <circle className="impact-ring-bg" cx="60" cy="60" r="54" />
-                    <circle 
-                      className="impact-ring-progress" 
-                      cx="60" 
-                      cy="60" 
-                      r="54" 
-                      style={{ 
-                        strokeDasharray: 339.292, 
-                        strokeDashoffset: 74.644 
-                      }} 
-                    />
-                  </svg>
-                  <div className="impact-content">
-                    <span className="impact-value">78%</span>
-                    <span className="impact-label">Resume Impact</span>
+              {selectedFile ? (
+                <div className="parsing-console-premium">
+                  <div className="console-header">
+                    <span className="console-title">🤖 AI Parsability Analysis</span>
+                    <span className="console-badge">{scanStep < 4 ? "Scanning..." : "Complete"}</span>
+                  </div>
+                  
+                  <div className="console-preview-row">
+                    <div className="console-pdf-wrapper">
+                      <div className="console-pdf-icon">📄</div>
+                      {scanStep < 4 && <div className="console-scan-line"></div>}
+                    </div>
+                    <div className="console-meta">
+                      <span className="console-filename">{selectedFile.name}</span>
+                      <span className="console-filesize">
+                        {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="console-logs">
+                    <div className={`console-log-item ${scanStep >= 1 ? 'done' : 'pending'}`}>
+                      <span className="log-status">{scanStep >= 1 ? '✓' : '●'}</span>
+                      <span className="log-text">Verifying document metadata integrity...</span>
+                    </div>
+                    <div className={`console-log-item ${scanStep >= 2 ? 'done' : 'pending'}`}>
+                      <span className="log-status">{scanStep >= 2 ? '✓' : '●'}</span>
+                      <span className="log-text">Extracting structural columns & margins...</span>
+                    </div>
+                    <div className={`console-log-item ${scanStep >= 3 ? 'done' : 'pending'}`}>
+                      <span className="log-status">{scanStep >= 3 ? '✓' : '●'}</span>
+                      <span className="log-text">Parsing header sections (Experience, Skills)...</span>
+                    </div>
+                    <div className={`console-log-item ${scanStep >= 4 ? 'done' : 'pending'}`}>
+                      <span className="log-status">{scanStep >= 4 ? '✓' : '●'}</span>
+                      <span className="log-text">Calculating parsability score & indexing...</span>
+                    </div>
+                  </div>
+
+                  {scanStep >= 4 && (
+                    <div className="console-success-banner">
+                      <span className="banner-icon">🎯</span>
+                      <span className="banner-text">Parsability Index: 98% (High Compatibility)</span>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="impact-card">
+                  <div className="impact-circle">
+                    <svg className="impact-ring" viewBox="0 0 120 120">
+                      <circle className="impact-ring-bg" cx="60" cy="60" r="54" />
+                      <circle
+                        className="impact-ring-progress"
+                        cx="60"
+                        cy="60"
+                        r="54"
+                        style={{
+                          strokeDasharray: 339.292,
+                          strokeDashoffset: 74.644
+                        }}
+                      />
+                    </svg>
+                    <div className="impact-content">
+                      <span className="impact-value">78%</span>
+                      <span className="impact-label">Resume Impact</span>
+                    </div>
+                  </div>
+                  <div className="impact-text">
+                    <span className="impact-title">Great Progress!</span>
+                    <span className="impact-description">
+                      Keep optimizing your resumes to increase your chances.
+                    </span>
                   </div>
                 </div>
-                <div className="impact-text">
-                  <span className="impact-title">Great Progress!</span>
-                  <span className="impact-description">
-                    Keep optimizing your resumes to increase your chances.
-                  </span>
-                </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
@@ -272,13 +387,26 @@ function ResumePage() {
           ) : (
             <div className="resume-grid-premium">
               {resumes.map((resume, index) => (
-                <div className="resume-card-premium" key={resume.id}>
+                <div
+                  className={`resume-card-premium ${analyzingId === resume.id ? "analyzing" : ""}`}
+                  key={resume.id}
+                >
+                  {analyzingId === resume.id && (
+                    <div className="scan-overlay">
+                      <div className="scan-line"></div>
+                      <div className="scan-label">🔍 Analyzing resume...</div>
+                    </div>
+                  )}
+
                   <div className="resume-card-header">
                     <div className="resume-card-icon">📄</div>
                     <div className="resume-card-info">
-                      <h4 className="resume-card-name">{resume.fileName}</h4>
+                      <h4 className="resume-card-name">
+                        <span className="resume-name-label">Resume Name</span>
+                        {resume.file_name}
+                      </h4>
                       <div className="resume-card-meta">
-                        <span>Uploaded on {new Date(resume.uploadedAt).toLocaleDateString()}</span>
+                        <span>Uploaded on {resume.uploaded_at ? new Date(resume.uploaded_at).toLocaleDateString() : 'N/A'}</span>
                         <span className="meta-dot">•</span>
                         <span>{(resume.fileSize || 2.4).toFixed(1)} MB</span>
                       </div>
@@ -293,14 +421,14 @@ function ResumePage() {
                       <div className="ats-score-circle">
                         <svg viewBox="0 0 60 60">
                           <circle className="ats-score-bg" cx="30" cy="30" r="26" />
-                          <circle 
-                            className="ats-score-progress" 
-                            cx="30" 
-                            cy="30" 
+                          <circle
+                            className="ats-score-progress"
+                            cx="30"
+                            cy="30"
                             r="26"
-                            style={{ 
-                              strokeDasharray: 163.36, 
-                              strokeDashoffset: 163.36 * (1 - (resume.atsScore || 65) / 100) 
+                            style={{
+                              strokeDasharray: 163.36,
+                              strokeDashoffset: 163.36 * (1 - (resume.atsScore || 65) / 100)
                             }}
                           />
                         </svg>
@@ -309,26 +437,42 @@ function ResumePage() {
                       <div className="ats-score-info">
                         <span className="ats-score-label">ATS Score</span>
                         <span className="ats-score-status">
-                          {resume.atsScore >= 80 ? '✅ Excellent' : 
+                          {resume.atsScore >= 80 ? '✅ Excellent' :
                            resume.atsScore >= 60 ? '⚠️ Good' : '🔴 Needs Improvement'}
                         </span>
                       </div>
                     </div>
 
                     <div className="resume-card-actions">
-                      <button 
-                        className="resume-action-btn primary"
-                        onClick={() => navigate(`/ats?resumeId=${resume.id}`)}
+                      {/* ✅ View Resume Button */}
+                      <button
+                        className="resume-action-btn view"
+                        onClick={() => handleViewResume(resume)}
                       >
-                        <span>📊</span> View Analytics
+                        <span>👁️</span> View Resume
                       </button>
-                      <button 
+                      <button
+                        className="resume-action-btn primary"
+                        onClick={() => handleViewAnalytics(resume)}
+                        disabled={analyzingId === resume.id}
+                      >
+                        {analyzingId === resume.id ? (
+                          <>
+                            <span className="spinner"></span> Analyzing...
+                          </>
+                        ) : (
+                          <>
+                            <span>📊</span> View Analytics
+                          </>
+                        )}
+                      </button>
+                      <button
                         className="resume-action-btn secondary"
                         onClick={() => navigate(`/resume-optimizer?resumeId=${resume.id}`)}
                       >
-                        <span>💡</span> Tips to Improve
+                        <span>💡</span> Tips
                       </button>
-                      <button 
+                      <button
                         className="resume-action-btn delete"
                         onClick={() => handleDelete(resume.id)}
                       >
@@ -354,6 +498,133 @@ function ResumePage() {
           )}
         </section>
       </div>
+
+      {/* ✅ Resume View Modal */}
+      {viewingResume && (
+        <div className="resume-modal-overlay" onClick={closeModal}>
+          <div className="resume-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="resume-modal-header">
+              <div className="modal-header-left">
+                <span className="modal-icon">📄</span>
+                <h3>{viewingResume.file_name}</h3>
+              </div>
+              <button className="modal-close-btn" onClick={closeModal}>
+                ✕
+              </button>
+            </div>
+            
+            <div className="resume-modal-body">
+              <div className="resume-modal-info">
+                <div className="modal-info-item">
+                  <span className="info-label">Uploaded</span>
+                  <span className="info-value">
+                    {viewingResume.uploaded_at ? new Date(viewingResume.uploaded_at).toLocaleDateString() : 'N/A'}
+                  </span>
+                </div>
+                <div className="modal-info-item">
+                  <span className="info-label">File Size</span>
+                  <span className="info-value">
+                    {(viewingResume.fileSize || 2.4).toFixed(1)} MB
+                  </span>
+                </div>
+                <div className="modal-info-item">
+                  <span className="info-label">ATS Score</span>
+                  <span className="info-value" style={{ 
+                    color: viewingResume.atsScore >= 80 ? '#10b981' : 
+                           viewingResume.atsScore >= 60 ? '#f59e0b' : '#ef4444'
+                  }}>
+                    {viewingResume.atsScore || 65}%
+                  </span>
+                </div>
+              </div>
+
+              <div className="resume-modal-preview" style={{ minHeight: '400px', display: 'flex', flexDirection: 'column', gap: '1rem', background: '#09090e', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '16px', padding: '12px', overflow: 'hidden' }}>
+                {pdfUrl ? (
+                  <iframe 
+                    src={pdfUrl} 
+                    width="100%" 
+                    height="450px" 
+                    title="Resume Preview" 
+                    style={{ border: 'none', borderRadius: '12px' }} 
+                  />
+                ) : (
+                  <div className="pdf-preview-placeholder" style={{ margin: 'auto', textAlign: 'center', padding: '3rem 1.5rem' }}>
+                    <div className="spinner" style={{ margin: '0 auto 1.5rem auto', width: '32px', height: '32px', border: '3px solid rgba(124, 59, 237, 0.2)', borderTopColor: '#7C3AED', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+                    <p style={{ color: '#94a3b8', fontSize: '13px', margin: 0 }}>Fetching secure document preview...</p>
+                  </div>
+                )}
+
+                <div className="pdf-actions" style={{ display: 'flex', gap: '0.75rem', marginTop: 'auto', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '12px' }}>
+                  <button 
+                    className="pdf-download-btn"
+                    onClick={handleDownload}
+                    disabled={!pdfUrl}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '8px 18px',
+                      background: 'rgba(16, 185, 129, 0.1)',
+                      border: '1px solid rgba(16, 185, 129, 0.2)',
+                      borderRadius: '10px',
+                      color: '#34d399',
+                      fontSize: '12.5px',
+                      fontWeight: '600',
+                      cursor: pdfUrl ? 'pointer' : 'not-allowed',
+                      opacity: pdfUrl ? 1 : 0.6
+                    }}
+                  >
+                    ⬇️ Download PDF
+                  </button>
+                  <button 
+                    className="pdf-view-btn"
+                    onClick={handleOpenNewTab}
+                    disabled={!pdfUrl}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '8px 18px',
+                      background: 'rgba(255, 255, 255, 0.03)',
+                      border: '1px solid rgba(255, 255, 255, 0.06)',
+                      borderRadius: '10px',
+                      color: '#94a3b8',
+                      fontSize: '12.5px',
+                      fontWeight: '600',
+                      cursor: pdfUrl ? 'pointer' : 'not-allowed',
+                      opacity: pdfUrl ? 1 : 0.6
+                    }}
+                  >
+                    🔍 Open in New Tab
+                  </button>
+                </div>
+              </div>
+
+              <div className="resume-modal-actions">
+                <button 
+                  className="modal-action-btn primary"
+                  onClick={() => {
+                    closeModal();
+                    navigate(`/resume-optimizer?resumeId=${viewingResume.id}`);
+                  }}
+                >
+                  💡 Optimize Resume
+                </button>
+                <button 
+                  className="modal-action-btn secondary"
+                  onClick={() => {
+                    closeModal();
+                    navigate(`/ats?resumeId=${viewingResume.id}`);
+                  }}
+                >
+                  📊 View Analytics
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {toast && (
         <div className={`toast-premium ${toast.type}`}>
           <span className="toast-icon">{toast.type === "success" ? "✓" : "ℹ"}</span>

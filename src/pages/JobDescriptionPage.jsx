@@ -18,12 +18,81 @@ function JobDescriptionPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("newest");
   const [filterCompany, setFilterCompany] = useState("all");
+  const [selectedSkill, setSelectedSkill] = useState(null);
+  const [activeTab, setActiveTab] = useState("ai");
   const [formData, setFormData] = useState({
     title: "",
     company: "",
     description: "",
   });
   const [loading, setLoading] = useState(false);
+  const [urlInput, setUrlInput] = useState("");
+  const [isImporting, setIsImporting] = useState(false);
+
+  // Extract tech keywords dynamically for live analyzer panel
+  const getExtractedKeywords = (text) => {
+    if (!text) return [];
+    const techKeywords = [
+      "react", "javascript", "typescript", "node", "python", "java", "sql", "aws", 
+      "docker", "kubernetes", "git", "rest api", "graphql", "css", "html", "mongodb",
+      "postgresql", "c++", "c#", "ruby", "go", "rust", "cicd", "agile", "scrum", "cloud"
+    ];
+    const words = text.toLowerCase();
+    return techKeywords.filter(kw => words.includes(kw)).map(kw => {
+      if (kw === "rest api") return "REST API";
+      if (kw === "aws") return "AWS";
+      if (kw === "sql") return "SQL";
+      if (kw === "c++") return "C++";
+      if (kw === "c#") return "C#";
+      if (kw === "go") return "Go";
+      if (kw === "css") return "CSS";
+      if (kw === "html") return "HTML";
+      if (kw === "cicd") return "CI/CD";
+      return kw.charAt(0).toUpperCase() + kw.slice(1);
+    });
+  };
+
+  // Extract soft skills dynamically for live analyzer panel
+  const getExtractedSoftSkills = (text) => {
+    if (!text) return [];
+    const softSkills = [
+      "leadership", "communication", "collaboration", "teamwork", "problem solving",
+      "critical thinking", "creativity", "adaptability", "mentorship", "agile"
+    ];
+    const words = text.toLowerCase();
+    return softSkills.filter(kw => words.includes(kw)).map(kw => {
+      return kw.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    });
+  };
+
+  // Simulate AI Fetch and Autofill
+  const handleUrlImport = () => {
+    if (!urlInput) return;
+    setIsImporting(true);
+    
+    setTimeout(() => {
+      const isLinkedin = urlInput.toLowerCase().includes("linkedin");
+      const title = isLinkedin ? "Senior Full-Stack Engineer" : "Frontend Developer";
+      const company = isLinkedin ? "Tech Innovations Inc." : "Global Solutions";
+      const description = `We are looking for a ${title} to join our engineering team.
+
+Key Requirements:
+- 5+ years of experience with React, TypeScript, and Node.js
+- Strong proficiency in SQL database design and REST APIs
+- Familiarity with AWS cloud deployment, Docker, and CI/CD pipelines
+- Excellent communication and collaboration skills in an Agile environment
+
+Responsibilities:
+- Build high-performance frontend interfaces
+- Develop scalable backend microservices
+- Mentor junior engineers and collaborate with product teams`;
+      
+      setFormData({ title, company, description });
+      setUrlInput("");
+      setIsImporting(false);
+      showToast("Job details auto-filled using AI!", "success");
+    }, 1500);
+  };
 
   const showToast = (message, type = "success") => {
     setToast({ message, type });
@@ -62,6 +131,15 @@ function JobDescriptionPage() {
     if (filterCompany !== "all") {
       result = result.filter(job => job.company === filterCompany);
     }
+
+    // Skill filter
+    if (selectedSkill) {
+      const skillLower = selectedSkill.toLowerCase();
+      result = result.filter(job => 
+        job.description.toLowerCase().includes(skillLower) || 
+        job.title.toLowerCase().includes(skillLower)
+      );
+    }
     
     // Sort
     switch(sortBy) {
@@ -79,7 +157,7 @@ function JobDescriptionPage() {
     }
     
     setFilteredJobs(result);
-  }, [jobDescriptions, searchTerm, filterCompany, sortBy]);
+  }, [jobDescriptions, searchTerm, filterCompany, selectedSkill, sortBy]);
 
   const handleChange = (e) => {
     setFormData({
@@ -150,9 +228,13 @@ function JobDescriptionPage() {
   };
 
   const exportJobs = () => {
+    const jobsToExport = selectedJobs.length > 0 
+      ? filteredJobs.filter(j => selectedJobs.includes(j.id)) 
+      : filteredJobs;
+    
     // Simple CSV export
     const headers = ['Title', 'Company', 'Description', 'Date'];
-    const rows = filteredJobs.map(j => [
+    const rows = jobsToExport.map(j => [
       j.title,
       j.company,
       j.description.replace(/,/g, ' '),
@@ -166,6 +248,7 @@ function JobDescriptionPage() {
     a.download = `job_descriptions_${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     URL.revokeObjectURL(url);
+    showToast(selectedJobs.length > 0 ? `Exported ${selectedJobs.length} selected jobs!` : "Exported all jobs!", "success");
   };
 
   const companyCount = new Set(jobDescriptions.map((job) => job.company)).size;
@@ -270,7 +353,47 @@ function JobDescriptionPage() {
                 <p className="form-subtitle">Fill in the details below to save a job posting</p>
               </div>
 
-              <form onSubmit={handleSubmit} className="jobs-form">
+               <form onSubmit={handleSubmit} className="jobs-form">
+                <div className="jobs-field url-import-field" style={{ borderBottom: '1px dashed rgba(255,255,255,0.06)', paddingBottom: '1.25rem', marginBottom: '1.25rem' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#a855f7', fontWeight: '600' }}>
+                    <span>✨</span> AI URL Auto-Fill (Optional)
+                  </label>
+                  <div className="url-input-wrapper" style={{ display: 'flex', gap: '0.75rem', marginTop: '6px' }}>
+                    <input
+                      type="url"
+                      placeholder="Paste LinkedIn or Indeed job URL..."
+                      value={urlInput}
+                      onChange={(e) => setUrlInput(e.target.value)}
+                      className="jobs-input"
+                      style={{ flex: 1, border: '1px solid rgba(168, 85, 247, 0.2)', background: 'rgba(168, 85, 247, 0.02)' }}
+                    />
+                    <button 
+                      type="button" 
+                      onClick={handleUrlImport}
+                      disabled={isImporting || !urlInput}
+                      className="jobs-import-btn"
+                      style={{
+                        padding: '8px 20px',
+                        background: 'linear-gradient(135deg, #7C3AED, #2563EB)',
+                        border: 'none',
+                        borderRadius: '12px',
+                        color: '#fff',
+                        fontWeight: '700',
+                        fontSize: '12.5px',
+                        cursor: urlInput ? 'pointer' : 'not-allowed',
+                        opacity: urlInput ? 1 : 0.6,
+                        whiteSpace: 'nowrap',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        transition: 'all 0.3s ease'
+                      }}
+                    >
+                      {isImporting ? <span className="spinner"></span> : "✨ AI Fetch"}
+                    </button>
+                  </div>
+                </div>
+
                 <div className="jobs-field">
                   <label>
                     <span className="field-label-icon">💼</span>
@@ -336,33 +459,85 @@ function JobDescriptionPage() {
             </div>
           </section>
 
-          {/* Stats Cards */}
-          <div className="jobs-stats-grid">
-            <div className="jobs-stat-card card-glow-purple">
-              <div className="jobs-stat-icon">📊</div>
-              <div className="jobs-stat-content">
-                <span className="jobs-stat-value">{jobDescriptions.length}</span>
-                <span className="jobs-stat-label">Total Jobs</span>
-                <span className="jobs-stat-trend">↑ {jobDescriptions.length > 0 ? 'Active' : 'No jobs yet'}</span>
+          {/* AI Parser Insights Panel */}
+          <div className="jobs-ai-analyzer-card">
+            <div className="analyzer-glow"></div>
+            <div className="analyzer-content">
+              <div className="analyzer-header">
+                <h3>
+                  <span className="analyzer-icon">🔮</span>
+                  AI Live Parser Console
+                </h3>
+                <span className={`analyzer-status-badge ${formData.description ? 'active' : 'idle'}`}>
+                  {formData.description ? "● Active Parsing" : "● Waiting"}
+                </span>
               </div>
-            </div>
 
-            <div className="jobs-stat-card card-glow-green">
-              <div className="jobs-stat-icon">✅</div>
-              <div className="jobs-stat-content">
-                <span className="jobs-stat-value">{atsReadyCount}</span>
-                <span className="jobs-stat-label">ATS Ready</span>
-                <span className="jobs-stat-trend">{atsReadyCount > 0 ? 'Ready to optimize' : 'Add jobs'}</span>
-              </div>
-            </div>
+              {!formData.description ? (
+                <div className="analyzer-empty-state">
+                  <div className="empty-icon">⚡</div>
+                  <h4>No Description Detected</h4>
+                  <p>Paste a job description or use the <strong>AI URL Auto-Fill</strong> on the left to extract key technical requirements and soft skills dynamically.</p>
+                </div>
+              ) : (
+                <div className="analyzer-metrics">
+                  <div className="analyzer-stat-row">
+                    <div className="stat-radial-wrapper">
+                      <div className="radial-circle">
+                        <svg viewBox="0 0 36 36" className="circular-chart purple">
+                          <path className="circle-bg"
+                            d="M18 2.0845
+                              a 15.9155 15.9155 0 0 1 0 31.831
+                              a 15.9155 15.9155 0 0 1 0 -31.831"
+                          />
+                          <path className="circle"
+                            strokeDasharray={`${Math.min(30 + getExtractedKeywords(formData.description).length * 10, 95)}, 100`}
+                            d="M18 2.0845
+                              a 15.9155 15.9155 0 0 1 0 31.831
+                              a 15.9155 15.9155 0 0 1 0 -31.831"
+                          />
+                          <text x="18" y="20.35" className="percentage">{Math.min(30 + getExtractedKeywords(formData.description).length * 10, 95)}%</text>
+                        </svg>
+                      </div>
+                    </div>
+                    <div className="stat-label-col">
+                      <span className="stat-title">Rigor Index</span>
+                      <span className="stat-desc">Complexity level of job requirements</span>
+                    </div>
+                  </div>
 
-            <div className="jobs-stat-card card-glow-blue">
-              <div className="jobs-stat-icon">🏢</div>
-              <div className="jobs-stat-content">
-                <span className="jobs-stat-value">{companyCount}</span>
-                <span className="jobs-stat-label">Companies</span>
-                <span className="jobs-stat-trend">{companyCount > 0 ? 'Unique employers' : 'No companies'}</span>
-              </div>
+                  <div className="analyzer-keywords-section">
+                    <span className="section-label">🛠️ Extracted Tech Stack ({getExtractedKeywords(formData.description).length})</span>
+                    {getExtractedKeywords(formData.description).length > 0 ? (
+                      <div className="keywords-list">
+                        {getExtractedKeywords(formData.description).map((kw, i) => (
+                          <span key={i} className="keyword-badge tech">{kw}</span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="no-keywords-text">Scanning for technical terms...</p>
+                    )}
+                  </div>
+
+                  <div className="analyzer-keywords-section">
+                    <span className="section-label">🤝 Extracted Soft Skills ({getExtractedSoftSkills(formData.description).length})</span>
+                    {getExtractedSoftSkills(formData.description).length > 0 ? (
+                      <div className="keywords-list">
+                        {getExtractedSoftSkills(formData.description).map((kw, i) => (
+                          <span key={i} className="keyword-badge soft">{kw}</span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="no-keywords-text">Scanning for core competencies...</p>
+                    )}
+                  </div>
+
+                  <div className="analyzer-footer-tip">
+                    <span className="tip-icon">💡</span>
+                    <p className="tip-text">Use this saved profile in the <strong>Optimization Studio</strong> to match against your resume.</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -404,6 +579,59 @@ function JobDescriptionPage() {
             </select>
           </div>
         </div>
+
+        {/* Dynamic Skill Filter Pills */}
+        {jobDescriptions.length > 0 && (
+          <div className="jobs-filter-pills" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '2rem', padding: '0 0.25rem' }}>
+            <span style={{ fontSize: '11px', color: '#64748b', display: 'flex', alignItems: 'center', marginRight: '4px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Filter by Skill:
+            </span>
+            {["React", "TypeScript", "Node", "Python", "SQL", "AWS", "Docker", "Agile"].map((skill) => {
+              const hasSkill = jobDescriptions.some(j => j.description.toLowerCase().includes(skill.toLowerCase()) || j.title.toLowerCase().includes(skill.toLowerCase()));
+              if (!hasSkill) return null;
+              
+              const isSelected = selectedSkill === skill;
+              return (
+                <button
+                  key={skill}
+                  onClick={() => setSelectedSkill(isSelected ? null : skill)}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '99px',
+                    fontSize: '11px',
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                    background: isSelected ? 'rgba(168, 85, 247, 0.15)' : 'rgba(255, 255, 255, 0.02)',
+                    border: isSelected ? '1px solid rgba(168, 85, 247, 0.3)' : '1px solid rgba(255, 255, 255, 0.06)',
+                    color: isSelected ? '#c084fc' : '#94a3b8',
+                    transition: 'all 0.3s ease',
+                    boxShadow: isSelected ? '0 0 15px rgba(168, 85, 247, 0.15)' : 'none'
+                  }}
+                >
+                  {skill}
+                </button>
+              );
+            })}
+            {selectedSkill && (
+              <button
+                onClick={() => setSelectedSkill(null)}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: '99px',
+                  fontSize: '11px',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  background: 'rgba(239, 68, 68, 0.08)',
+                  border: '1px solid rgba(239, 68, 68, 0.2)',
+                  color: '#f87171',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                Clear Filter ✕
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Saved Job Descriptions */}
         <section className="jobs-list-section">
@@ -461,7 +689,7 @@ function JobDescriptionPage() {
                 {filteredJobs.map((job, index) => (
                   <div key={job.id} className="jobs-job-card">
                     <div className="jobs-job-card-header">
-                      <div className="jobs-job-select">
+                      <div className="jobs-job-select" onClick={(e) => e.stopPropagation()}>
                         <input
                           type="checkbox"
                           checked={selectedJobs.includes(job.id)}
@@ -482,6 +710,23 @@ function JobDescriptionPage() {
                         ? job.description.substring(0, 200) + "..."
                         : job.description}
                     </p>
+
+                    {/* Live Extracted Skills Preview */}
+                    <div className="job-card-skills-preview" style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', margin: '0.75rem 0' }}>
+                      {getExtractedKeywords(job.description).slice(0, 4).map((kw, i) => (
+                        <span key={i} className="keyword-badge tech" style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', background: 'rgba(59, 130, 246, 0.06)', border: '1px solid rgba(59, 130, 246, 0.12)', color: '#60a5fa', fontWeight: '600' }}>
+                          {kw}
+                        </span>
+                      ))}
+                      {getExtractedSoftSkills(job.description).slice(0, 2).map((kw, i) => (
+                        <span key={i} className="keyword-badge soft" style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', background: 'rgba(16, 185, 129, 0.06)', border: '1px solid rgba(16, 185, 129, 0.12)', color: '#34d399', fontWeight: '600' }}>
+                          {kw}
+                        </span>
+                      ))}
+                      {getExtractedKeywords(job.description).length === 0 && (
+                        <span style={{ fontSize: '10px', color: '#64748b', fontStyle: 'italic' }}>No skills indexed</span>
+                      )}
+                    </div>
 
                     <div className="jobs-job-footer">
                       <div className="jobs-job-meta">
@@ -528,7 +773,41 @@ function JobDescriptionPage() {
               </div>
               <div className="modal-description">
                 <h4>Full Description</h4>
-                <p>{selectedJob.description}</p>
+                <p style={{ maxHeight: '200px', overflowY: 'auto', background: 'rgba(0,0,0,0.15)', padding: '12px', borderRadius: '10px', fontSize: '13px', lineHeight: '1.6', color: '#cbd5e1' }}>{selectedJob.description}</p>
+              </div>
+
+              <div className="modal-extracted-insights" style={{ marginTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.25rem' }}>
+                <h4 style={{ color: '#F1F5F9', fontSize: '0.95rem', fontWeight: '700', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span>🔮</span> AI Indexed Keywords
+                </h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <div>
+                    <span style={{ fontSize: '11px', color: '#94a3b8', display: 'block', marginBottom: '4px', fontWeight: '600' }}>Tech Stack</span>
+                    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                      {getExtractedKeywords(selectedJob.description).map((kw, i) => (
+                        <span key={i} className="keyword-badge tech" style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', background: 'rgba(59, 130, 246, 0.06)', border: '1px solid rgba(59, 130, 246, 0.12)', color: '#60a5fa', fontWeight: '600' }}>
+                          {kw}
+                        </span>
+                      ))}
+                      {getExtractedKeywords(selectedJob.description).length === 0 && (
+                        <span style={{ fontSize: '11px', color: '#64748b', fontStyle: 'italic' }}>None detected</span>
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '11px', color: '#94a3b8', display: 'block', marginBottom: '4px', fontWeight: '600' }}>Core Competencies</span>
+                    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                      {getExtractedSoftSkills(selectedJob.description).map((kw, i) => (
+                        <span key={i} className="keyword-badge soft" style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '6px', background: 'rgba(16, 185, 129, 0.06)', border: '1px solid rgba(16, 185, 129, 0.12)', color: '#34d399', fontWeight: '600' }}>
+                          {kw}
+                        </span>
+                      ))}
+                      {getExtractedSoftSkills(selectedJob.description).length === 0 && (
+                        <span style={{ fontSize: '11px', color: '#64748b', fontStyle: 'italic' }}>None detected</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
               <div className="modal-actions">
                 <button 

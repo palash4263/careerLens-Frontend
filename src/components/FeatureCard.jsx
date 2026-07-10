@@ -1,48 +1,70 @@
-// src/components/FeatureCard.jsx
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { motion } from 'motion/react';
+import './FeatureCard.css';
 
-const FeatureCard = ({ title, description, icon, gradient, delay }) => {
+const FeatureCard = ({ title, description, icon, gradient, delay, index = 0 }) => {
+  const cardRef = useRef(null);
+  const [mouse, setMouse] = useState({ x: 0.5, y: 0.5 });
+  const [hovered, setHovered] = useState(false);
+
+  const num = String(index + 1).padStart(2, '0');
+
+  const onMove = (e) => {
+    if (!cardRef.current) return;
+    const r = cardRef.current.getBoundingClientRect();
+    setMouse({
+      x: (e.clientX - r.left) / r.width,
+      y: (e.clientY - r.top)  / r.height,
+    });
+  };
+
   return (
     <motion.div
-      className="feature-card-wrapper"
-      initial={{ opacity: 0, y: 30 }}
+      ref={cardRef}
+      className={`fc-root${hovered ? ' fc-hovered' : ''}`}
+      initial={{ opacity: 0, y: 40 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.8, ease: "easeOut", delay }}
+      transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay }}
+      onMouseMove={onMove}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => { setHovered(false); setMouse({ x: 0.5, y: 0.5 }); }}
+      style={{
+        '--mx': mouse.x,
+        '--my': mouse.y,
+        '--grad': gradient,
+      }}
     >
-      {/* Outer Glow - Visible on hover */}
-      <div 
-        className="feature-card-outer-glow"
-        style={{ 
-          background: gradient,
-          opacity: 0,
-        }}
-      />
-      
-      {/* Card Container */}
-      <div className="feature-card-container">
-        {/* Inner Glow - Always visible subtle glow */}
-        <div 
-          className="feature-card-inner-glow"
-          style={{ background: gradient }}
-        />
-        
-        {/* Card Content */}
-        <div className="feature-card-content">
-          <div className="feature-card-icon-wrapper">
-            <span className="feature-card-icon">{icon}</span>
-          </div>
-          <h3 className="feature-card-title">{title}</h3>
-          <p className="feature-card-desc">{description}</p>
-          
-          {/* Learn More Link */}
-          <div className="feature-card-link">
-            <span>Learn More</span>
-            <svg className="feature-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
-          </div>
-        </div>
+      {/* Mouse-tracking spotlight */}
+      <div className="fc-spotlight" />
+
+      {/* Top gradient bar */}
+      <div className="fc-topbar" style={{ background: gradient }} />
+
+      {/* Card number */}
+      <span className="fc-num">{num}</span>
+
+      {/* Icon */}
+      <div className="fc-icon-wrap">
+        <div className="fc-icon-glow" style={{ background: gradient }} />
+        <span className="fc-icon">{icon}</span>
+      </div>
+
+      {/* Text */}
+      <div className="fc-body">
+        <h3 className="fc-title">{title}</h3>
+        <p className="fc-desc">{description}</p>
+      </div>
+
+      {/* Footer CTA */}
+      <div className="fc-footer">
+        <div className="fc-cta-line" style={{ background: gradient }} />
+        <button className="fc-cta">
+          <span>Get Started</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </button>
       </div>
     </motion.div>
   );

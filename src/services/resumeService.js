@@ -25,3 +25,10 @@ export const uploadResume = async (file) => {
 export const deleteResume = async (id) => {
   await api.delete(`/resumes/${id}`);
 };
+
+export const getResumeFile = async (id) => {
+  const response = await api.get(`/resumes/${id}/file`, {
+    responseType: "blob"
+  });
+  return response.data;
+};

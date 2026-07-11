@@ -1,9 +1,9 @@
 // src/api/axiosConfig.js
 import axios from "axios";
 
-// ✅ Change baseURL to FastAPI backend
+// ✅ Change baseURL dynamically to support production Render URL
 const api = axios.create({
-  baseURL: "http://localhost:8000/api", // FastAPI runs on port 8000
+  baseURL: import.meta.env.VITE_API_URL || "https://careerlens-backend.onrender.com/api", 
   timeout: 60000, // 60 seconds for AI optimization
 });
 

@@ -73,6 +73,7 @@ function JobDescriptionPage() {
     setIsImporting(true);
     try {
       const data = await fetchJobFromUrl(urlInput.trim());
+      console.log("AI Fetch result:", data);
       setFormData({
         title: data.title || "",
         company: data.company || "",
@@ -81,8 +82,10 @@ function JobDescriptionPage() {
       setUrlInput("");
       showToast("✅ Job details auto-filled using AI!", "success");
     } catch (err) {
+      console.error("AI Fetch error:", err);
       const msg =
         err?.response?.data?.detail ||
+        err?.message ||
         "AI Fetch failed. Some job sites block scraping — try pasting the description manually.";
       showToast(msg, "error");
     } finally {
@@ -357,11 +360,12 @@ function JobDescriptionPage() {
                     <span>✨</span> AI URL Auto-Fill (Optional)
                   </label>
                   <div className="url-input-wrapper" style={{ display: 'flex', gap: '0.75rem', marginTop: '6px' }}>
-                    <input
-                      type="url"
-                      placeholder="Paste LinkedIn or Indeed job URL..."
+                     <input
+                      type="text"
+                      placeholder="Paste any job URL (LinkedIn, Naukri, Indeed...)"
                       value={urlInput}
                       onChange={(e) => setUrlInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleUrlImport())}
                       className="jobs-input"
                       style={{ flex: 1, border: '1px solid rgba(168, 85, 247, 0.2)', background: 'rgba(168, 85, 247, 0.02)' }}
                     />

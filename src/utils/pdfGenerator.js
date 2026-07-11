@@ -2,61 +2,79 @@
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { saveAs } from "file-saver";
 
-const PAGE_WIDTH = 595;
+const PAGE_WIDTH  = 595;
 const PAGE_HEIGHT = 842;
-
-const MARGIN_X = 46;
-const MARGIN_TOP = 44;
-const MARGIN_BOTTOM = 40;
+const MARGIN_X    = 50;
+const MARGIN_TOP  = 48;
+const MARGIN_BOTTOM = 44;
 
 // ====== COLOR PALETTE ======
-const PRIMARY = rgb(0.1, 0.28, 0.58);
-const BLACK = rgb(0.12, 0.12, 0.12);
-const DARK_GRAY = rgb(0.32, 0.32, 0.32);
-const GRAY = rgb(0.45, 0.45, 0.45);
-const LIGHT_GRAY = rgb(0.82, 0.82, 0.85);
+const PRIMARY    = rgb(0.09, 0.26, 0.55);   // deep navy blue
+const BLACK      = rgb(0.10, 0.10, 0.10);
+const DARK_GRAY  = rgb(0.30, 0.30, 0.30);
+const GRAY       = rgb(0.48, 0.48, 0.48);
+const LIGHT_GRAY = rgb(0.80, 0.80, 0.83);
 
 // ====== FONT SIZES ======
-const SIZE_NAME = 19;
-const SIZE_TITLE = 11.5;
-const SIZE_CONTACT = 9;
-const SIZE_SECTION = 11;
-const SIZE_ENTRY_HEADER = 10.5;
-const SIZE_SUBTITLE = 9.5;
-const SIZE_BODY = 9;
+const SIZE_NAME         = 20;
+const SIZE_TITLE        = 11;
+const SIZE_CONTACT      = 8.5;
+const SIZE_SECTION      = 10.5;
+const SIZE_ENTRY_HEADER = 10;
+const SIZE_SUBTITLE     = 9.5;
+const SIZE_BODY         = 9;
 
 // ====== LINE HEIGHTS ======
-const LH_BODY = 12.5;
-const LH_ENTRY_HEADER = 13.5;
-const LH_SUBTITLE = 13;
+const LH_BODY         = 13;
+const LH_ENTRY_HEADER = 14;
+const LH_SUBTITLE     = 13;
 
-// ====== SAFE TEXT HELPER ======
-const safeText = (value) => {
-  if (value === null || value === undefined || Number.isNaN(value) || value === 'NaN') {
-    return '';
-  }
-  return String(value);
+// =====================================================================
+// MARKDOWN STRIPPING – removes ALL markdown symbols before rendering
+// =====================================================================
+const stripMarkdown = (text) => {
+  if (!text) return '';
+  return String(text)
+    // Remove bold/italic markers  ** __ * _
+    .replace(/\*\*\*(.+?)\*\*\*/g, '$1')
+    .replace(/___(.+?)___/g,       '$1')
+    .replace(/\*\*(.+?)\*\*/g,     '$1')
+    .replace(/__(.+?)__/g,         '$1')
+    .replace(/\*(.+?)\*/g,         '$1')
+    .replace(/_(.+?)_/g,           '$1')
+    // Loose remaining asterisks/underscores at line boundaries
+    .replace(/^\*+\s*/gm, '')
+    .replace(/^\#+\s*/gm, '')
+    .replace(/\*+$/gm, '')
+    .trim();
 };
 
 // =====================================================================
-// EXTRACT CONTACT INFO FROM RESUME TEXT
+// SAFE TEXT
+// =====================================================================
+const safeText = (value) => {
+  if (value === null || value === undefined || Number.isNaN(value) || value === 'NaN') return '';
+  return stripMarkdown(String(value));
+};
+
+// =====================================================================
+// CONTACT EXTRACTORS
 // =====================================================================
 const extractPhoneNumber = (text) => {
   if (!text) return null;
   const patterns = [
-    /(?:\+91[\s-]?)?[6-9]\d{9}/g,
-    /(?:\+91[\s-]?)?\d{10}/g,
+    /\+91[\s-]?[6-9]\d{9}/,
+    /\+91[\s-]?\d{10}/,
+    /[6-9]\d{9}/,
+    /\d{10}/,
     /Phone[:\s]*([+\d\s-]{10,15})/i,
     /Mobile[:\s]*([+\d\s-]{10,15})/i,
-    /Contact[:\s]*([+\d\s-]{10,15})/i,
   ];
-  for (const pattern of patterns) {
-    const matches = text.match(pattern);
-    if (matches && matches.length > 0) {
-      let phone = matches[0].replace(/[^+\d]/g, '');
-      if (phone.length === 10) {
-        phone = `+91${phone}`;
-      }
+  for (const pat of patterns) {
+    const m = text.match(pat);
+    if (m) {
+      let phone = (m[1] || m[0]).replace(/[^\d+]/g, '');
+      if (phone.length === 10) phone = `+91${phone}`;
       return phone;
     }
   }
@@ -65,66 +83,72 @@ const extractPhoneNumber = (text) => {
 
 const extractEmail = (text) => {
   if (!text) return null;
-  const match = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
-  return match ? match[0] : null;
+  const m = text.match(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/);
+  return m ? m[0] : null;
 };
 
 const extractLinkedIn = (text) => {
   if (!text) return null;
-  const match = text.match(/linkedin\.com\/in\/[a-zA-Z0-9-]+/i);
-  return match ? match[0] : null;
+  const m = text.match(/linkedin\.com\/in\/[a-zA-Z0-9_-]+/i);
+  return m ? m[0] : null;
 };
 
-const extractName = (text) => {
+const extractGitHub = (text) => {
   if (!text) return null;
-  const lines = text.split('\n');
+  const m = text.match(/github\.com\/[a-zA-Z0-9_-]+/i);
+  return m ? m[0] : null;
+};
+
+const extractName = (rawText) => {
+  if (!rawText) return null;
+  const lines = rawText.split('\n');
   for (const line of lines) {
-    const trimmed = line.trim();
-    if (trimmed && trimmed.length < 50 && !trimmed.includes('@')) {
-      if (!trimmed.match(/^(summary|education|experience|skills|projects|contact|phone|email|linkedin|profile)/i)) {
-        return trimmed;
-      }
-    }
+    // Strip markdown before testing
+    const trimmed = stripMarkdown(line).trim();
+    if (!trimmed || trimmed.length < 3 || trimmed.length > 50) continue;
+    if (trimmed.includes('@')) continue;
+    // Skip lines that look like section headers or contact info
+    if (/^(summary|education|experience|skills|projects|contact|phone|email|linkedin|profile|certif|objective|languages)/i.test(trimmed)) continue;
+    // Must look like a name: mostly alpha + spaces
+    if (/^[A-Za-z][A-Za-z\s.'-]{2,}$/.test(trimmed)) return trimmed;
   }
   return null;
 };
 
-const extractJobTitle = (text) => {
-  if (!text) return null;
-  const lines = text.split('\n');
+const extractJobTitle = (rawText) => {
+  if (!rawText) return null;
+  const lines = rawText.split('\n');
   for (const line of lines) {
-    const trimmed = line.trim();
-    if (trimmed && trimmed.length < 60) {
-      if (/(school|university|college|academy|institute|international)/i.test(trimmed)) {
-        continue;
-      }
-      if (/\b(developer|engineer|analyst|architect|manager|designer|consultant|specialist|lead|intern|full[- ]stack|backend|frontend|data|software|devops|cloud|ml|ai|machine\s*learning)\b/i.test(trimmed)) {
-        return trimmed;
-      }
+    const trimmed = stripMarkdown(line).trim();
+    if (!trimmed || trimmed.length > 65) continue;
+    // Skip educational institutions
+    if (/(school|university|college|academy|institute|international)/i.test(trimmed)) continue;
+    if (/\b(developer|engineer|analyst|architect|manager|designer|consultant|specialist|lead|intern|full[- ]?stack|backend|frontend|data\s*scientist|software|devops|cloud|ml\s*engineer|ai\s*engineer)\b/i.test(trimmed)) {
+      return trimmed;
     }
   }
   return null;
 };
 
 // =====================================================================
-// SECTION HEADER ALIASES
+// SECTION HEADER DETECTION
 // =====================================================================
 const SECTION_ALIASES = {
-  Summary: ['Summary', 'Professional Summary', 'Objective', 'Profile'],
-  Education: ['Education'],
-  Experience: ['Experience', 'Work Experience', 'Professional Experience', 'Employment History'],
-  Projects: ['Projects', 'Personal Projects', 'Key Projects'],
-  Skills: ['Skills', 'Technical Skills', 'Core Skills', 'Skills Summary'],
-  Certifications: ['Certifications', 'Certificates', 'Licenses & Certifications'],
+  Summary:        ['Summary', 'Professional Summary', 'Objective', 'Profile', 'About'],
+  Education:      ['Education', 'Academic Background'],
+  Experience:     ['Experience', 'Work Experience', 'Professional Experience', 'Employment History', 'Career History'],
+  Projects:       ['Projects', 'Personal Projects', 'Key Projects', 'Academic Projects'],
+  Skills:         ['Skills', 'Technical Skills', 'Core Skills', 'Skills Summary', 'Technologies'],
+  Certifications: ['Certifications', 'Certificates', 'Licenses & Certifications', 'Awards & Certifications'],
+  Languages:      ['Languages', 'Language Proficiency'],
 };
 const CANONICAL_SECTIONS = Object.keys(SECTION_ALIASES);
 
-const matchSectionHeader = (trimmed) => {
-  // Strip markdown formatting symbols like #, *, _
-  const cleaned = trimmed.replace(/[\*#_]/g, '').trim();
+const matchSectionHeader = (rawLine) => {
+  const cleaned = stripMarkdown(rawLine).replace(/[:#\-_*]/g, '').trim();
   for (const canonical of CANONICAL_SECTIONS) {
     for (const alias of SECTION_ALIASES[canonical]) {
-      if (new RegExp(`^${alias}:?\\s*$`, 'i').test(cleaned)) {
+      if (new RegExp(`^${alias}\\s*$`, 'i').test(cleaned)) {
         return { section: canonical, inlineContent: '' };
       }
       const m = cleaned.match(new RegExp(`^${alias}:\\s*(.+)$`, 'i'));
@@ -135,75 +159,61 @@ const matchSectionHeader = (trimmed) => {
 };
 
 // =====================================================================
-// PARSE RESUME SECTIONS
+// PARSE RESUME TEXT INTO SECTIONS
 // =====================================================================
 const parseResumeSections = (text, userData = {}) => {
-  if (!text) return [{ title: 'Summary', content: [] }];
+  if (!text) return [];
 
-  const sections = [];
-  const lines = safeText(text).split('\n');
+  const sections   = [];
+  const rawLines   = text.split('\n');
   let currentSection = null;
   let currentContent = [];
 
+  // Build a filter list to remove redundant contact lines
   const filters = [
     userData.userName,
     userData.email,
     userData.phone,
     userData.linkedin,
-    'palashmishra47@gmail.com',
-    '+91-7428477219',
   ].filter(Boolean).map(s => s.toLowerCase());
 
-  const isRedundant = (line) => {
-    const lower = line.toLowerCase();
-    
-    // Filter out common raw contact row headers and symbols
-    if (
-      lower.includes('envelope') ||
-      lower.includes('phone-alt') ||
-      lower.includes('map-marker') ||
-      lower.includes('email:') ||
-      lower.includes('phone:') ||
-      lower.includes('linkedin:') ||
-      lower.includes('mobile:') ||
-      (lower.includes('@') && lower.includes('|'))
-    ) {
-      return true;
-    }
-
-    if (filters.some(f => lower === f)) return true;
-    if (lower.includes('|') && filters.some(f => lower.includes(f))) {
-      const parts = lower.split('|').map(p => p.trim());
-      if (parts.every(p => filters.some(f => p.includes(f) || f.includes(p) || p.includes('@') || p.includes('phone') || p.includes('envelope') || p.includes('map-marker') || p.includes('noida') || p.includes('india')))) return true;
-    }
+  const isRedundantContactLine = (raw) => {
+    const lower = stripMarkdown(raw).toLowerCase();
+    if (lower.includes('envelope') || lower.includes('phone-alt') || lower.includes('map-marker')) return true;
+    if (/^(email|phone|mobile|linkedin|contact|location|address)\s*:/i.test(lower)) return true;
+    if (lower.includes('@') && lower.includes('|')) return true;
+    if (filters.length > 0 && filters.some(f => lower === f)) return true;
     return false;
   };
+
+  // Lines to always skip (school lines in global header area only — not inside Education)
+  const SKIP_SCHOOLS_GLOBAL = ['amity international school'];
 
   const flush = () => {
     if (currentSection && currentContent.length > 0) {
       const existing = sections.find(s => s.title === currentSection);
-      if (existing) {
-        existing.content.push(...currentContent);
-      } else {
-        sections.push({ title: currentSection, content: [...currentContent] });
-      }
+      if (existing) existing.content.push(...currentContent);
+      else          sections.push({ title: currentSection, content: [...currentContent] });
     }
   };
 
-  lines.forEach((line) => {
-    const trimmed = line.trim();
-    if (!trimmed) return;
-    if (isRedundant(trimmed)) return;
+  for (const raw of rawLines) {
+    const trimmed = stripMarkdown(raw).trim();
+    if (!trimmed) continue;
+    if (isRedundantContactLine(raw)) continue;
 
     const headerMatch = matchSectionHeader(trimmed);
     if (headerMatch) {
       flush();
       currentSection = headerMatch.section;
       currentContent = [];
-      if (headerMatch.inlineContent && !isRedundant(headerMatch.inlineContent)) {
-        currentContent.push(headerMatch.inlineContent);
-      }
-      return;
+      if (headerMatch.inlineContent) currentContent.push(headerMatch.inlineContent);
+      continue;
+    }
+
+    // Skip schools outside the Education section
+    if (!currentSection || currentSection !== 'Education') {
+      if (SKIP_SCHOOLS_GLOBAL.some(s => trimmed.toLowerCase().includes(s))) continue;
     }
 
     if (!currentSection) {
@@ -211,372 +221,357 @@ const parseResumeSections = (text, userData = {}) => {
       currentContent = [];
     }
 
-    // Check if this line is a continuation of the previous bullet point
-    const isBullet = trimmed.startsWith('•') || trimmed.startsWith('-') || trimmed.startsWith('*');
-    const isHeader = !!matchSectionHeader(trimmed);
-    const isDate = /\b(19|20)\d{2}\b/.test(trimmed) || /\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\b/i.test(trimmed);
-    const hasColon = trimmed.includes(':') && !trimmed.startsWith('•') && !trimmed.startsWith('-');
-
-    if (!isBullet && !isHeader && !isDate && !hasColon && currentContent.length > 0) {
-      const lastItem = currentContent[currentContent.length - 1];
-      const lastIsBullet = lastItem.startsWith('•') || lastItem.startsWith('-') || lastItem.startsWith('*');
-      
-      if (lastIsBullet) {
-        currentContent[currentContent.length - 1] = `${lastItem} ${trimmed}`;
-        return;
-      }
-    }
-
-    currentContent.push(trimmed);
-  });
+    // Normalise bullet characters
+    const normLine = trimmed.replace(/^[\*\-]\s+/, '• ').replace(/^•\s*/, '• ');
+    currentContent.push(normLine);
+  }
 
   flush();
-  return sections.length > 0 ? sections : [{ title: 'Resume', content: lines.filter(Boolean) }];
+  return sections;
 };
 
 // =====================================================================
-// HELPER: Make crisp 2-sentence summary
+// DATE HELPER
 // =====================================================================
-const makeCrispSummary = (contentArray) => {
-  const fullText = contentArray.join(' ').replace(/\s+/g, ' ').trim();
-  if (!fullText) return '';
-  
-  // Split into sentences using punctuation markers
-  const sentences = fullText.match(/[^.!?]+[.!?]+/g) || [fullText];
-  
-  // Take first 2 sentences
-  const crispText = sentences.slice(0, 2).join(' ').trim();
-  return crispText;
-};
-
-// =====================================================================
-// HELPER: Split label and date
-// =====================================================================
-const DATE_PATTERN = /((?:[A-Za-z]{3,9}\.?\s+)?\d{4})\s*(?:[-–—]\s*((?:[A-Za-z]{3,9}\.?\s+)?\d{4}|Present))?/i;
+const DATE_PATTERN = /((?:[A-Za-z]{3,9}\.?\s+)?\d{4})\s*(?:[-–—]\s*((?:[A-Za-z]{3,9}\.?\s+)?\d{4}|Present|Current))?/i;
 
 const splitLabelAndDate = (text) => {
-  const trimmed = safeText(text).trim();
-  const match = trimmed.match(DATE_PATTERN);
-  if (!match) return { label: trimmed, date: '' };
-  const date = match[0].trim();
-  const label = trimmed.slice(0, match.index).trim().replace(/[-–—,|]\s*$/, '').trim();
-  return { label: label || trimmed, date: label ? date : '' };
+  const t = safeText(text).trim();
+  const m = t.match(DATE_PATTERN);
+  if (!m) return { label: t, date: '' };
+  const date  = m[0].trim();
+  const label = t.slice(0, m.index).trim().replace(/[-–—,|]\s*$/, '').trim();
+  return { label: label || t, date: label ? date : '' };
 };
 
 // =====================================================================
-// MAIN PDF GENERATION - ✅ EXPORTED PROPERLY
+// MAIN PDF GENERATION
 // =====================================================================
 export async function generateResumePDF({
   resumeText,
-  fileName = "resume",
-  score = 0,
+  fileName = 'resume',
+  score    = 0,
   jobTitle = null,
-  email = null,
-  phone = null,
+  email    = null,
+  phone    = null,
   linkedin = null,
-  userName = null
+  userName = null,
 }) {
-  // Extract contact info from resume text
-  const extractedName = extractName(resumeText);
-  const extractedJobTitle = extractJobTitle(resumeText);
-  const extractedEmail = extractEmail(resumeText);
-  const extractedPhone = extractPhoneNumber(resumeText);
-  const extractedLinkedIn = extractLinkedIn(resumeText);
+  // --- Extract contact info ---
+  const finalName     = extractName(resumeText)     || userName  || 'Palash Mishra';
+  const finalJobTitle = extractJobTitle(resumeText)  || jobTitle  || 'Full Stack Developer';
+  const finalEmail    = extractEmail(resumeText)     || email     || 'palashmishra47@gmail.com';
+  const finalPhone    = extractPhoneNumber(resumeText) || phone   || '+91-7428477219';
+  const finalLinkedIn = extractLinkedIn(resumeText)  || linkedin  || 'linkedin.com/in/palash-mishra-6a68a71aa';
+  const finalGitHub   = extractGitHub(resumeText)    || '';
 
-  // Use extracted values as priority
-  const finalName = extractedName || userName || "Palash Mishra";
-  const finalJobTitle = extractedJobTitle || jobTitle || "Full Stack Developer";
-  const finalEmail = extractedEmail || email || "palashmishra47@gmail.com";
-  const finalPhone = extractedPhone || phone || "+91-7428477219";
-  const finalLinkedIn = extractedLinkedIn || linkedin || "linkedin.com/in/palash-mishra-6a68a71aa";
+  // --- Fonts ---
+  const pdf      = await PDFDocument.create();
+  const font     = await pdf.embedFont(StandardFonts.Helvetica);
+  const bold     = await pdf.embedFont(StandardFonts.HelveticaBold);
+  const italic   = await pdf.embedFont(StandardFonts.HelveticaOblique);
+  const boldItal = await pdf.embedFont(StandardFonts.HelveticaBoldOblique);
 
-  const pdf = await PDFDocument.create();
-  const font = await pdf.embedFont(StandardFonts.TimesRoman);
-  const bold = await pdf.embedFont(StandardFonts.TimesRomanBold);
-  const italic = await pdf.embedFont(StandardFonts.TimesRomanItalic);
-  const boldItalic = await pdf.embedFont(StandardFonts.TimesRomanBoldItalic);
-
-  const pickFont = (options = {}) => {
-    if (options.bold && options.italic) return boldItalic;
-    if (options.bold) return bold;
-    if (options.italic) return italic;
+  const pickFont = ({ bold: b, italic: i } = {}) => {
+    if (b && i) return boldItal;
+    if (b)      return bold;
+    if (i)      return italic;
     return font;
   };
 
-  const sections = parseResumeSections(resumeText, { userName: finalName, email: finalEmail, phone: finalPhone, linkedin: finalLinkedIn });
-  const cleanFileName = safeText(fileName).replace(/\.pdf$/i, '');
-  const MAX_TEXT_WIDTH = PAGE_WIDTH - MARGIN_X * 2;
+  const sections     = parseResumeSections(resumeText, { userName: finalName, email: finalEmail, phone: finalPhone, linkedin: finalLinkedIn });
+  const cleanFile    = safeText(fileName).replace(/\.pdf$/i, '');
+  const MAX_W        = PAGE_WIDTH - MARGIN_X * 2;
 
-  // ====== UTILITY METHODS ======
-  function addNewPage() {
-    const page = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-    return { page, cursorY: PAGE_HEIGHT - MARGIN_TOP };
-  }
+  // --- Helpers ---
+  const addPage = () => {
+    const p = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+    return { page: p, cursorY: PAGE_HEIGHT - MARGIN_TOP };
+  };
 
-  function drawLine(page, y, color = LIGHT_GRAY, thickness = 0.75) {
-    page.drawLine({
-      start: { x: MARGIN_X, y },
-      end: { x: PAGE_WIDTH - MARGIN_X, y },
-      thickness,
-      color,
-    });
-  }
+  const drawLine = (page, y, color = LIGHT_GRAY, thickness = 0.6) =>
+    page.drawLine({ start: { x: MARGIN_X, y }, end: { x: PAGE_WIDTH - MARGIN_X, y }, thickness, color });
 
-  function drawText(page, text, x, y, options = {}) {
-    const safe = safeText(text);
-    if (!safe) return;
-    page.drawText(safe, {
-      x,
-      y,
-      size: options.size || SIZE_BODY,
-      font: pickFont(options),
-      color: options.color || BLACK,
-    });
-  }
+  const tw = (text, opts = {}) =>
+    pickFont(opts).widthOfTextAtSize(safeText(text), opts.size || SIZE_BODY);
 
-  function textWidth(text, options = {}) {
-    return pickFont(options).widthOfTextAtSize(safeText(text), options.size || SIZE_BODY);
-  }
+  const drawText = (page, text, x, y, opts = {}) => {
+    const s = safeText(text);
+    if (!s) return;
+    page.drawText(s, { x, y, size: opts.size || SIZE_BODY, font: pickFont(opts), color: opts.color || BLACK });
+  };
 
-  function wrapText(text, maxWidth, options = {}) {
-    const safe = safeText(text);
-    if (!safe) return [];
-    const size = options.size || SIZE_BODY;
-    const useFont = pickFont(options);
-    const words = safe.split(' ');
-    const lines = [];
-    let current = '';
-
+  const wrapText = (text, maxWidth, opts = {}) => {
+    const s = safeText(text);
+    if (!s) return [];
+    const sz      = opts.size || SIZE_BODY;
+    const useFont = pickFont(opts);
+    const words   = s.split(' ');
+    const lines   = [];
+    let cur       = '';
     for (const word of words) {
-      const test = current ? `${current} ${word}` : word;
-      if (useFont.widthOfTextAtSize(test, size) <= maxWidth) {
-        current = test;
+      const test = cur ? `${cur} ${word}` : word;
+      if (useFont.widthOfTextAtSize(test, sz) <= maxWidth) {
+        cur = test;
       } else {
-        if (current) lines.push(current);
-        current = word;
+        if (cur) lines.push(cur);
+        // If a single word is still too wide, force it
+        if (useFont.widthOfTextAtSize(word, sz) > maxWidth) {
+          lines.push(word);
+          cur = '';
+        } else {
+          cur = word;
+        }
       }
     }
-    if (current) lines.push(current);
+    if (cur) lines.push(cur);
     return lines;
-  }
+  };
 
-  function drawWrappedText(page, text, x, y, maxWidth, options = {}) {
-    const lines = wrapText(text, maxWidth, options);
-    let currentY = y;
-    for (const line of lines) {
-      drawText(page, line, x, currentY, options);
-      currentY -= options.lineHeight || LH_BODY;
+  const drawWrapped = (page, text, x, y, maxWidth, opts = {}) => {
+    const lines = wrapText(text, maxWidth, opts);
+    let cy = y;
+    for (const ln of lines) {
+      drawText(page, ln, x, cy, opts);
+      cy -= opts.lineHeight || LH_BODY;
     }
-    return currentY;
-  }
+    return cy;
+  };
 
-  function drawBullet(page, text, x, y, maxWidth) {
-    const safe = safeText(text);
-    if (!safe) return y;
-    const bulletIndent = 13;
-    drawText(page, '•', x, y, { bold: true, size: SIZE_BODY + 0.5, color: PRIMARY });
-    return drawWrappedText(page, safe, x + bulletIndent, y, maxWidth - bulletIndent, {
-      size: SIZE_BODY,
-      lineHeight: LH_BODY,
-    });
-  }
+  const drawBullet = (page, text, x, y, maxWidth) => {
+    const s = safeText(text);
+    if (!s) return y;
+    const indent = 12;
+    drawText(page, '•', x, y, { size: SIZE_BODY, color: PRIMARY });
+    return drawWrapped(page, s, x + indent, y, maxWidth - indent, { size: SIZE_BODY, lineHeight: LH_BODY });
+  };
 
-  function drawEntryHeaderRow(page, label, date, x, y, maxWidth, options = {}) {
-    const labelOptions = { bold: true, size: options.size || SIZE_ENTRY_HEADER, color: options.color || BLACK };
-    const dateOptions = { italic: true, size: SIZE_SUBTITLE, color: GRAY };
-
+  const drawEntryHeader = (page, label, date, x, y, maxWidth, opts = {}) => {
+    const lOpts = { bold: true,   size: opts.size  || SIZE_ENTRY_HEADER, color: opts.color || BLACK };
+    const dOpts = { italic: true, size: SIZE_SUBTITLE, color: GRAY };
     if (date) {
-      const dateWidth = textWidth(date, dateOptions);
-      drawText(page, label, x, y, labelOptions);
-      drawText(page, date, PAGE_WIDTH - MARGIN_X - dateWidth, y, dateOptions);
+      const dw = tw(date, dOpts);
+      // Wrap label if needed so it doesn't overlap date
+      const labelMaxW = maxWidth - dw - 10;
+      const lLines    = wrapText(label, labelMaxW, lOpts);
+      let ly = y;
+      for (const ll of lLines) { drawText(page, ll, x, ly, lOpts); ly -= LH_ENTRY_HEADER; }
+      drawText(page, date, PAGE_WIDTH - MARGIN_X - dw, y, dOpts);
+      return y - (lLines.length * LH_ENTRY_HEADER);
     } else {
-      drawText(page, label, x, y, labelOptions);
+      const lLines = wrapText(label, maxWidth, lOpts);
+      let ly = y;
+      for (const ll of lLines) { drawText(page, ll, x, ly, lOpts); ly -= LH_ENTRY_HEADER; }
+      return y - (lLines.length * LH_ENTRY_HEADER);
+    }
+  };
+
+  const ensureSpace = (page, cursorY, needed) => {
+    if (cursorY > MARGIN_BOTTOM + needed) return { page, cursorY };
+    const np = addPage();
+    return { page: np.page, cursorY: np.cursorY };
+  };
+
+  // ====================================================================
+  // HEADER
+  // ====================================================================
+  let { page, cursorY } = addPage();
+
+  // Candidate name — large, centred, bold
+  const nameW = tw(finalName, { bold: true, size: SIZE_NAME });
+  drawText(page, finalName, (PAGE_WIDTH - nameW) / 2, cursorY, { bold: true, size: SIZE_NAME, color: PRIMARY });
+  cursorY -= SIZE_NAME + 5;
+
+  // Job title — centred, italic
+  const jtW = tw(finalJobTitle, { italic: true, size: SIZE_TITLE });
+  drawText(page, finalJobTitle, (PAGE_WIDTH - jtW) / 2, cursorY, { italic: true, size: SIZE_TITLE, color: DARK_GRAY });
+  cursorY -= SIZE_TITLE + 7;
+
+  // Contact bar — centred, all on one line or split
+  const contactParts = [finalEmail, finalPhone, finalLinkedIn];
+  if (finalGitHub) contactParts.push(finalGitHub);
+  const sep   = '  |  ';
+  const cOpts = { size: SIZE_CONTACT, color: DARK_GRAY };
+  const sOpts = { size: SIZE_CONTACT, color: LIGHT_GRAY };
+  const sepW  = tw(sep, sOpts);
+
+  let totalCW = contactParts.reduce((acc, p) => acc + tw(p, cOpts), 0) + sepW * (contactParts.length - 1);
+  let cx = (PAGE_WIDTH - totalCW) / 2;
+  if (cx < MARGIN_X) cx = MARGIN_X; // fallback if too wide
+
+  for (let i = 0; i < contactParts.length; i++) {
+    const p = contactParts[i];
+    drawText(page, p, cx, cursorY, cOpts);
+    cx += tw(p, cOpts);
+    if (i < contactParts.length - 1) {
+      drawText(page, sep, cx, cursorY, sOpts);
+      cx += sepW;
     }
   }
-
-  function checkPageSpace(cursorY, neededSpace = 50) {
-    return cursorY > MARGIN_BOTTOM + neededSpace;
-  }
-
-  function ensureSpace(page, cursorY, neededSpace) {
-    if (!checkPageSpace(cursorY, neededSpace)) {
-      const np = addNewPage();
-      return { page: np.page, cursorY: np.cursorY };
-    }
-    return { page, cursorY };
-  }
-
-  // ====== FIRST PAGE ======
-  let { page, cursorY } = addNewPage();
-
-  // NAME
-  drawText(page, finalName, MARGIN_X, cursorY, { size: SIZE_NAME, bold: true, color: PRIMARY });
-  cursorY -= SIZE_NAME + 4;
-
-  // JOB TITLE
-  drawText(page, finalJobTitle, MARGIN_X, cursorY, { size: SIZE_TITLE, italic: true, color: PRIMARY });
-  cursorY -= SIZE_TITLE + 6;
-
-  // CONTACT INFO
-  const contactOptions = { size: SIZE_CONTACT, color: DARK_GRAY };
-  const sepOptions = { size: SIZE_CONTACT, color: LIGHT_GRAY };
-
-  const emailW = textWidth(finalEmail, contactOptions);
-  const phoneW = textWidth(finalPhone, contactOptions);
-  const linkedinW = textWidth(finalLinkedIn, contactOptions);
-  const sepW = textWidth('   |   ', sepOptions);
-  const totalW = emailW + phoneW + linkedinW + sepW * 2;
-  let cx = (PAGE_WIDTH - totalW) / 2;
-
-  drawText(page, finalEmail, cx, cursorY, contactOptions); cx += emailW;
-  drawText(page, '   |   ', cx, cursorY, sepOptions); cx += sepW;
-  drawText(page, finalPhone, cx, cursorY, contactOptions); cx += phoneW;
-  drawText(page, '   |   ', cx, cursorY, sepOptions); cx += sepW;
-  drawText(page, finalLinkedIn, cx, cursorY, contactOptions);
-
-  cursorY -= 14;
-  drawLine(page, cursorY, PRIMARY, 1);
   cursorY -= 12;
 
-  // ====== SUMMARY / PROFILE SECTION ======
-  const summarySection = sections.find(s => s.title.toLowerCase() === 'summary');
-  if (summarySection && summarySection.content.length > 0) {
-    ({ page, cursorY } = ensureSpace(page, cursorY, 30));
-    const crispSummaryText = makeCrispSummary(summarySection.content);
-    if (crispSummaryText) {
-      cursorY = drawWrappedText(page, crispSummaryText, MARGIN_X, cursorY, MAX_TEXT_WIDTH, {
-        size: SIZE_BODY,
-        lineHeight: LH_BODY + 1,
-        italic: true,
-        color: DARK_GRAY,
-      });
-      cursorY -= 8;
-    }
-  }
+  // Full-width primary rule
+  drawLine(page, cursorY, PRIMARY, 1.2);
+  cursorY -= 12;
 
-  // ====== SECTIONS (Skip Summary) ======
+  // ====================================================================
+  // SECTIONS
+  // ====================================================================
   for (const section of sections) {
-    // Skip Summary section since it was printed above
-    if (section.title.toLowerCase() === 'summary') {
-      continue;
-    }
+    ({ page, cursorY } = ensureSpace(page, cursorY, 50));
 
-    ({ page, cursorY } = ensureSpace(page, cursorY, 45));
-
+    // Section heading
     drawText(page, section.title.toUpperCase(), MARGIN_X, cursorY, { bold: true, size: SIZE_SECTION, color: PRIMARY });
-    cursorY -= 6;
-    drawLine(page, cursorY, LIGHT_GRAY, 0.75);
+    cursorY -= 5;
+    drawLine(page, cursorY, LIGHT_GRAY, 0.6);
     cursorY -= 10;
 
-    const sectionKey = section.title.toLowerCase();
+    const key = section.title.toLowerCase();
 
     for (const rawLine of section.content) {
       const trimmed = safeText(rawLine).trim();
       if (!trimmed) continue;
+      ({ page, cursorY } = ensureSpace(page, cursorY, 24));
 
-      ({ page, cursorY } = ensureSpace(page, cursorY, 30));
+      const isBullet  = trimmed.startsWith('•');
+      const bulletTxt = isBullet ? trimmed.replace(/^•\s*/, '') : '';
 
-      const isBullet = trimmed.startsWith('•') || trimmed.startsWith('-');
-      const bulletText = isBullet ? trimmed.replace(/^[•-]\s*/, '') : '';
+      // -------- SUMMARY --------
+      if (key === 'summary') {
+        if (isBullet) {
+          cursorY = drawBullet(page, bulletTxt, MARGIN_X, cursorY, MAX_W);
+          cursorY -= 2;
+        } else {
+          cursorY = drawWrapped(page, trimmed, MARGIN_X, cursorY, MAX_W, { size: SIZE_BODY, lineHeight: LH_BODY, color: DARK_GRAY });
+          cursorY -= 3;
+        }
+        continue;
+      }
 
-      // ---------- EXPERIENCE ----------
-      if (sectionKey.includes('experience')) {
+      // -------- EXPERIENCE --------
+      if (key.includes('experience')) {
         if (!isBullet && /\d{4}/.test(trimmed)) {
           const { label, date } = splitLabelAndDate(trimmed);
-          drawEntryHeaderRow(page, label, date, MARGIN_X, cursorY, MAX_TEXT_WIDTH, { size: SIZE_ENTRY_HEADER, color: BLACK });
-          cursorY -= LH_ENTRY_HEADER;
-          continue;
-        }
-        if (!isBullet && /(developer|engineer|intern|analyst)/i.test(trimmed)) {
-          drawText(page, trimmed, MARGIN_X, cursorY, { italic: true, size: SIZE_SUBTITLE, color: PRIMARY });
-          cursorY -= LH_SUBTITLE;
-          continue;
-        }
-        if (isBullet) {
-          cursorY = drawBullet(page, bulletText, MARGIN_X, cursorY, MAX_TEXT_WIDTH);
+          // Clean up any leftover bold markers in label
+          const cleanLabel = safeText(label);
+          cursorY = drawEntryHeader(page, cleanLabel, date, MARGIN_X, cursorY, MAX_W, { size: SIZE_ENTRY_HEADER, color: BLACK });
           cursorY -= 2;
           continue;
         }
-      }
-
-      // ---------- PROJECTS ----------
-      if (sectionKey.includes('project')) {
-        if (trimmed.includes('|')) {
-          const parts = trimmed.split('|').map((s) => safeText(s).trim());
-          const projectName = parts[0] || '';
-          const rest = parts.slice(1).join(' | ');
-          const { label: techStack, date } = splitLabelAndDate(rest);
-          const displayLabel = techStack ? `${projectName}  |  ${techStack}` : projectName;
-          drawEntryHeaderRow(page, displayLabel, date, MARGIN_X, cursorY, MAX_TEXT_WIDTH, { size: SIZE_ENTRY_HEADER, color: PRIMARY, bold: true });
-          cursorY -= LH_ENTRY_HEADER;
-          continue;
-        }
-        if (isBullet) {
-          cursorY = drawBullet(page, bulletText, MARGIN_X, cursorY, MAX_TEXT_WIDTH);
+        if (!isBullet && /\b(developer|engineer|intern|analyst|consultant|lead|architect|manager|designer|specialist|devops|sde)\b/i.test(trimmed)) {
+          cursorY = drawWrapped(page, trimmed, MARGIN_X, cursorY, MAX_W, { italic: true, size: SIZE_SUBTITLE, color: PRIMARY, lineHeight: LH_SUBTITLE });
           cursorY -= 2;
           continue;
         }
+        if (isBullet) {
+          cursorY = drawBullet(page, bulletTxt, MARGIN_X + 4, cursorY, MAX_W - 4);
+          cursorY -= 2;
+          continue;
+        }
+        cursorY = drawWrapped(page, trimmed, MARGIN_X, cursorY, MAX_W, { size: SIZE_BODY, lineHeight: LH_BODY });
+        cursorY -= 2;
+        continue;
       }
 
-      // ---------- EDUCATION ----------
-      if (sectionKey.includes('education')) {
-        if (/\d{4}/.test(trimmed)) {
+      // -------- PROJECTS --------
+      if (key.includes('project')) {
+        if (!isBullet && trimmed.includes('|')) {
+          const parts = trimmed.split('|').map(p => safeText(p).trim());
+          const name  = parts[0];
+          const rest  = parts.slice(1).join(' | ');
+          const { label: tech, date } = splitLabelAndDate(rest);
+          const display = tech ? `${name}  |  ${tech}` : name;
+          cursorY = drawEntryHeader(page, display, date, MARGIN_X, cursorY, MAX_W, { size: SIZE_ENTRY_HEADER, color: PRIMARY });
+          cursorY -= 2;
+          continue;
+        }
+        if (!isBullet && /\d{4}/.test(trimmed)) {
           const { label, date } = splitLabelAndDate(trimmed);
-          const labelOptions = { italic: true, size: SIZE_SUBTITLE, color: DARK_GRAY };
-          const dateOptions = { italic: true, size: SIZE_SUBTITLE, color: GRAY };
-          drawText(page, label, MARGIN_X + 10, cursorY, labelOptions);
-          if (date) {
-            const dw = textWidth(date, dateOptions);
-            drawText(page, date, PAGE_WIDTH - MARGIN_X - dw, cursorY, dateOptions);
-          }
-          cursorY -= LH_SUBTITLE;
-          continue;
-        }
-        if (!isBullet && /^[A-Za-z]/.test(trimmed)) {
-          drawText(page, trimmed, MARGIN_X, cursorY, { bold: true, size: SIZE_ENTRY_HEADER });
-          cursorY -= LH_ENTRY_HEADER;
-          continue;
-        }
-        cursorY = drawWrappedText(page, trimmed, MARGIN_X + 10, cursorY, MAX_TEXT_WIDTH - 10, { size: SIZE_BODY, lineHeight: LH_BODY });
-        cursorY -= 2;
-        continue;
-      }
-
-      // ---------- SKILLS ----------
-      if (sectionKey.includes('skill')) {
-        if (trimmed.includes(':')) {
-          const [rawLabel, ...restParts] = trimmed.split(':');
-          const label = safeText(rawLabel).trim();
-          const value = restParts.join(':').trim();
-          const labelStr = `${label}: `;
-          const labelW = textWidth(labelStr, { bold: true, size: SIZE_BODY });
-          drawText(page, labelStr, MARGIN_X, cursorY, { bold: true, size: SIZE_BODY });
-          cursorY = drawWrappedText(page, value, MARGIN_X + labelW, cursorY, MAX_TEXT_WIDTH - labelW, {
-            size: SIZE_BODY,
-            lineHeight: LH_BODY,
-          });
+          cursorY = drawEntryHeader(page, safeText(label), date, MARGIN_X, cursorY, MAX_W, { size: SIZE_ENTRY_HEADER, color: PRIMARY });
           cursorY -= 2;
           continue;
         }
-        cursorY = drawWrappedText(page, trimmed, MARGIN_X, cursorY, MAX_TEXT_WIDTH, { size: SIZE_BODY, lineHeight: LH_BODY });
+        if (!isBullet && trimmed.length < 80) {
+          cursorY = drawWrapped(page, trimmed, MARGIN_X, cursorY, MAX_W, { bold: true, size: SIZE_ENTRY_HEADER, color: PRIMARY, lineHeight: LH_ENTRY_HEADER });
+          cursorY -= 2;
+          continue;
+        }
+        if (isBullet) {
+          cursorY = drawBullet(page, bulletTxt, MARGIN_X + 4, cursorY, MAX_W - 4);
+          cursorY -= 2;
+          continue;
+        }
+        cursorY = drawWrapped(page, trimmed, MARGIN_X, cursorY, MAX_W, { size: SIZE_BODY, lineHeight: LH_BODY });
         cursorY -= 2;
         continue;
       }
 
-      // ---------- DEFAULT ----------
-      if (isBullet) {
-        cursorY = drawBullet(page, bulletText, MARGIN_X, cursorY, MAX_TEXT_WIDTH);
+      // -------- EDUCATION --------
+      if (key.includes('education')) {
+        // Skip Amity International School entirely
+        if (/amity\s+international\s+school/i.test(trimmed)) continue;
+
+        if (/\d{4}/.test(trimmed) && !/(gpa|cgpa|grade|score)/i.test(trimmed)) {
+          const { label, date } = splitLabelAndDate(trimmed);
+          const lOpts = { italic: true, size: SIZE_SUBTITLE, color: DARK_GRAY };
+          const dOpts = { italic: true, size: SIZE_SUBTITLE, color: GRAY };
+          const lLines = wrapText(safeText(label), MAX_W - tw(date, dOpts) - 10, lOpts);
+          let ly = cursorY;
+          for (const ll of lLines) { drawText(page, ll, MARGIN_X + 8, ly, lOpts); ly -= LH_SUBTITLE; }
+          if (date) { const dw = tw(date, dOpts); drawText(page, date, PAGE_WIDTH - MARGIN_X - dw, cursorY, dOpts); }
+          cursorY = ly;
+          continue;
+        }
+        if (!isBullet) {
+          cursorY = drawWrapped(page, trimmed, MARGIN_X, cursorY, MAX_W, { bold: true, size: SIZE_ENTRY_HEADER, lineHeight: LH_ENTRY_HEADER });
+          cursorY -= 2;
+          continue;
+        }
+        cursorY = drawWrapped(page, trimmed.replace(/^•\s*/, ''), MARGIN_X + 8, cursorY, MAX_W - 8, { size: SIZE_BODY, lineHeight: LH_BODY, color: DARK_GRAY });
         cursorY -= 2;
         continue;
       }
-      cursorY = drawWrappedText(page, trimmed, MARGIN_X, cursorY, MAX_TEXT_WIDTH, { size: SIZE_BODY, lineHeight: LH_BODY });
-      cursorY -= 2;
+
+      // -------- SKILLS --------
+      if (key.includes('skill') || key.includes('technolog')) {
+        if (trimmed.includes(':')) {
+          const colon  = trimmed.indexOf(':');
+          const label  = trimmed.slice(0, colon).trim();
+          const value  = trimmed.slice(colon + 1).trim();
+          const lStr   = `${label}: `;
+          const lW     = tw(lStr, { bold: true, size: SIZE_BODY });
+          drawText(page, lStr, MARGIN_X, cursorY, { bold: true, size: SIZE_BODY, color: BLACK });
+          cursorY = drawWrapped(page, value, MARGIN_X + lW, cursorY, MAX_W - lW, { size: SIZE_BODY, lineHeight: LH_BODY, color: DARK_GRAY });
+          cursorY -= 2;
+          continue;
+        }
+        if (isBullet) {
+          cursorY = drawBullet(page, bulletTxt, MARGIN_X, cursorY, MAX_W);
+          cursorY -= 2;
+          continue;
+        }
+        cursorY = drawWrapped(page, trimmed, MARGIN_X, cursorY, MAX_W, { size: SIZE_BODY, lineHeight: LH_BODY, color: DARK_GRAY });
+        cursorY -= 2;
+        continue;
+      }
+
+      // -------- CERTIFICATIONS / LANGUAGES / DEFAULT --------
+      if (isBullet) {
+        cursorY = drawBullet(page, bulletTxt, MARGIN_X, cursorY, MAX_W);
+        cursorY -= 2;
+      } else {
+        cursorY = drawWrapped(page, trimmed, MARGIN_X, cursorY, MAX_W, { size: SIZE_BODY, lineHeight: LH_BODY });
+        cursorY -= 2;
+      }
     }
-    cursorY -= 6;
+
+    cursorY -= 8; // gap between sections
   }
 
-  // ====== SAVE PDF ======
+  // ====================================================================
+  // SAVE
+  // ====================================================================
   const pdfBytes = await pdf.save();
-  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-  saveAs(blob, `${cleanFileName}_optimized.pdf`);
+  const blob     = new Blob([pdfBytes], { type: 'application/pdf' });
+  saveAs(blob, `${cleanFile}_optimized.pdf`);
 }

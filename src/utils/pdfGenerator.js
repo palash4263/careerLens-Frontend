@@ -94,9 +94,13 @@ const extractJobTitle = (text) => {
   const lines = text.split('\n');
   for (const line of lines) {
     const trimmed = line.trim();
-    if (trimmed && trimmed.length < 60 && 
-        /(developer|engineer|analyst|architect|manager|designer|consultant|specialist|lead|intern|full[- ]stack|backend|frontend|data|software|devops|cloud|ml|ai|machine learning)/i.test(trimmed)) {
-      return trimmed;
+    if (trimmed && trimmed.length < 60) {
+      if (/(school|university|college|academy|institute|international)/i.test(trimmed)) {
+        continue;
+      }
+      if (/\b(developer|engineer|analyst|architect|manager|designer|consultant|specialist|lead|intern|full[- ]stack|backend|frontend|data|software|devops|cloud|ml|ai|machine\s*learning)\b/i.test(trimmed)) {
+        return trimmed;
+      }
     }
   }
   return null;

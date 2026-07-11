@@ -1,7 +1,8 @@
 // src/pages/Login.jsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { login } from "../services/authService";
+import { GoogleLogin } from "@react-oauth/google";
+import { login, googleSignIn } from "../services/authService";
 import "./Login.css";
 
 function Login() {
@@ -62,6 +63,43 @@ function Login() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setFormError("");
+    setSubmitting(true);
+    try {
+      const data = await googleSignIn(credentialResponse.credential);
+      const token = data.access_token || data.token;
+      if (!token) {
+        setFormError('Google Login failed: No token received');
+        return;
+      }
+      
+      localStorage.setItem('token', token);
+      
+      // Store user data
+      localStorage.setItem('userName', data.user?.name || 'User');
+      localStorage.setItem('userEmail', data.user?.email || '');
+      localStorage.setItem('userAvatar', data.user?.avatar || '');
+      localStorage.setItem('userRole', data.user?.role || 'Product Manager');
+      localStorage.setItem('userLocation', data.user?.location || 'Noida, IN');
+      localStorage.setItem('userJoinDate', data.user?.joinDate || 'January 2026');
+      
+      navigate('/dashboard');
+    } catch (error) {
+      setFormError(
+        error?.response?.data?.detail || 
+        error?.response?.data?.message || 
+        "Google authentication failed."
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    setFormError("Google Sign-In was unsuccessful. Please try again.");
   };
 
   return (
@@ -128,6 +166,19 @@ function Login() {
           <button type="submit" className="login-submit" disabled={submitting}>
             <span>{submitting ? "Signing in…" : "Sign in"}</span>
           </button>
+
+          <div className="auth-divider">or sign in with</div>
+
+          <div className="google-signin-wrapper">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={handleGoogleError}
+              theme="filled_dark"
+              shape="pill"
+              size="large"
+              width="100%"
+            />
+          </div>
 
           <p className="login-footnote">
             New here? <a href="/register">Create an account</a>

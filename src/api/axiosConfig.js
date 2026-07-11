@@ -14,6 +14,7 @@ api.interceptors.request.use(
     const publicEndpoints = [
       "/auth/login",
       "/auth/register",
+      "/auth/google",
       "/health",
       "/docs",
       "/redoc",

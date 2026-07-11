@@ -15,3 +15,8 @@ export const createJobDescription = async (jobDescription) => {
 export const deleteJobDescription = async (id) => {
   await api.delete(`/jobs/${id}`);
 };
+
+export const fetchJobFromUrl = async (url) => {
+  const response = await api.post("/jobs/fetch-from-url", { url });
+  return response.data; // { title, company, description }
+};

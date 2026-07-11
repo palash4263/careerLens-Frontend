@@ -5,7 +5,9 @@ import {
   createJobDescription,
   deleteJobDescription,
   getJobDescriptions,
+  fetchJobFromUrl,
 } from "../services/jobDescriptionService";
+import { useScrollReveal } from "../hooks/useScrollReveal";
 import "../assets/jobDescription.css";
 
 function JobDescriptionPage() {
@@ -65,33 +67,27 @@ function JobDescriptionPage() {
     });
   };
 
-  // Simulate AI Fetch and Autofill
-  const handleUrlImport = () => {
-    if (!urlInput) return;
+  // Real AI Fetch — calls backend which scrapes the URL and uses Groq to extract job data
+  const handleUrlImport = async () => {
+    if (!urlInput.trim()) return;
     setIsImporting(true);
-    
-    setTimeout(() => {
-      const isLinkedin = urlInput.toLowerCase().includes("linkedin");
-      const title = isLinkedin ? "Senior Full-Stack Engineer" : "Frontend Developer";
-      const company = isLinkedin ? "Tech Innovations Inc." : "Global Solutions";
-      const description = `We are looking for a ${title} to join our engineering team.
-
-Key Requirements:
-- 5+ years of experience with React, TypeScript, and Node.js
-- Strong proficiency in SQL database design and REST APIs
-- Familiarity with AWS cloud deployment, Docker, and CI/CD pipelines
-- Excellent communication and collaboration skills in an Agile environment
-
-Responsibilities:
-- Build high-performance frontend interfaces
-- Develop scalable backend microservices
-- Mentor junior engineers and collaborate with product teams`;
-      
-      setFormData({ title, company, description });
+    try {
+      const data = await fetchJobFromUrl(urlInput.trim());
+      setFormData({
+        title: data.title || "",
+        company: data.company || "",
+        description: data.description || "",
+      });
       setUrlInput("");
+      showToast("✅ Job details auto-filled using AI!", "success");
+    } catch (err) {
+      const msg =
+        err?.response?.data?.detail ||
+        "AI Fetch failed. Some job sites block scraping — try pasting the description manually.";
+      showToast(msg, "error");
+    } finally {
       setIsImporting(false);
-      showToast("Job details auto-filled using AI!", "success");
-    }, 1500);
+    }
   };
 
   const showToast = (message, type = "success") => {
@@ -112,6 +108,8 @@ Responsibilities:
   useEffect(() => {
     loadJobDescriptions();
   }, []);
+
+  useScrollReveal([jobDescriptions, filteredJobs]);
 
   // Filter and sort jobs
   useEffect(() => {
@@ -308,7 +306,7 @@ Responsibilities:
         </section>
 
         {/* Quick Stats Cards */}
-        <div className="jobs-quick-stats">
+        <div className="jobs-quick-stats scroll-reveal">
           <div className="quick-stat-card">
             <div className="quick-stat-header">
               <span className="quick-stat-icon">🏢</span>
@@ -342,7 +340,7 @@ Responsibilities:
         {/* Form + Stats Grid */}
         <div className="jobs-top-grid">
           {/* Form Card */}
-          <section className="jobs-form-card">
+          <section className="jobs-form-card scroll-reveal-3d">
             <div className="jobs-form-glow"></div>
             <div className="jobs-form-content">
               <div className="jobs-form-header">
@@ -460,7 +458,7 @@ Responsibilities:
           </section>
 
           {/* AI Parser Insights Panel */}
-          <div className="jobs-ai-analyzer-card">
+          <div className="jobs-ai-analyzer-card scroll-reveal-3d">
             <div className="analyzer-glow"></div>
             <div className="analyzer-content">
               <div className="analyzer-header">
@@ -634,7 +632,7 @@ Responsibilities:
         )}
 
         {/* Saved Job Descriptions */}
-        <section className="jobs-list-section">
+        <section className="jobs-list-section scroll-reveal">
           <div className="jobs-list-header">
             <div className="jobs-list-header-left">
               <h2>Saved Job Descriptions</h2>

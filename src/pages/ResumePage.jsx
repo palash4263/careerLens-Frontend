@@ -7,6 +7,7 @@ import {
   deleteResume,
   getResumeFile,
 } from "../services/resumeService";
+import { useScrollReveal } from "../hooks/useScrollReveal";
 
 import "../assets/resume.css";
 
@@ -41,6 +42,8 @@ function ResumePage() {
   useEffect(() => {
     loadResumes();
   }, []);
+
+  useScrollReveal([resumes]);
 
   const handleFileChange = (file) => {
     if (!file) return;
@@ -187,7 +190,7 @@ function ResumePage() {
         </div>
 
         {/* Upload Section */}
-        <div className="upload-premium-card">
+        <div className="upload-premium-card scroll-reveal-3d">
           <div className="upload-premium-glow"></div>
           <div className="upload-premium-content">
             <div className="upload-premium-left">
@@ -342,7 +345,7 @@ function ResumePage() {
         </div>
 
         {/* Stats Overview */}
-        <div className="stats-overview-premium">
+        <div className="stats-overview-premium scroll-reveal">
           <div className="stat-overview-card">
             <div className="stat-overview-icon">📄</div>
             <div className="stat-overview-content">
@@ -372,7 +375,7 @@ function ResumePage() {
         </div>
 
         {/* Resume List */}
-        <section className="resume-list-premium">
+        <section className="resume-list-premium scroll-reveal-3d">
           <div className="resume-list-header">
             <h2>Uploaded Resumes</h2>
             <span className="resume-count">{resumes.length} resumes</span>

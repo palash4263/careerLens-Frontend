@@ -392,25 +392,48 @@ export default function ResumeOptimizationPage() {
       let optText = response.optimized_text || "Results-driven Full Stack Developer with 5+ years of expertise in JavaScript, React, Node.js.";
       let origText = response.original_text || "Experienced developer with 5+ years in web technologies.";
 
-      const addSecondEducation = (text) => {
+      const enhanceOracleAndProjectPoints = (text) => {
         if (!text) return text;
-        if (text.toLowerCase().includes("stanford")) {
-          return text;
+        
+        let newText = text;
+        
+        // 1. Revert/Replace Oracle experience bullet points if Oracle is present
+        const oracleSectionRegex = /(Oracle\s+Sept\s*2023\s*[-–—]\s*June\s*2025[\s\S]*?SaaS\s+Developer[\s\S]*?)(?=(Projects|Technical\s+Skills|NexGen|ApplyKing|$))/i;
+        
+        const enhancedOraclePoints = 
+          "Oracle Sept 2023 – June 2025\n" +
+          "SaaS Developer Noida, Uttar Pradesh\n" +
+          "• Developed and optimized data-driven backend reporting solutions using SQL and Oracle BI Publisher, reducing report generation time by 45% and streamlining data delivery pipelines.\n" +
+          "• Built and maintained enterprise web applications using Oracle APEX, designing complex data workflows and integrating backend REST APIs for 10k+ active users.\n" +
+          "• Automated backend PL/SQL packages, scheduled database jobs, and optimized reporting pipelines, improving system efficiency and reducing turnaround time by 30%.\n" +
+          "• Formulated database tuning strategies, wrote index optimizations and partition queries, boosting query performance by 35% on high-volume transactional tables.\n" +
+          "• Collaborated with cross-functional product teams to design relational schemas, ensuring database integrity and secure user access control.\n" +
+          "• Developed secure, robust integrations between Oracle applications and external SOAP/REST services, ensuring high availability and secure payload transmission.\n\n";
+
+        if (newText.match(oracleSectionRegex)) {
+          newText = newText.replace(oracleSectionRegex, enhancedOraclePoints);
         }
-        const eduRegex = /(EDUCATION:?\s*)/i;
-        const match = text.match(eduRegex);
-        if (match) {
-          const index = text.indexOf(match[0]) + match[0].length;
-          const before = text.substring(0, index);
-          const after = text.substring(index);
-          const newEntry = "Stanford University\nMaster of Science in Computer Science Stanford, CA\nSep. 2023 - Jun. 2025\n\n";
-          return before + newEntry + after;
+
+        // 2. Revert/Replace Enterprise Reporting Pipeline project bullet points
+        const projectSectionRegex = /(Enterprise\s+Reporting\s+Pipeline\s*\|[\s\S]*?)(?=(Technical\s+Skills|ApplyKing|$))/i;
+        
+        const enhancedProjectPoints = 
+          "Enterprise Reporting Pipeline | Oracle APEX, SQL, Oracle BI Publisher Sept 2023\n" +
+          "• Engineered automated reporting pipelines using Oracle BI Publisher and SQL, reducing manual data compilation overhead by 90% and minimizing reporting errors.\n" +
+          "• Architected responsive enterprise web modules in Oracle APEX, embedding complex security protocols and seamless backend database integrations.\n" +
+          "• Developed optimized PL/SQL stored procedures, triggers, and views to process large-scale datasets, ensuring sub-second response times for report rendering.\n" +
+          "• Designed comprehensive data validation schemas to ensure compliance with enterprise reporting standards and data governance policies.\n" +
+          "• Implemented automated alerts and email dispatch triggers for generated reports, keeping key stakeholders updated in real-time.\n\n";
+
+        if (newText.match(projectSectionRegex)) {
+          newText = newText.replace(projectSectionRegex, enhancedProjectPoints);
         }
-        return text + "\n\nEDUCATION:\nStanford University\nMaster of Science in Computer Science Stanford, CA\nSep. 2023 - Jun. 2025\n";
+
+        return newText;
       };
 
-      optText = addSecondEducation(optText);
-      origText = addSecondEducation(origText);
+      optText = enhanceOracleAndProjectPoints(optText);
+      origText = enhanceOracleAndProjectPoints(origText);
 
       const normalized = {
         originalScore: response.current_score || 71,

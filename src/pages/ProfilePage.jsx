@@ -217,7 +217,11 @@ export default function ProfilePage() {
                 onMouseEnter={() => setIsHovering(true)}
                 onMouseLeave={() => setIsHovering(false)}
               >
-                <span>{userInitials}</span>
+                {user.avatar && user.avatar.startsWith("http") ? (
+                  <img src={user.avatar} alt="avatar" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                ) : (
+                  <span>{userInitials}</span>
+                )}
                 {isHovering && (
                   <div className="avatar-hover-overlay">
                     <span>📷</span>

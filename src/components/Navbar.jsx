@@ -9,6 +9,7 @@ export default function Navbar() {
   const [userName, setUserName] = useState("John Doe");
   const [userRole, setUserRole] = useState("Product Manager");
   const [userInitials, setUserInitials] = useState("JD");
+  const [userAvatar, setUserAvatar] = useState("");
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState([
     { id: 1, text: "Your resume score improved by 17 points!", time: "2 hours ago", read: false, type: "success" },
@@ -20,8 +21,10 @@ export default function Navbar() {
     const loadUser = () => {
       const name = localStorage.getItem("userName") || "John Doe";
       const role = localStorage.getItem("userRole") || "Product Manager";
+      const avatar = localStorage.getItem("userAvatar") || "";
       setUserName(name);
       setUserRole(role);
+      setUserAvatar(avatar);
       const parts = name.trim().split(" ");
       setUserInitials(
         parts.length >= 2
@@ -31,7 +34,7 @@ export default function Navbar() {
     };
     loadUser();
     const onStorage = (e) => {
-      if (e.key === "userName" || e.key === "userRole") loadUser();
+      if (e.key === "userName" || e.key === "userRole" || e.key === "userAvatar") loadUser();
     };
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
@@ -201,7 +204,11 @@ export default function Navbar() {
             {/* User pill */}
             <Link to="/profile" className="nb-user">
               <div className="nb-avatar">
-                <span>{userInitials}</span>
+                {userAvatar && userAvatar.startsWith("http") ? (
+                  <img src={userAvatar} alt="avatar" className="nb-avatar-img" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                ) : (
+                  <span>{userInitials}</span>
+                )}
                 <div className="nb-online" />
               </div>
               <div className="nb-user-info">
@@ -237,7 +244,11 @@ export default function Navbar() {
           {/* User profile details in header */}
           <Link to="/profile" className="nb-sidebar-user" onClick={() => setSidebarOpen(false)}>
             <div className="nb-sidebar-avatar">
-              <span>{userInitials}</span>
+              {userAvatar && userAvatar.startsWith("http") ? (
+                <img src={userAvatar} alt="avatar" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+              ) : (
+                <span>{userInitials}</span>
+              )}
               <div className="nb-sidebar-online" />
             </div>
             <div className="nb-sidebar-user-info">

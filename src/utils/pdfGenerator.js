@@ -609,16 +609,26 @@ export async function generateResumePDF({
       const trimmed = safeText(rawLine).trim();
       if (!trimmed) continue;
 
-      if (/\d{4}/.test(trimmed) && !/(gpa|cgpa|grade|score)/i.test(trimmed)) {
-        const { label, date } = splitLabelAndDate(trimmed);
+      const isInst = /\b(university|college|school|institute|academy)\b/i.test(trimmed);
+      const hasYear = /\d{4}/.test(trimmed);
+
+      if (isInst) {
         rightY -= 4;
-        drawText(p, safeText(label), RIGHT_COL_X, rightY, sizeSubtitle, { bold: true, color: BLACK });
+        drawText(p, trimmed, RIGHT_COL_X, rightY, sizeSubtitle, { bold: true, color: BLACK });
+        rightY -= lhSubtitle;
+        continue;
+      }
+
+      if (hasYear && !/(gpa|cgpa|grade|score)/i.test(trimmed)) {
+        const { label, date } = splitLabelAndDate(trimmed);
+        rightY -= 3;
+        drawText(p, safeText(label), RIGHT_COL_X, rightY, sizeBody + 0.2, { color: DARK_GRAY });
         
         if (date) {
-          rightY -= lhSubtitle;
-          drawText(p, date, RIGHT_COL_X, rightY, sizeSubtitle - 0.5, { italic: true, color: GRAY });
+          rightY -= lhBody;
+          drawText(p, date, RIGHT_COL_X, rightY, sizeBody, { italic: true, color: GRAY });
         }
-        rightY -= 6;
+        rightY -= 4;
         continue;
       }
 

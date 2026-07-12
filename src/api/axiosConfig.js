@@ -1,8 +1,11 @@
 // src/api/axiosConfig.js
 import axios from "axios";
 
-// ✅ Change baseURL dynamically to support production Render URL
+// ✅ Change baseURL dynamically to support production Render URL and local testing fallback
 let apiURL = import.meta.env.VITE_API_URL || "https://careerlens-backend-4mmq.onrender.com/api";
+if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+  apiURL = "http://localhost:8000/api";
+}
 if (apiURL && !apiURL.toLowerCase().endsWith("/api") && !apiURL.toLowerCase().endsWith("/api/")) {
   apiURL = apiURL.endsWith("/") ? `${apiURL}api` : `${apiURL}/api`;
 }

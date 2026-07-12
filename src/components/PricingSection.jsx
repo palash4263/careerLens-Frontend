@@ -86,13 +86,14 @@ export const SpotlightBorder = ({
   );
 };
 
-// Animated Text Helper
-const AnimatedText = ({ text }) => {
+// Animated Text Helper — Fixed to correctly support children and text prop
+const AnimatedText = ({ text, children }) => {
+  const displayText = text || children;
   return (
     <div className="animated-text-container">
       <div className="animated-text-slide">
-        <span className="animated-text-line">{text}</span>
-        <span className="animated-text-line">{text}</span>
+        <span className="animated-text-line">{displayText}</span>
+        <span className="animated-text-line">{displayText}</span>
       </div>
     </div>
   );
@@ -211,6 +212,40 @@ const PricingCard = ({ plan, onCheckout, processing }) => {
 const PricingSection = () => {
   const [loading, setLoading] = useState(false);
 
+  const simulateMockPayment = async (planKey, order_id) => {
+    const confirmPayment = window.confirm(
+      "💻 Local Dev Mode Detected:\n\nWould you like to simulate a successful payment upgrade to " + 
+      (planKey === "pro" ? "Professional" : "Elite Pro") + "?"
+    );
+
+    if (!confirmPayment) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const verification = await api.post("/payments/verify-payment", {
+        razorpay_order_id: order_id,
+        razorpay_payment_id: "pay_mock_" + Date.now(),
+        razorpay_signature: "mock_signature",
+        plan: planKey
+      });
+
+      if (verification.data.status === "success") {
+        localStorage.setItem("userRole", planKey);
+        alert(`🎉 Mock Payment Successful! Upgraded to ${planKey === "pro" ? "Professional" : "Elite Pro"} plan.`);
+        window.location.href = "/dashboard";
+      } else {
+        alert("Mock payment verification failed.");
+      }
+    } catch (err) {
+      console.error("Mock verification error:", err);
+      alert("Error simulating mock payment verification.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleCheckout = async (planKey) => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -223,9 +258,15 @@ const PricingSection = () => {
     try {
       // 1. Create order on FastAPI Backend
       const response = await api.post("/payments/create-order", { plan: planKey });
-      const { order_id, amount, currency, key_id } = response.data;
+      const { order_id, amount, currency, key_id, is_mock } = response.data;
 
-      // 2. Setup Razorpay options
+      // 2. Check if local developer mock flow is returned
+      if (is_mock || order_id.startsWith("order_mock_")) {
+        await simulateMockPayment(planKey, order_id);
+        return;
+      }
+
+      // 3. Setup Razorpay options (For real test/live orders)
       const options = {
         key: key_id,
         amount: amount,
@@ -235,7 +276,7 @@ const PricingSection = () => {
         order_id: order_id,
         handler: async function (paymentResponse) {
           try {
-            // 3. Verify payment signature on FastAPI Backend
+            // 4. Verify payment signature on FastAPI Backend
             const verification = await api.post("/payments/verify-payment", {
               razorpay_order_id: paymentResponse.razorpay_order_id,
               razorpay_payment_id: paymentResponse.razorpay_payment_id,

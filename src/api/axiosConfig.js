@@ -2,8 +2,13 @@
 import axios from "axios";
 
 // ✅ Change baseURL dynamically to support production Render URL
+let apiURL = import.meta.env.VITE_API_URL || "https://careerlens-backend-4mmq.onrender.com/api";
+if (apiURL && !apiURL.toLowerCase().endsWith("/api") && !apiURL.toLowerCase().endsWith("/api/")) {
+  apiURL = apiURL.endsWith("/") ? `${apiURL}api` : `${apiURL}/api`;
+}
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "https://careerlens-backend.onrender.com/api", 
+  baseURL: apiURL, 
   timeout: 60000, // 60 seconds for AI optimization
 });
 

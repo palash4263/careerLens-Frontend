@@ -5,15 +5,17 @@ import { saveAs } from "file-saver";
 const PAGE_WIDTH  = 595;
 const PAGE_HEIGHT = 842;
 const MARGIN_X    = 50;
-const MARGIN_TOP  = 36;
-const MARGIN_BOTTOM = 48; // Increased bottom margin to prevent text touching the bottom edge
+const MARGIN_TOP  = 40;
+const MARGIN_BOTTOM = 46; // keeps text off the very bottom edge
 
-// ====== COLOR PALETTE (Modern Slate/Navy Aesthetic) ======
-const PRIMARY    = rgb(0.12, 0.20, 0.38);   // deep slate navy
-const BLACK      = rgb(0.15, 0.17, 0.22);   // dark off-black
-const DARK_GRAY  = rgb(0.33, 0.37, 0.44);   // slate grey
-const GRAY       = rgb(0.48, 0.52, 0.60);
-const LIGHT_GRAY = rgb(0.85, 0.87, 0.90);
+// ====== COLOR PALETTE (Navy + warm gold accent — reads as premium, not corporate-beige) ======
+const PRIMARY    = rgb(0.10, 0.16, 0.32);   // deep navy — headings, name
+const ACCENT     = rgb(0.72, 0.55, 0.20);   // warm gold — small highlight touches only
+const BLACK      = rgb(0.14, 0.16, 0.20);   // body ink
+const DARK_GRAY  = rgb(0.32, 0.35, 0.42);   // secondary text
+const GRAY       = rgb(0.50, 0.53, 0.60);   // dates / meta
+const LIGHT_GRAY = rgb(0.86, 0.87, 0.90);   // hairlines
+const RULE_FAINT = rgb(0.90, 0.91, 0.93);
 
 // =====================================================================
 // MARKDOWN STRIPPING – removes ALL markdown symbols before rendering
@@ -21,14 +23,12 @@ const LIGHT_GRAY = rgb(0.85, 0.87, 0.90);
 const stripMarkdown = (text) => {
   if (!text) return '';
   return String(text)
-    // Remove bold/italic markers  ** __ * _
     .replace(/\*\*\*(.+?)\*\*\*/g, '$1')
     .replace(/___(.+?)___/g,       '$1')
     .replace(/\*\*(.+?)\*\*/g,     '$1')
     .replace(/__(.+?)__/g,         '$1')
     .replace(/\*(.+?)\*/g,         '$1')
     .replace(/_(.+?)_/g,           '$1')
-    // Loose remaining asterisks/underscores at line boundaries
     .replace(/^\*+\s*/gm, '')
     .replace(/^\#+\s*/gm, '')
     .replace(/\*+$/gm, '')
@@ -41,6 +41,13 @@ const stripMarkdown = (text) => {
 const safeText = (value) => {
   if (value === null || value === undefined || Number.isNaN(value) || value === 'NaN') return '';
   return stripMarkdown(String(value));
+};
+
+// Adds visual "tracking" (letter-spacing) for small-caps style headings —
+// pdf-lib has no native letter-spacing, so we space the characters ourselves.
+const trackedUpper = (text, spaced = true) => {
+  const s = safeText(text).toUpperCase();
+  return spaced ? s.split('').join('\u200a\u200a') : s;
 };
 
 // =====================================================================
@@ -89,16 +96,13 @@ const extractName = (rawText) => {
   if (!rawText) return null;
   const lines = rawText.split('\n');
   for (const line of lines) {
-    // Strip markdown before testing
     const trimmed = stripMarkdown(line).trim();
     if (!trimmed || trimmed.length < 3 || trimmed.length > 50) continue;
     if (trimmed.includes('@')) continue;
-    
-    // Skip if it contains any common section keywords
+
     const lower = trimmed.toLowerCase();
     if (/(summary|objective|profile|experience|education|skills|projects|certif|language|technolog|contact|phone|email|linkedin|github)/i.test(lower)) continue;
 
-    // Must look like a name: mostly alpha + spaces
     if (/^[A-Za-z][A-Za-z\s.'-]{2,}$/.test(trimmed)) return trimmed;
   }
   return null;
@@ -110,7 +114,6 @@ const extractJobTitle = (rawText) => {
   for (const line of lines) {
     const trimmed = stripMarkdown(line).trim();
     if (!trimmed || trimmed.length > 65) continue;
-    // Skip educational institutions
     if (/(school|university|college|academy|institute|international)/i.test(trimmed)) continue;
     if (/\b(developer|engineer|analyst|architect|manager|designer|consultant|specialist|lead|intern|full[- ]?stack|backend|frontend|data\s*scientist|software|devops|cloud|ml\s*engineer|ai\s*engineer)\b/i.test(trimmed)) {
       return trimmed;
@@ -158,7 +161,6 @@ const parseResumeSections = (text, userData = {}) => {
   let currentSection = null;
   let currentContent = [];
 
-  // Build a filter list to remove redundant contact lines
   const filters = [
     userData.userName,
     userData.email,
@@ -175,7 +177,6 @@ const parseResumeSections = (text, userData = {}) => {
     return false;
   };
 
-  // Lines to always skip (school lines in global header area only — not inside Education)
   const SKIP_SCHOOLS_GLOBAL = ['amity international school'];
 
   const flush = () => {
@@ -200,7 +201,6 @@ const parseResumeSections = (text, userData = {}) => {
       continue;
     }
 
-    // Skip schools outside the Education section
     if (!currentSection || currentSection !== 'Education') {
       if (SKIP_SCHOOLS_GLOBAL.some(s => trimmed.toLowerCase().includes(s))) continue;
     }
@@ -210,7 +210,6 @@ const parseResumeSections = (text, userData = {}) => {
       currentContent = [];
     }
 
-    // Normalise bullet characters
     const normLine = trimmed.replace(/^[\*\-]\s+/, '• ').replace(/^•\s*/, '• ');
     currentContent.push(normLine);
   }
@@ -230,15 +229,14 @@ const splitLabelAndDate = (text) => {
   if (!m) return { label: t, date: '' };
   const date  = m[0].trim();
   let label = t.slice(0, m.index).trim();
-  
-  // Clean up trailing open parentheses or brackets left over from parsing dates
+
   label = label
-    .replace(/[-–—,|]\s*$/, '') // trailing separators
+    .replace(/[-–—,|]\s*$/, '')
     .trim()
-    .replace(/\(\s*$/, '')      // trailing open parenthesis (e.g. "Oracle (")
-    .replace(/\[\s*$/, '')      // trailing open bracket
+    .replace(/\(\s*$/, '')
+    .replace(/\[\s*$/, '')
     .trim();
-    
+
   return { label: label || t, date: label ? date : '' };
 };
 
@@ -255,11 +253,13 @@ export async function generateResumePDF({
   linkedin = null,
   userName = null,
 }) {
-  // --- Extract contact info (always prioritize userName) ---
-  const finalName     = userName || extractName(resumeText) || 'Palash Mishra';
-  const finalEmail    = extractEmail(resumeText)     || email     || 'palashmishra47@gmail.com';
-  const finalPhone    = extractPhoneNumber(resumeText) || phone   || '+91-7428477219';
-  const finalLinkedIn = extractLinkedIn(resumeText)  || linkedin  || 'linkedin.com/in/palash-mishra-6a68a71aa';
+  // --- Extract contact info. IMPORTANT: no hardcoded personal fallback data —
+  // if nothing can be found/provided, the field is simply omitted rather than
+  // silently stamping a stranger's name/email/phone onto someone else's resume.
+  const finalName     = userName || extractName(resumeText) || 'Your Name';
+  const finalEmail    = extractEmail(resumeText)     || email     || '';
+  const finalPhone    = extractPhoneNumber(resumeText) || phone   || '';
+  const finalLinkedIn = extractLinkedIn(resumeText)  || linkedin  || '';
   const finalGitHub   = extractGitHub(resumeText)    || '';
 
   // --- Fonts ---
@@ -314,29 +314,28 @@ export async function generateResumePDF({
   // ====================================================================
   const calculateTotalHeight = (sName, sContact, sSection, sEntryHeader, sSubtitle, sBody, lBody, lEntryHeader, lSubtitle, gSec) => {
     let heightNeeded = 0;
-    
-    // Header heights (no job title subtitle line)
-    heightNeeded += sName + 6;
-    heightNeeded += sContact + 12;
-    heightNeeded += 12; // divider rule
-    
+
+    heightNeeded += sName + 8;
+    heightNeeded += sContact + 14;
+    heightNeeded += 14; // divider rule + breathing room
+
     for (const section of sections) {
-      heightNeeded += 14; // Heading spacing overhead
+      heightNeeded += 16; // heading + tab spacing overhead
       const key = section.title.toLowerCase();
-      
+
       for (const rawLine of section.content) {
         const trimmed = safeText(rawLine).trim();
         if (!trimmed) continue;
-        
+
         const isBullet  = trimmed.startsWith('•');
         const bulletTxt = isBullet ? trimmed.replace(/^•\s*/, '') : '';
-        
+
         if (key === 'summary') {
           const linesCount = wrapText(trimmed, MAX_W, sBody).length;
           heightNeeded += linesCount * lBody + 2;
           continue;
         }
-        
+
         if (key.includes('experience')) {
           if (!isBullet && /\d{4}/.test(trimmed)) {
             const { label } = splitLabelAndDate(trimmed);
@@ -358,10 +357,10 @@ export async function generateResumePDF({
           heightNeeded += linesCount * lBody + 2;
           continue;
         }
-        
+
         if (key.includes('project')) {
           if (!isBullet && trimmed.includes('|')) {
-            const parts = trimmed.split('|').map(p => safeText(p).trim());
+            const parts = trimmed.split('|').map(pt => safeText(pt).trim());
             const display = parts[0];
             const linesCount = wrapText(display, MAX_W - 100, sEntryHeader, { bold: true }).length;
             heightNeeded += linesCount * lEntryHeader + 2;
@@ -387,7 +386,7 @@ export async function generateResumePDF({
           heightNeeded += linesCount * lBody + 2;
           continue;
         }
-        
+
         if (key.includes('education')) {
           if (/amity\s+international\s+school/i.test(trimmed)) continue;
           if (/\d{4}/.test(trimmed) && !/(gpa|cgpa|grade|score)/i.test(trimmed)) {
@@ -405,7 +404,7 @@ export async function generateResumePDF({
           heightNeeded += linesCount * lBody + 2;
           continue;
         }
-        
+
         if (key.includes('skill') || key.includes('technolog')) {
           if (trimmed.includes(':')) {
             const colon  = trimmed.indexOf(':');
@@ -418,70 +417,72 @@ export async function generateResumePDF({
           heightNeeded += linesCount * lBody + 2;
           continue;
         }
-        
+
         const linesCount = wrapText(trimmed, MAX_W, sBody).length;
         heightNeeded += linesCount * lBody + 2;
       }
       heightNeeded += gSec;
     }
-    
+
     return heightNeeded;
   };
 
-  // --- Dynamic Layout Metrics (Slightly larger, much more aesthetic starting sizes) ---
-  let sizeName        = 22;
+  // --- Dynamic Layout Metrics ---
+  let sizeName        = 23;
   let sizeContact     = 9.0;
-  let sizeSection     = 11.0;
+  let sizeSection     = 10.6;
   let sizeEntryHeader = 10.2;
   let sizeSubtitle    = 9.6;
   let sizeBody        = 9.4;
 
-  let lhBody         = 13.5;
+  let lhBody        = 13.5;
   let lhEntryHeader = 14.5;
-  let lhSubtitle     = 13.5;
-  
-  let gapSection = 9.0;
+  let lhSubtitle    = 13.5;
+
+  let gapSection = 10.0;
   let marginY = MARGIN_TOP;
 
-  // Available vertical space is strictly enforced
-  const availableHeight = PAGE_HEIGHT - MARGIN_TOP - MARGIN_BOTTOM; 
+  const availableHeight = PAGE_HEIGHT - MARGIN_TOP - MARGIN_BOTTOM;
   let requiredHeight = calculateTotalHeight(sizeName, sizeContact, sizeSection, sizeEntryHeader, sizeSubtitle, sizeBody, lhBody, lhEntryHeader, lhSubtitle, gapSection);
 
   if (requiredHeight > availableHeight) {
-    // Stage 1 Compression (Slightly compact, still highly aesthetic and readable)
+    // Stage 1 compression
     sizeName        = 20;
     sizeContact     = 8.6;
-    sizeSection     = 10.5;
+    sizeSection     = 10.0;
     sizeEntryHeader = 9.6;
     sizeSubtitle    = 9.1;
     sizeBody        = 8.8;
     lhBody          = 12.2;
     lhEntryHeader   = 13.2;
     lhSubtitle      = 12.2;
-    gapSection      = 6.5;
+    gapSection      = 7.5;
     requiredHeight = calculateTotalHeight(sizeName, sizeContact, sizeSection, sizeEntryHeader, sizeSubtitle, sizeBody, lhBody, lhEntryHeader, lhSubtitle, gapSection);
   }
 
   if (requiredHeight > availableHeight) {
-    // Stage 2 Compression (Minimum threshold to ensure a readable, premium single page)
+    // Stage 2 compression (minimum threshold to stay readable)
     sizeName        = 18;
     sizeContact     = 8.2;
-    sizeSection     = 9.8;
+    sizeSection     = 9.4;
     sizeEntryHeader = 9.2;
     sizeSubtitle    = 8.6;
     sizeBody        = 8.2;
     lhBody          = 11.5;
     lhEntryHeader   = 12.2;
     lhSubtitle      = 11.5;
-    gapSection      = 5.0;
+    gapSection      = 5.5;
   }
 
   // --- Rendering engine ---
   const p = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
   let cursorY = PAGE_HEIGHT - marginY;
 
-  const drawLine = (page, y, color = LIGHT_GRAY, thickness = 0.6) =>
-    page.drawLine({ start: { x: MARGIN_X, y }, end: { x: PAGE_WIDTH - MARGIN_X, y }, thickness, color });
+  const drawLine = (page, y, color = LIGHT_GRAY, thickness = 0.6, x1 = MARGIN_X, x2 = PAGE_WIDTH - MARGIN_X) =>
+    page.drawLine({ start: { x: x1, y }, end: { x: x2, y }, thickness, color });
+
+  const drawRect = (page, x, y, w, h, color) =>
+    page.drawRectangle({ x, y, width: w, height: h, color });
 
   const drawText = (page, text, x, y, size, opts = {}) => {
     const s = safeText(text);
@@ -499,16 +500,17 @@ export async function generateResumePDF({
     return cy;
   };
 
+  // Accent-colored dash bullet (reads cleaner than a round dot at small sizes)
   const drawBullet = (page, text, x, y, maxWidth, size, lineHeight) => {
     const s = safeText(text);
     if (!s) return y;
-    const indent = 12;
-    drawText(page, '•', x, y, size, { color: PRIMARY });
+    const indent = 13;
+    drawText(page, '—', x, y, size, { color: ACCENT });
     return drawWrapped(page, s, x + indent, y, maxWidth - indent, size, lineHeight);
   };
 
   const drawEntryHeader = (page, label, date, x, y, maxWidth, size, lineHeight, opts = {}) => {
-    const lOpts = { bold: true, color: opts.color || BLACK };
+    const lOpts = { bold: true, color: opts.color || PRIMARY };
     const dOpts = { italic: true, color: GRAY };
     if (date) {
       const dw = tw(date, sizeSubtitle, dOpts);
@@ -531,17 +533,19 @@ export async function generateResumePDF({
   // ====================================================================
   const nameW = tw(finalName, sizeName, { bold: true });
   drawText(p, finalName, (PAGE_WIDTH - nameW) / 2, cursorY, sizeName, { bold: true, color: PRIMARY });
-  cursorY -= sizeName + 6;
 
-  // ONLY SHOW DETAILS BELOW NAME (REMOVED TARGET JOB TITLE LINE)
-  const contactParts = [finalEmail, finalPhone, finalLinkedIn];
-  if (finalGitHub) contactParts.push(finalGitHub);
-  const sep   = '  |  ';
+  // Small gold accent tick centered under the name — a quiet signature touch
+  const tickW = 26;
+  drawRect(p, (PAGE_WIDTH - tickW) / 2, cursorY - sizeName + 2, tickW, 1.6, ACCENT);
+  cursorY -= sizeName + 10;
+
+  // Contact row — small gold dot separators instead of plain pipes
+  const contactParts = [finalPhone, finalEmail, finalLinkedIn, finalGitHub].filter(Boolean);
   const cOpts = { color: DARK_GRAY };
-  const sOpts = { color: LIGHT_GRAY };
-  const sepW  = tw(sep, sizeContact, sOpts);
+  const dotGap = 14;
 
-  let totalCW = contactParts.reduce((acc, part) => acc + tw(part, sizeContact, cOpts), 0) + sepW * (contactParts.length - 1);
+  let totalCW = contactParts.reduce((acc, part) => acc + tw(part, sizeContact, cOpts), 0)
+              + dotGap * (contactParts.length - 1);
   let cx = (PAGE_WIDTH - totalCW) / 2;
   if (cx < MARGIN_X) cx = MARGIN_X;
 
@@ -550,23 +554,29 @@ export async function generateResumePDF({
     drawText(p, part, cx, cursorY, sizeContact, cOpts);
     cx += tw(part, sizeContact, cOpts);
     if (i < contactParts.length - 1) {
-      drawText(p, sep, cx, cursorY, sizeContact, sOpts);
-      cx += sepW;
+      const midX = cx + dotGap / 2;
+      p.drawCircle({ x: midX, y: cursorY + sizeContact * 0.32, size: 1.1, color: ACCENT });
+      cx += dotGap;
     }
   }
-  cursorY -= 12;
+  cursorY -= 14;
 
-  drawLine(p, cursorY, PRIMARY, 1.2);
-  cursorY -= 12;
+  // Header divider: short bold navy segment + long faint hairline (subtle asymmetry reads as designed, not templated)
+  drawLine(p, cursorY, PRIMARY, 1.4, MARGIN_X, MARGIN_X + 46);
+  drawLine(p, cursorY, RULE_FAINT, 0.75, MARGIN_X + 54, PAGE_WIDTH - MARGIN_X);
+  cursorY -= 14;
 
   // ====================================================================
   // WRITE SECTIONS
   // ====================================================================
   for (const section of sections) {
-    drawText(p, section.title.toUpperCase(), MARGIN_X, cursorY, sizeSection, { bold: true, color: PRIMARY });
-    cursorY -= 3;
-    drawLine(p, cursorY, LIGHT_GRAY, 0.5);
-    cursorY -= 7;
+    // Section heading with small accent tab + tracked-out caps for a premium, editorial feel
+    const tabW = 3, tabH = sizeSection * 0.78;
+    drawRect(p, MARGIN_X, cursorY - tabH + sizeSection * 0.16, tabW, tabH, ACCENT);
+    drawText(p, trackedUpper(section.title), MARGIN_X + tabW + 7, cursorY, sizeSection, { bold: true, color: PRIMARY });
+    cursorY -= 4;
+    drawLine(p, cursorY, RULE_FAINT, 0.6);
+    cursorY -= 9;
 
     const key = section.title.toLowerCase();
 
@@ -593,12 +603,12 @@ export async function generateResumePDF({
       if (key.includes('experience')) {
         if (!isBullet && /\d{4}/.test(trimmed)) {
           const { label, date } = splitLabelAndDate(trimmed);
-          cursorY = drawEntryHeader(p, safeText(label), date, MARGIN_X, cursorY, MAX_W, sizeEntryHeader, lhEntryHeader, { color: BLACK });
+          cursorY = drawEntryHeader(p, safeText(label), date, MARGIN_X, cursorY, MAX_W, sizeEntryHeader, lhEntryHeader, { color: PRIMARY });
           cursorY -= 2;
           continue;
         }
         if (!isBullet && /\b(developer|engineer|intern|analyst|consultant|lead|architect|manager|designer|specialist|devops|sde)\b/i.test(trimmed)) {
-          cursorY = drawWrapped(p, trimmed, MARGIN_X, cursorY, MAX_W, sizeSubtitle, lhSubtitle, { italic: true, color: PRIMARY });
+          cursorY = drawWrapped(p, trimmed, MARGIN_X, cursorY, MAX_W, sizeSubtitle, lhSubtitle, { italic: true, color: ACCENT });
           cursorY -= 2;
           continue;
         }
@@ -661,7 +671,7 @@ export async function generateResumePDF({
           continue;
         }
         if (!isBullet) {
-          cursorY = drawWrapped(p, trimmed, MARGIN_X, cursorY, MAX_W, sizeEntryHeader, lhEntryHeader, { bold: true });
+          cursorY = drawWrapped(p, trimmed, MARGIN_X, cursorY, MAX_W, sizeEntryHeader, lhEntryHeader, { bold: true, color: PRIMARY });
           cursorY -= 2;
           continue;
         }
@@ -678,7 +688,7 @@ export async function generateResumePDF({
           const value  = trimmed.slice(colon + 1).trim();
           const lStr   = `${label}: `;
           const lW     = tw(lStr, sizeBody, { bold: true });
-          drawText(p, lStr, MARGIN_X, cursorY, sizeBody, { bold: true, color: BLACK });
+          drawText(p, lStr, MARGIN_X, cursorY, sizeBody, { bold: true, color: PRIMARY });
           cursorY = drawWrapped(p, value, MARGIN_X + lW, cursorY, MAX_W - lW, sizeBody, lhBody, { color: DARK_GRAY });
           cursorY -= 2;
           continue;

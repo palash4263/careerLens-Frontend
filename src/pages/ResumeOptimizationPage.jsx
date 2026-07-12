@@ -326,6 +326,7 @@ export default function ResumeOptimizationPage() {
   const [viewMode, setViewMode] = useState('side-by-side');
   const [downloading, setDownloading] = useState(false);
   const [celebrationKey, setCelebrationKey] = useState(0);
+  const [mobileCompareTab, setMobileCompareTab] = useState('optimized');
   const reduceMotion = useReducedMotion();
 
   // Ambient hero glow that drifts very gently toward the cursor. Purely atmospheric —
@@ -1180,12 +1181,26 @@ export default function ResumeOptimizationPage() {
                   >
                     <div className="compare-header-modern">
                       <h3>📝 Before & After</h3>
+                      <div className="mobile-compare-tabs-selector">
+                        <button 
+                          className={`mobile-tab-btn ${mobileCompareTab === 'original' ? 'active' : ''}`}
+                          onClick={() => setMobileCompareTab('original')}
+                        >
+                          📄 Original
+                        </button>
+                        <button 
+                          className={`mobile-tab-btn ${mobileCompareTab === 'optimized' ? 'active' : ''}`}
+                          onClick={() => setMobileCompareTab('optimized')}
+                        >
+                          ✨ Optimized
+                        </button>
+                      </div>
                       <span className="compare-hint">Scroll to see all changes</span>
                     </div>
 
                     <div className="compare-grid-modern">
                       <motion.div
-                        className="compare-col-modern before"
+                        className={`compare-col-modern before ${mobileCompareTab === 'original' ? 'mobile-visible' : 'mobile-hidden'}`}
                         initial={{ x: -30, opacity: 0 }}
                         animate={{ x: 0, opacity: 1 }}
                         transition={{ delay: 0.1 }}
@@ -1200,7 +1215,7 @@ export default function ResumeOptimizationPage() {
                       </motion.div>
 
                       <motion.div
-                        className="compare-col-modern after"
+                        className={`compare-col-modern after ${mobileCompareTab === 'optimized' ? 'mobile-visible' : 'mobile-hidden'}`}
                         initial={{ x: 30, opacity: 0 }}
                         animate={{ x: 0, opacity: 1 }}
                         transition={{ delay: 0.2 }}

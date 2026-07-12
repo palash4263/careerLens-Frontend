@@ -1,5 +1,6 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { motion } from "framer-motion";
+import api from "../api/axiosConfig";
 import "./PricingSection.css";
 
 // Helper component: MIcon
@@ -97,31 +98,9 @@ const AnimatedText = ({ text }) => {
   );
 };
 
-// Primary & Secondary Buttons
-export const PrimaryButton = ({ href, children }) => {
-  return (
-    <button 
-      onClick={() => window.open(href, "_self")}
-      className="pricing-btn pricing-btn-primary"
-    >
-      <AnimatedText text={children} />
-    </button>
-  );
-};
-
-export const SecondaryButton = ({ href, children }) => {
-  return (
-    <button 
-      onClick={() => window.open(href, "_self")}
-      className="pricing-btn pricing-btn-secondary"
-    >
-      <AnimatedText text={children} />
-    </button>
-  );
-};
-
 const plans = [
   {
+    key: "pro",
     name: "Professional Plan",
     price: "250",
     originalPrice: "499",
@@ -136,6 +115,7 @@ const plans = [
     ],
   },
   {
+    key: "elite",
     name: "Elite Pro Plan",
     price: "600",
     originalPrice: "1199",
@@ -153,7 +133,7 @@ const plans = [
   },
 ];
 
-const PricingCard = ({ plan }) => {
+const PricingCard = ({ plan, onCheckout, processing }) => {
   return (
     <SpotlightBorder 
       radius="2xl" 
@@ -192,11 +172,15 @@ const PricingCard = ({ plan }) => {
 
         <FadeUp delay={0.3}>
           <div className="pricing-card-btn-wrap">
-            {plan.featured ? (
-              <PrimaryButton href="/resume-optimizer">Get Started</PrimaryButton>
-            ) : (
-              <SecondaryButton href="/resume-optimizer">Get Started</SecondaryButton>
-            )}
+            <button 
+              disabled={processing}
+              onClick={() => onCheckout(plan.key)}
+              className={`pricing-btn ${plan.featured ? 'pricing-btn-primary' : 'pricing-btn-secondary'}`}
+            >
+              <AnimatedText>
+                {processing ? "Processing..." : "Get Started"}
+              </AnimatedText>
+            </button>
           </div>
         </FadeUp>
 
@@ -225,13 +209,90 @@ const PricingCard = ({ plan }) => {
 };
 
 const PricingSection = () => {
+  const [loading, setLoading] = useState(false);
+
+  const handleCheckout = async (planKey) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Please log in to upgrade your subscription!");
+      window.location.href = "/login";
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // 1. Create order on FastAPI Backend
+      const response = await api.post("/payments/create-order", { plan: planKey });
+      const { order_id, amount, currency, key_id } = response.data;
+
+      // 2. Setup Razorpay options
+      const options = {
+        key: key_id,
+        amount: amount,
+        currency: currency,
+        name: "CareerLens AI",
+        description: planKey === "pro" ? "Professional Plan Upgrade" : "Elite Pro Plan Upgrade",
+        order_id: order_id,
+        handler: async function (paymentResponse) {
+          try {
+            // 3. Verify payment signature on FastAPI Backend
+            const verification = await api.post("/payments/verify-payment", {
+              razorpay_order_id: paymentResponse.razorpay_order_id,
+              razorpay_payment_id: paymentResponse.razorpay_payment_id,
+              razorpay_signature: paymentResponse.razorpay_signature || "mock_signature",
+              plan: planKey
+            });
+
+            if (verification.data.status === "success") {
+              // Update local state role
+              localStorage.setItem("userRole", planKey);
+              alert(`🎉 Payment Successful! Upgraded to ${planKey === "pro" ? "Professional" : "Elite Pro"} plan.`);
+              window.location.href = "/dashboard";
+            } else {
+              alert("Payment verification failed. Please try again or contact support.");
+            }
+          } catch (err) {
+            console.error("Verification error:", err);
+            alert("Error verifying payment signature. Please contact support.");
+          }
+        },
+        prefill: {
+          name: localStorage.getItem("userName") || "",
+          email: localStorage.getItem("userEmail") || "",
+        },
+        theme: {
+          color: "#0f172a",
+        },
+        modal: {
+          ondismiss: function () {
+            setLoading(false);
+          }
+        }
+      };
+
+      // 3. Launch Razorpay native modal
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (error) {
+      console.error("Order creation failed:", error);
+      alert("Failed to initiate checkout. Please check your internet connection.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <section id="pricing" className="pricing-section">
       <div className="pricing-container">
         {/* CARDS */}
         <div className="pricing-grid">
           {plans.map((p) => (
-            <PricingCard key={p.name} plan={p} />
+            <PricingCard 
+              key={p.name} 
+              plan={p} 
+              onCheckout={handleCheckout} 
+              processing={loading} 
+            />
           ))}
         </div>
       </div>

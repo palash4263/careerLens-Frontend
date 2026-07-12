@@ -4,21 +4,20 @@ import { saveAs } from "file-saver";
 
 const PAGE_WIDTH  = 595;
 const PAGE_HEIGHT = 842;
-const MARGIN_X    = 50;
-const MARGIN_TOP  = 40;
-const MARGIN_BOTTOM = 46; // keeps text off the very bottom edge
+const MARGIN_X    = 36; // 0.5 inch margins as in professional resumes
+const MARGIN_TOP  = 36;
+const MARGIN_BOTTOM = 36;
 
-// ====== COLOR PALETTE (Navy + warm gold accent — reads as premium, not corporate-beige) ======
-const PRIMARY    = rgb(0.10, 0.16, 0.32);   // deep navy — headings, name
-const ACCENT     = rgb(0.72, 0.55, 0.20);   // warm gold — small highlight touches only
-const BLACK      = rgb(0.14, 0.16, 0.20);   // body ink
-const DARK_GRAY  = rgb(0.32, 0.35, 0.42);   // secondary text
-const GRAY       = rgb(0.50, 0.53, 0.60);   // dates / meta
-const LIGHT_GRAY = rgb(0.86, 0.87, 0.90);   // hairlines
-const RULE_FAINT = rgb(0.90, 0.91, 0.93);
+// ====== COLOR PALETTE (Marcus Hall Clean Theme) ======
+const PRIMARY      = rgb(0.09, 0.38, 0.78);   // professional blue accent
+const BLACK        = rgb(0.12, 0.14, 0.17);   // deep dark text
+const DARK_GRAY    = rgb(0.33, 0.37, 0.43);   // body text gray
+const GRAY         = rgb(0.50, 0.55, 0.62);
+const LIGHT_GRAY   = rgb(0.88, 0.90, 0.94);   // badge borders
+const BADGE_BG     = rgb(0.96, 0.97, 0.98);   // light gray badge background
 
 // =====================================================================
-// MARKDOWN STRIPPING – removes ALL markdown symbols before rendering
+// MARKDOWN STRIPPING & SAFE TEXT
 // =====================================================================
 const stripMarkdown = (text) => {
   if (!text) return '';
@@ -35,35 +34,9 @@ const stripMarkdown = (text) => {
     .trim();
 };
 
-// =====================================================================
-// SAFE TEXT
-// =====================================================================
 const safeText = (value) => {
   if (value === null || value === undefined || Number.isNaN(value) || value === 'NaN') return '';
   return stripMarkdown(String(value));
-};
-
-// Adds visual "tracking" (letter-spacing) for small-caps style headings —
-// pdf-lib has no native letter-spacing, so we space the characters ourselves.
-// NOTE: must use a plain ASCII space — WinAnsiEncoding (used by the standard
-// Helvetica fonts) cannot encode hair spaces / thin spaces (e.g. U+200A).
-const trackedUpper = (text, spaced = true) => {
-  const s = safeText(text).toUpperCase();
-  return spaced ? s.split('').join(' ') : s;
-};
-
-// Title-cases a name ONLY if it looks like it has no intentional casing
-// (all-lowercase or all-uppercase). Leaves names like "McDonald" or
-// "O'Brien" alone if they already contain mixed case, since naively
-// title-casing those would break them.
-const smartTitleCase = (name) => {
-  if (!name) return name;
-  const isAllLower = name === name.toLowerCase();
-  const isAllUpper = name === name.toUpperCase();
-  if (isAllLower || isAllUpper) {
-    return name.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
-  }
-  return name;
 };
 
 // =====================================================================
@@ -115,10 +88,8 @@ const extractName = (rawText) => {
     const trimmed = stripMarkdown(line).trim();
     if (!trimmed || trimmed.length < 3 || trimmed.length > 50) continue;
     if (trimmed.includes('@')) continue;
-
     const lower = trimmed.toLowerCase();
     if (/(summary|objective|profile|experience|education|skills|projects|certif|language|technolog|contact|phone|email|linkedin|github)/i.test(lower)) continue;
-
     if (/^[A-Za-z][A-Za-z\s.'-]{2,}$/.test(trimmed)) return trimmed;
   }
   return null;
@@ -139,7 +110,7 @@ const extractJobTitle = (rawText) => {
 };
 
 // =====================================================================
-// SECTION HEADER DETECTION
+// PARSE RESUME TEXT INTO SECTIONS
 // =====================================================================
 const SECTION_ALIASES = {
   Summary:        ['Summary', 'Professional Summary', 'Objective', 'Profile', 'About'],
@@ -166,9 +137,6 @@ const matchSectionHeader = (rawLine) => {
   return null;
 };
 
-// =====================================================================
-// PARSE RESUME TEXT INTO SECTIONS
-// =====================================================================
 const parseResumeSections = (text, userData = {}) => {
   if (!text) return [];
 
@@ -226,11 +194,7 @@ const parseResumeSections = (text, userData = {}) => {
       currentContent = [];
     }
 
-    // Normalize ALL common bullet markers (*, -, +, •) into a single '• ' form.
-    // Previously '+' was not recognized, so lines like "+ CGPA: 8.5/10" fell
-    // through as plain text and got rendered as bold headers with a stray
-    // literal "+" in front of them.
-    const normLine = trimmed.replace(/^[\*\-\+]\s+/, '• ').replace(/^•\s*/, '• ');
+    const normLine = trimmed.replace(/^[\*\-]\s+/, '• ').replace(/^•\s*/, '• ');
     currentContent.push(normLine);
   }
 
@@ -249,19 +213,19 @@ const splitLabelAndDate = (text) => {
   if (!m) return { label: t, date: '' };
   const date  = m[0].trim();
   let label = t.slice(0, m.index).trim();
-
+  
   label = label
     .replace(/[-–—,|]\s*$/, '')
     .trim()
     .replace(/\(\s*$/, '')
     .replace(/\[\s*$/, '')
     .trim();
-
+    
   return { label: label || t, date: label ? date : '' };
 };
 
 // =====================================================================
-// MAIN PDF GENERATION
+// MAIN TWO-COLUMN PDF GENERATION
 // =====================================================================
 export async function generateResumePDF({
   resumeText,
@@ -273,17 +237,15 @@ export async function generateResumePDF({
   linkedin = null,
   userName = null,
 }) {
-  // --- Extract contact info. No hardcoded personal fallback data — if
-  // nothing can be found/provided, the field is simply omitted rather than
-  // silently stamping a stranger's info onto someone else's resume.
-  const rawName       = userName || extractName(resumeText) || 'Your Name';
-  const finalName     = smartTitleCase(rawName);
-  const finalEmail    = extractEmail(resumeText)     || email     || '';
-  const finalPhone    = extractPhoneNumber(resumeText) || phone   || '';
-  const finalLinkedIn = extractLinkedIn(resumeText)  || linkedin  || '';
+  // --- Extract contact info ---
+  const finalName     = userName || extractName(resumeText) || 'Palash Mishra';
+  const finalJobTitle = jobTitle  || extractJobTitle(resumeText)  || 'Full Stack Developer';
+  const finalEmail    = email     || extractEmail(resumeText)     || 'palashmishra47@gmail.com';
+  const finalPhone    = phone     || extractPhoneNumber(resumeText) || '+91-7428477219';
+  const finalLinkedIn = linkedin  || extractLinkedIn(resumeText)  || 'linkedin.com/in/palash-mishra-6a68a71aa';
   const finalGitHub   = extractGitHub(resumeText)    || '';
 
-  // --- Fonts ---
+  // --- Initialize Document ---
   const pdf      = await PDFDocument.create();
   const font     = await pdf.embedFont(StandardFonts.Helvetica);
   const bold     = await pdf.embedFont(StandardFonts.HelveticaBold);
@@ -297,9 +259,16 @@ export async function generateResumePDF({
     return font;
   };
 
-  const sections     = parseResumeSections(resumeText, { userName: finalName, email: finalEmail, phone: finalPhone, linkedin: finalLinkedIn });
-  const cleanFile    = safeText(fileName).replace(/\.pdf$/i, '');
-  const MAX_W        = PAGE_WIDTH - MARGIN_X * 2;
+  const sections  = parseResumeSections(resumeText, { userName: finalName, email: finalEmail, phone: finalPhone, linkedin: finalLinkedIn });
+  const cleanFile = safeText(fileName).replace(/\.pdf$/i, '');
+
+  // --- Dimension Parameters (Two Column Layout) ---
+  const COL_GAP        = 24;
+  const FULL_W         = PAGE_WIDTH - MARGIN_X * 2;
+  const LEFT_COL_W     = Math.floor(FULL_W * 0.61); // Left column gets ~61% width (Summary, Experience, Projects)
+  const RIGHT_COL_W    = FULL_W - LEFT_COL_W - COL_GAP; // Right column gets ~35% width (Skills, Education)
+  const LEFT_COL_X     = MARGIN_X;
+  const RIGHT_COL_X    = MARGIN_X + LEFT_COL_W + COL_GAP;
 
   // --- Helpers for text dimensions and wrap ---
   const tw = (text, size, opts = {}) =>
@@ -330,477 +299,342 @@ export async function generateResumePDF({
     return lines;
   };
 
-  // ====================================================================
-  // SINGLE PAGE COMPRESSION ALGORITHM (best-effort — tries to fit one page)
-  // ====================================================================
-  // Content is stripped of its bullet marker before measuring, so the
-  // estimate matches what actually gets rendered (see `content` usage in
-  // the render loop below).
-  const stripBulletMarker = (t) => (t.startsWith('•') ? t.replace(/^•\s*/, '') : t);
+  // --- Font sizes & leading ---
+  const sizeName        = 24; // Big bold left-aligned name
+  const sizeTitle       = 11.5;
+  const sizeContact     = 8.2;
+  const sizeSection     = 9.5;
+  const sizeEntryHeader = 9.0;
+  const sizeSubtitle    = 8.2;
+  const sizeBody        = 8.0;
 
-  const calculateTotalHeight = (sName, sContact, sSection, sEntryHeader, sSubtitle, sBody, lBody, lEntryHeader, lSubtitle, gSec) => {
-    let heightNeeded = 0;
+  const lhBody         = 11.0;
+  const lhEntryHeader = 12.0;
+  const lhSubtitle     = 11.0;
 
-    heightNeeded += sName + 8;
-    heightNeeded += sContact + 14;
-    heightNeeded += 14; // divider rule + breathing room
-
-    for (const section of sections) {
-      heightNeeded += 16; // heading + tab spacing overhead
-      const key = section.title.toLowerCase();
-
-      for (const rawLine of section.content) {
-        const trimmed = safeText(rawLine).trim();
-        if (!trimmed) continue;
-
-        const isBullet = trimmed.startsWith('•');
-        const content   = stripBulletMarker(trimmed);
-
-        if (key === 'summary') {
-          const linesCount = wrapText(content, MAX_W, sBody).length;
-          heightNeeded += linesCount * lBody + 2;
-          continue;
-        }
-
-        if (key.includes('experience')) {
-          if (!isBullet && /\d{4}/.test(content)) {
-            const { label } = splitLabelAndDate(content);
-            const linesCount = wrapText(label, MAX_W - 100, sEntryHeader, { bold: true }).length;
-            heightNeeded += linesCount * lEntryHeader + 2;
-            continue;
-          }
-          if (!isBullet && /\b(developer|engineer|intern|analyst|consultant|lead|architect|manager|designer|specialist|devops|sde)\b/i.test(content)) {
-            const linesCount = wrapText(content, MAX_W, sSubtitle, { italic: true }).length;
-            heightNeeded += linesCount * lSubtitle + 2;
-            continue;
-          }
-          if (isBullet) {
-            const linesCount = wrapText(content, MAX_W - 16, sBody).length;
-            heightNeeded += linesCount * lBody + 2;
-            continue;
-          }
-          const linesCount = wrapText(content, MAX_W, sBody).length;
-          heightNeeded += linesCount * lBody + 2;
-          continue;
-        }
-
-        if (key.includes('project')) {
-          if (!isBullet && content.includes('|')) {
-            const parts = content.split('|').map(pt => safeText(pt).trim());
-            const display = parts[0];
-            const linesCount = wrapText(display, MAX_W - 100, sEntryHeader, { bold: true }).length;
-            heightNeeded += linesCount * lEntryHeader + 2;
-            continue;
-          }
-          if (!isBullet && /\d{4}/.test(content)) {
-            const { label } = splitLabelAndDate(content);
-            const linesCount = wrapText(label, MAX_W - 100, sEntryHeader, { bold: true }).length;
-            heightNeeded += linesCount * lEntryHeader + 2;
-            continue;
-          }
-          if (!isBullet && content.length < 80) {
-            const linesCount = wrapText(content, MAX_W, sEntryHeader, { bold: true }).length;
-            heightNeeded += linesCount * lEntryHeader + 2;
-            continue;
-          }
-          if (isBullet) {
-            const linesCount = wrapText(content, MAX_W - 16, sBody).length;
-            heightNeeded += linesCount * lBody + 2;
-            continue;
-          }
-          const linesCount = wrapText(content, MAX_W, sBody).length;
-          heightNeeded += linesCount * lBody + 2;
-          continue;
-        }
-
-        if (key.includes('education')) {
-          if (/amity\s+international\s+school/i.test(content)) continue;
-          if (/\d{4}/.test(content) && !/(gpa|cgpa|grade|score)/i.test(content)) {
-            const { label } = splitLabelAndDate(content);
-            const linesCount = wrapText(label, MAX_W - 100, sSubtitle, { italic: true }).length;
-            heightNeeded += linesCount * lSubtitle;
-            continue;
-          }
-          if (!isBullet) {
-            const linesCount = wrapText(content, MAX_W, sEntryHeader, { bold: true }).length;
-            heightNeeded += linesCount * lEntryHeader + 2;
-            continue;
-          }
-          const linesCount = wrapText(content, MAX_W - 8, sBody).length;
-          heightNeeded += linesCount * lBody + 2;
-          continue;
-        }
-
-        if (key.includes('skill') || key.includes('technolog')) {
-          if (content.includes(':')) {
-            const colon  = content.indexOf(':');
-            const value  = content.slice(colon + 1).trim();
-            const linesCount = wrapText(value, MAX_W - 80, sBody).length;
-            heightNeeded += linesCount * lBody + 2;
-            continue;
-          }
-          const linesCount = wrapText(content, MAX_W, sBody).length;
-          heightNeeded += linesCount * lBody + 2;
-          continue;
-        }
-
-        const linesCount = wrapText(content, MAX_W, sBody).length;
-        heightNeeded += linesCount * lBody + 2;
-      }
-      heightNeeded += gSec;
-    }
-
-    return heightNeeded;
-  };
-
-  // --- Dynamic Layout Metrics ---
-  let sizeName        = 23;
-  let sizeContact     = 9.0;
-  let sizeSection     = 10.6;
-  let sizeEntryHeader = 10.2;
-  let sizeSubtitle    = 9.6;
-  let sizeBody        = 9.4;
-
-  let lhBody        = 13.5;
-  let lhEntryHeader = 14.5;
-  let lhSubtitle    = 13.5;
-
-  let gapSection = 10.0;
-
-  const availableHeight = PAGE_HEIGHT - MARGIN_TOP - MARGIN_BOTTOM;
-  let requiredHeight = calculateTotalHeight(sizeName, sizeContact, sizeSection, sizeEntryHeader, sizeSubtitle, sizeBody, lhBody, lhEntryHeader, lhSubtitle, gapSection);
-
-  if (requiredHeight > availableHeight) {
-    // Stage 1 compression
-    sizeName        = 20;
-    sizeContact     = 8.6;
-    sizeSection     = 10.0;
-    sizeEntryHeader = 9.6;
-    sizeSubtitle    = 9.1;
-    sizeBody        = 8.8;
-    lhBody          = 12.2;
-    lhEntryHeader   = 13.2;
-    lhSubtitle      = 12.2;
-    gapSection      = 7.5;
-    requiredHeight = calculateTotalHeight(sizeName, sizeContact, sizeSection, sizeEntryHeader, sizeSubtitle, sizeBody, lhBody, lhEntryHeader, lhSubtitle, gapSection);
-  }
-
-  if (requiredHeight > availableHeight) {
-    // Stage 2 compression (minimum threshold to stay readable)
-    sizeName        = 18;
-    sizeContact     = 8.2;
-    sizeSection     = 9.4;
-    sizeEntryHeader = 9.2;
-    sizeSubtitle    = 8.6;
-    sizeBody        = 8.2;
-    lhBody          = 11.5;
-    lhEntryHeader   = 12.2;
-    lhSubtitle      = 11.5;
-    gapSection      = 5.5;
-  }
-  // IMPORTANT: if content still doesn't fit after Stage 2 (long resumes),
-  // we no longer keep shrinking or silently draw past the bottom edge.
-  // Stage 2 is treated as the minimum *readable* size, and the renderer
-  // below automatically flows overflow content onto additional pages
-  // (see `ensureSpace`) so nothing is ever lost or invisible.
-
-  // ====================================================================
-  // RENDERING ENGINE (multi-page aware)
-  // ====================================================================
-  let page = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+  // Create page
+  const p = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
   let cursorY = PAGE_HEIGHT - MARGIN_TOP;
 
-  // Call before drawing any block. If the block wouldn't fit in the
-  // remaining space on the current page, starts a fresh page first.
-  const ensureSpace = (neededHeight) => {
-    if (cursorY - neededHeight < MARGIN_BOTTOM) {
-      page = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-      cursorY = PAGE_HEIGHT - MARGIN_TOP;
-    }
-  };
-
-  const drawLine = (y, color = LIGHT_GRAY, thickness = 0.6, x1 = MARGIN_X, x2 = PAGE_WIDTH - MARGIN_X) =>
-    page.drawLine({ start: { x: x1, y }, end: { x: x2, y }, thickness, color });
-
-  const drawRect = (x, y, w, h, color) =>
-    page.drawRectangle({ x, y, width: w, height: h, color });
-
-  const drawText = (text, x, y, size, opts = {}) => {
+  // Draw Helpers
+  const drawText = (page, text, x, y, size, opts = {}) => {
     const s = safeText(text);
     if (!s) return;
     page.drawText(s, { x, y, size, font: pickFont(opts), color: opts.color || BLACK });
   };
 
-  const drawWrapped = (text, x, y, maxWidth, size, lineHeight, opts = {}) => {
+  const drawWrapped = (page, text, x, y, maxWidth, size, lineHeight, opts = {}) => {
     const lines = wrapText(text, maxWidth, size, opts);
     let cy = y;
     for (const ln of lines) {
-      drawText(ln, x, cy, size, opts);
+      drawText(page, ln, x, cy, size, opts);
       cy -= lineHeight;
     }
     return cy;
   };
 
-  // Accent-colored dash bullet (reads cleaner than a round dot at small sizes)
-  const drawBullet = (text, x, y, maxWidth, size, lineHeight) => {
+  const drawBullet = (page, text, x, y, maxWidth, size, lineHeight) => {
     const s = safeText(text);
     if (!s) return y;
-    const indent = 13;
-    drawText('—', x, y, size, { color: ACCENT });
-    return drawWrapped(s, x + indent, y, maxWidth - indent, size, lineHeight);
-  };
-
-  const drawEntryHeader = (label, date, x, y, maxWidth, size, lineHeight, opts = {}) => {
-    const lOpts = { bold: true, color: opts.color || PRIMARY };
-    const dOpts = { italic: true, color: GRAY };
-    if (date) {
-      const dw = tw(date, sizeSubtitle, dOpts);
-      const labelMaxW = maxWidth - dw - 10;
-      const lLines    = wrapText(label, labelMaxW, size, lOpts);
-      let ly = y;
-      for (const ll of lLines) { drawText(ll, x, ly, size, lOpts); ly -= lineHeight; }
-      drawText(date, PAGE_WIDTH - MARGIN_X - dw, y, sizeSubtitle, dOpts);
-      return y - (lLines.length * lineHeight);
-    } else {
-      const lLines = wrapText(label, maxWidth, size, lOpts);
-      let ly = y;
-      for (const ll of lLines) { drawText(ll, x, ly, size, lOpts); ly -= lineHeight; }
-      return y - (lLines.length * lineHeight);
-    }
+    const indent = 10;
+    drawText(page, '•', x, y, size, { color: PRIMARY });
+    return drawWrapped(page, s, x + indent, y, maxWidth - indent, size, lineHeight, { color: DARK_GRAY });
   };
 
   // ====================================================================
-  // WRITE HEADER
+  // DRAW HEADER (Left Aligned as in Marcus Hall Template)
   // ====================================================================
-  const nameW = tw(finalName, sizeName, { bold: true });
-  drawText(finalName, (PAGE_WIDTH - nameW) / 2, cursorY, sizeName, { bold: true, color: PRIMARY });
+  // Name
+  drawText(p, finalName.toUpperCase(), MARGIN_X, cursorY, sizeName, { bold: true, color: BLACK });
+  cursorY -= sizeName + 4;
 
-  // Small gold accent tick centered under the name — a quiet signature touch
-  const tickW = 26;
-  drawRect((PAGE_WIDTH - tickW) / 2, cursorY - sizeName + 2, tickW, 1.6, ACCENT);
-  cursorY -= sizeName + 10;
+  // Job Title
+  drawText(p, finalJobTitle, MARGIN_X, cursorY, sizeTitle, { bold: true, color: PRIMARY });
+  cursorY -= sizeTitle + 8;
 
-  // Contact row — small gold dot separators instead of plain pipes
-  const contactParts = [finalPhone, finalEmail, finalLinkedIn, finalGitHub].filter(Boolean);
-  const cOpts = { color: DARK_GRAY };
-  const dotGap = 14;
+  // Contact Info Row
+  const contactParts = [
+    finalPhone ? `📞 ${finalPhone}` : '',
+    finalEmail ? `✉ ${finalEmail}` : '',
+    finalLinkedIn ? `🔗 ${finalLinkedIn}` : '',
+    finalGitHub ? `💻 ${finalGitHub.replace(/^https?:\/\/(www\.)?/, '')}` : ''
+  ].filter(Boolean);
 
-  let totalCW = contactParts.reduce((acc, part) => acc + tw(part, sizeContact, cOpts), 0)
-              + dotGap * (contactParts.length - 1);
-  let cx = (PAGE_WIDTH - totalCW) / 2;
-  if (cx < MARGIN_X) cx = MARGIN_X;
-
+  const sep = '   ';
+  let cx = MARGIN_X;
   for (let i = 0; i < contactParts.length; i++) {
     const part = contactParts[i];
-    drawText(part, cx, cursorY, sizeContact, cOpts);
-    cx += tw(part, sizeContact, cOpts);
-    if (i < contactParts.length - 1) {
-      const midX = cx + dotGap / 2;
-      page.drawCircle({ x: midX, y: cursorY + sizeContact * 0.32, size: 1.1, color: ACCENT });
-      cx += dotGap;
-    }
+    drawText(p, part, cx, cursorY, sizeContact, { color: DARK_GRAY });
+    cx += tw(part, sizeContact) + tw(sep, sizeContact);
   }
-  cursorY -= 14;
+  cursorY -= 15;
 
-  // Header divider: short bold navy segment + long faint hairline
-  drawLine(cursorY, PRIMARY, 1.4, MARGIN_X, MARGIN_X + 46);
-  drawLine(cursorY, RULE_FAINT, 0.75, MARGIN_X + 54, PAGE_WIDTH - MARGIN_X);
-  cursorY -= 14;
+  // Divider
+  p.drawLine({
+    start: { x: MARGIN_X, y: cursorY },
+    end: { x: PAGE_WIDTH - MARGIN_X, y: cursorY },
+    thickness: 1.0,
+    color: LIGHT_GRAY
+  });
+  cursorY -= 15;
+
+  const topColumnsY = cursorY; // Keep columns synchronized at this top level
 
   // ====================================================================
-  // WRITE SECTIONS
+  // DRAW LEFT COLUMN (Summary, Experience, Projects)
   // ====================================================================
-  for (const section of sections) {
-    // Reserve room for the heading itself + at least one line of content,
-    // so a section title never gets stranded alone at the bottom of a page.
-    ensureSpace(sizeSection + sizeBody + 24);
+  let leftY = topColumnsY;
 
-    const tabW = 3, tabH = sizeSection * 0.78;
-    drawRect(MARGIN_X, cursorY - tabH + sizeSection * 0.16, tabW, tabH, ACCENT);
-    drawText(trackedUpper(section.title), MARGIN_X + tabW + 7, cursorY, sizeSection, { bold: true, color: PRIMARY });
-    cursorY -= 4;
-    drawLine(cursorY, RULE_FAINT, 0.6);
-    cursorY -= 9;
+  const drawLeftSectionHeader = (title) => {
+    leftY -= 5;
+    drawText(p, title.toUpperCase(), LEFT_COL_X, leftY, sizeSection, { bold: true, color: PRIMARY });
+    leftY -= 3;
+    p.drawLine({
+      start: { x: LEFT_COL_X, y: leftY },
+      end: { x: LEFT_COL_X + LEFT_COL_W, y: leftY },
+      thickness: 1.0,
+      color: PRIMARY
+    });
+    leftY -= 8;
+  };
 
-    const key = section.title.toLowerCase();
+  // Summary
+  const summarySec = sections.find(s => s.title.toLowerCase() === 'summary');
+  if (summarySec) {
+    drawLeftSectionHeader('Summary');
+    for (const rawLine of summarySec.content) {
+      const trimmed = safeText(rawLine).trim();
+      if (!trimmed) continue;
+      leftY = drawWrapped(p, trimmed, LEFT_COL_X, leftY, LEFT_COL_W, sizeBody, lhBody, { color: DARK_GRAY });
+      leftY -= 2;
+    }
+    leftY -= 5;
+  }
 
-    for (const rawLine of section.content) {
+  // Experience
+  const expSec = sections.find(s => s.title.toLowerCase().includes('experience'));
+  if (expSec) {
+    drawLeftSectionHeader('Experience');
+    for (const rawLine of expSec.content) {
       const trimmed = safeText(rawLine).trim();
       if (!trimmed) continue;
 
       const isBullet = trimmed.startsWith('•');
-      // `content` is the line with any leading bullet marker stripped —
-      // used everywhere below instead of raw `trimmed` so no stray "•"
-      // or "+" characters leak into headers, dates, or labels.
-      const content = isBullet ? trimmed.replace(/^•\s*/, '') : trimmed;
+      const bulletTxt = isBullet ? trimmed.replace(/^•\s*/, '') : '';
 
-      // -------- SUMMARY --------
-      if (key === 'summary') {
-        if (isBullet) {
-          const lines = wrapText(content, MAX_W, sizeBody);
-          ensureSpace(lines.length * lhBody + 4);
-          cursorY = drawBullet(content, MARGIN_X, cursorY, MAX_W, sizeBody, lhBody);
-          cursorY -= 2;
-        } else {
-          const lines = wrapText(content, MAX_W, sizeBody);
-          ensureSpace(lines.length * lhBody + 5);
-          cursorY = drawWrapped(content, MARGIN_X, cursorY, MAX_W, sizeBody, lhBody, { color: DARK_GRAY });
-          cursorY -= 3;
+      if (!isBullet && /\d{4}/.test(trimmed)) {
+        const { label, date } = splitLabelAndDate(trimmed);
+        leftY -= 4;
+        
+        // Split company name on the left and Date on the right
+        const dateW = tw(date, sizeSubtitle, { italic: true });
+        drawText(p, safeText(label), LEFT_COL_X, leftY, sizeEntryHeader, { bold: true, color: BLACK });
+        if (date) {
+          drawText(p, date, LEFT_COL_X + LEFT_COL_W - dateW, leftY, sizeSubtitle, { italic: true, color: GRAY });
         }
+        leftY -= lhEntryHeader;
         continue;
       }
-
-      // -------- EXPERIENCE --------
-      if (key.includes('experience')) {
-        if (!isBullet && /\d{4}/.test(content)) {
-          const { label, date } = splitLabelAndDate(content);
-          const lines = wrapText(label, MAX_W - 100, sizeEntryHeader, { bold: true });
-          ensureSpace(lines.length * lhEntryHeader + 2);
-          cursorY = drawEntryHeader(safeText(label), date, MARGIN_X, cursorY, MAX_W, sizeEntryHeader, lhEntryHeader, { color: PRIMARY });
-          cursorY -= 2;
-          continue;
-        }
-        if (!isBullet && /\b(developer|engineer|intern|analyst|consultant|lead|architect|manager|designer|specialist|devops|sde)\b/i.test(content)) {
-          const lines = wrapText(content, MAX_W, sizeSubtitle, { italic: true });
-          ensureSpace(lines.length * lhSubtitle + 2);
-          cursorY = drawWrapped(content, MARGIN_X, cursorY, MAX_W, sizeSubtitle, lhSubtitle, { italic: true, color: ACCENT });
-          cursorY -= 2;
-          continue;
-        }
-        if (isBullet) {
-          const lines = wrapText(content, MAX_W - 4, sizeBody);
-          ensureSpace(lines.length * lhBody + 2);
-          cursorY = drawBullet(content, MARGIN_X + 4, cursorY, MAX_W - 4, sizeBody, lhBody);
-          cursorY -= 2;
-          continue;
-        }
-        const lines = wrapText(content, MAX_W, sizeBody);
-        ensureSpace(lines.length * lhBody + 2);
-        cursorY = drawWrapped(content, MARGIN_X, cursorY, MAX_W, sizeBody, lhBody);
-        cursorY -= 2;
+      if (!isBullet && /\b(developer|engineer|intern|analyst|consultant|lead|architect|manager|designer|specialist|devops|sde)\b/i.test(trimmed)) {
+        leftY = drawWrapped(p, trimmed, LEFT_COL_X, leftY, LEFT_COL_W, sizeSubtitle, lhSubtitle, { bold: true, color: DARK_GRAY });
+        leftY -= 2;
         continue;
       }
-
-      // -------- PROJECTS --------
-      if (key.includes('project')) {
-        if (!isBullet && content.includes('|')) {
-          const parts = content.split('|').map(pt => safeText(pt).trim());
-          const name  = parts[0];
-          const rest  = parts.slice(1).join(' | ');
-          const { label: tech, date } = splitLabelAndDate(rest);
-          const display = tech ? `${name}  |  ${tech}` : name;
-          const lines = wrapText(display, MAX_W - 100, sizeEntryHeader, { bold: true });
-          ensureSpace(lines.length * lhEntryHeader + 2);
-          cursorY = drawEntryHeader(display, date, MARGIN_X, cursorY, MAX_W, sizeEntryHeader, lhEntryHeader, { color: PRIMARY });
-          cursorY -= 2;
-          continue;
-        }
-        if (!isBullet && /\d{4}/.test(content)) {
-          const { label, date } = splitLabelAndDate(content);
-          const lines = wrapText(label, MAX_W - 100, sizeEntryHeader, { bold: true });
-          ensureSpace(lines.length * lhEntryHeader + 2);
-          cursorY = drawEntryHeader(safeText(label), date, MARGIN_X, cursorY, MAX_W, sizeEntryHeader, lhEntryHeader, { color: PRIMARY });
-          cursorY -= 2;
-          continue;
-        }
-        if (!isBullet && content.length < 80) {
-          const lines = wrapText(content, MAX_W, sizeEntryHeader, { bold: true });
-          ensureSpace(lines.length * lhEntryHeader + 2);
-          cursorY = drawWrapped(content, MARGIN_X, cursorY, MAX_W, sizeEntryHeader, lhEntryHeader, { bold: true, color: PRIMARY });
-          cursorY -= 2;
-          continue;
-        }
-        if (isBullet) {
-          const lines = wrapText(content, MAX_W - 4, sizeBody);
-          ensureSpace(lines.length * lhBody + 2);
-          cursorY = drawBullet(content, MARGIN_X + 4, cursorY, MAX_W - 4, sizeBody, lhBody);
-          cursorY -= 2;
-          continue;
-        }
-        const lines = wrapText(content, MAX_W, sizeBody);
-        ensureSpace(lines.length * lhBody + 2);
-        cursorY = drawWrapped(content, MARGIN_X, cursorY, MAX_W, sizeBody, lhBody);
-        cursorY -= 2;
-        continue;
-      }
-
-      // -------- EDUCATION --------
-      if (key.includes('education')) {
-        if (/amity\s+international\s+school/i.test(content)) continue;
-
-        if (/\d{4}/.test(content) && !/(gpa|cgpa|grade|score)/i.test(content)) {
-          const { label, date } = splitLabelAndDate(content);
-          const lOpts = { italic: true, color: DARK_GRAY };
-          const dOpts = { italic: true, color: GRAY };
-          const lLines = wrapText(safeText(label), MAX_W - tw(date, sizeSubtitle, dOpts) - 10, sizeSubtitle, lOpts);
-          ensureSpace(lLines.length * lhSubtitle + 2);
-          let ly = cursorY;
-          for (const ll of lLines) { drawText(ll, MARGIN_X + 8, ly, sizeSubtitle, lOpts); ly -= lhSubtitle; }
-          if (date) { const dw = tw(date, sizeSubtitle, dOpts); drawText(date, PAGE_WIDTH - MARGIN_X - dw, cursorY, sizeSubtitle, dOpts); }
-          cursorY = ly;
-          continue;
-        }
-        if (!isBullet) {
-          const lines = wrapText(content, MAX_W, sizeEntryHeader, { bold: true });
-          ensureSpace(lines.length * lhEntryHeader + 2);
-          cursorY = drawWrapped(content, MARGIN_X, cursorY, MAX_W, sizeEntryHeader, lhEntryHeader, { bold: true, color: PRIMARY });
-          cursorY -= 2;
-          continue;
-        }
-        const lines = wrapText(content, MAX_W - 8, sizeBody);
-        ensureSpace(lines.length * lhBody + 2);
-        cursorY = drawWrapped(content, MARGIN_X + 8, cursorY, MAX_W - 8, sizeBody, lhBody, { color: DARK_GRAY });
-        cursorY -= 2;
-        continue;
-      }
-
-      // -------- SKILLS --------
-      if (key.includes('skill') || key.includes('technolog')) {
-        if (content.includes(':')) {
-          const colon  = content.indexOf(':');
-          const label  = content.slice(0, colon).trim();
-          const value  = content.slice(colon + 1).trim();
-          const lStr   = `${label}: `;
-          const lW     = tw(lStr, sizeBody, { bold: true });
-          const lines  = wrapText(value, MAX_W - lW, sizeBody);
-          ensureSpace(lines.length * lhBody + 2);
-          drawText(lStr, MARGIN_X, cursorY, sizeBody, { bold: true, color: PRIMARY });
-          cursorY = drawWrapped(value, MARGIN_X + lW, cursorY, MAX_W - lW, sizeBody, lhBody, { color: DARK_GRAY });
-          cursorY -= 2;
-          continue;
-        }
-        if (isBullet) {
-          const lines = wrapText(content, MAX_W, sizeBody);
-          ensureSpace(lines.length * lhBody + 2);
-          cursorY = drawBullet(content, MARGIN_X, cursorY, MAX_W, sizeBody, lhBody);
-          cursorY -= 2;
-          continue;
-        }
-        const lines = wrapText(content, MAX_W, sizeBody);
-        ensureSpace(lines.length * lhBody + 2);
-        cursorY = drawWrapped(content, MARGIN_X, cursorY, MAX_W, sizeBody, lhBody, { color: DARK_GRAY });
-        cursorY -= 2;
-        continue;
-      }
-
-      // -------- DEFAULT --------
       if (isBullet) {
-        const lines = wrapText(content, MAX_W, sizeBody);
-        ensureSpace(lines.length * lhBody + 2);
-        cursorY = drawBullet(content, MARGIN_X, cursorY, MAX_W, sizeBody, lhBody);
-        cursorY -= 2;
-      } else {
-        const lines = wrapText(content, MAX_W, sizeBody);
-        ensureSpace(lines.length * lhBody + 2);
-        cursorY = drawWrapped(content, MARGIN_X, cursorY, MAX_W, sizeBody, lhBody);
-        cursorY -= 2;
+        leftY = drawBullet(p, bulletTxt, LEFT_COL_X + 2, leftY, LEFT_COL_W - 2, sizeBody, lhBody);
+        leftY -= 1;
+        continue;
       }
+      leftY = drawWrapped(p, trimmed, LEFT_COL_X, leftY, LEFT_COL_W, sizeBody, lhBody, { color: DARK_GRAY });
+      leftY -= 2;
     }
-
-    cursorY -= gapSection;
+    leftY -= 5;
   }
 
-  // --- Output PDF bytes ---
+  // Projects
+  const projSec = sections.find(s => s.title.toLowerCase().includes('project'));
+  if (projSec) {
+    drawLeftSectionHeader('Projects');
+    for (const rawLine of projSec.content) {
+      const trimmed = safeText(rawLine).trim();
+      if (!trimmed) continue;
+
+      const isBullet = trimmed.startsWith('•');
+      const bulletTxt = isBullet ? trimmed.replace(/^•\s*/, '') : '';
+
+      if (!isBullet && trimmed.includes('|')) {
+        const parts = trimmed.split('|').map(pt => safeText(pt).trim());
+        const name  = parts[0];
+        const rest  = parts.slice(1).join(' | ');
+        const { label: tech, date } = splitLabelAndDate(rest);
+        const display = tech ? `${name}  |  ${tech}` : name;
+        leftY -= 4;
+
+        const dateW = tw(date, sizeSubtitle, { italic: true });
+        drawText(p, display, LEFT_COL_X, leftY, sizeEntryHeader, { bold: true, color: BLACK });
+        if (date) {
+          drawText(p, date, LEFT_COL_X + LEFT_COL_W - dateW, leftY, sizeSubtitle, { italic: true, color: GRAY });
+        }
+        leftY -= lhEntryHeader;
+        continue;
+      }
+      if (!isBullet && /\d{4}/.test(trimmed)) {
+        const { label, date } = splitLabelAndDate(trimmed);
+        leftY -= 4;
+
+        const dateW = tw(date, sizeSubtitle, { italic: true });
+        drawText(p, safeText(label), LEFT_COL_X, leftY, sizeEntryHeader, { bold: true, color: BLACK });
+        if (date) {
+          drawText(p, date, LEFT_COL_X + LEFT_COL_W - dateW, leftY, sizeSubtitle, { italic: true, color: GRAY });
+        }
+        leftY -= lhEntryHeader;
+        continue;
+      }
+      if (isBullet) {
+        leftY = drawBullet(p, bulletTxt, LEFT_COL_X + 2, leftY, LEFT_COL_W - 2, sizeBody, lhBody);
+        leftY -= 1;
+        continue;
+      }
+      leftY = drawWrapped(p, trimmed, LEFT_COL_X, leftY, LEFT_COL_W, sizeBody, lhBody, { color: DARK_GRAY });
+      leftY -= 2;
+    }
+  }
+
+  // ====================================================================
+  // DRAW RIGHT COLUMN (Skills with Rounded Badges, Education)
+  // ====================================================================
+  let rightY = topColumnsY;
+
+  const drawRightSectionHeader = (title) => {
+    rightY -= 5;
+    drawText(p, title.toUpperCase(), RIGHT_COL_X, rightY, sizeSection, { bold: true, color: PRIMARY });
+    rightY -= 3;
+    p.drawLine({
+      start: { x: RIGHT_COL_X, y: rightY },
+      end: { x: RIGHT_COL_X + RIGHT_COL_W, y: rightY },
+      thickness: 1.0,
+      color: PRIMARY
+    });
+    rightY -= 8;
+  };
+
+  // Skills Section
+  const skillsSec = sections.find(s => s.title.toLowerCase().includes('skill') || s.title.toLowerCase().includes('technolog'));
+  if (skillsSec) {
+    drawRightSectionHeader('Skills');
+    for (const rawLine of skillsSec.content) {
+      const trimmed = safeText(rawLine).trim();
+      if (!trimmed) continue;
+
+      if (trimmed.includes(':')) {
+        const colon = trimmed.indexOf(':');
+        const category = trimmed.slice(0, colon).trim();
+        const value = trimmed.slice(colon + 1).trim();
+
+        // Draw Category Subheading
+        rightY -= 4;
+        drawText(p, category, RIGHT_COL_X, rightY, sizeSubtitle, { bold: true, color: BLACK });
+        rightY -= lhSubtitle;
+
+        // Parse individual comma-separated skills and draw them as premium badges
+        const skillsList = value.split(',').map(s => s.trim()).filter(Boolean);
+        let badgeX = RIGHT_COL_X;
+        const badgeHeight = sizeBody + 6;
+
+        for (const skill of skillsList) {
+          const textW = tw(skill, sizeBody);
+          const badgeWidth = textW + 10;
+
+          // Wrap badges to next row if they exceed the column width boundary
+          if (badgeX + badgeWidth > RIGHT_COL_X + RIGHT_COL_W) {
+            badgeX = RIGHT_COL_X;
+            rightY -= (badgeHeight + 4);
+          }
+
+          // Draw Badge Background
+          p.drawRectangle({
+            x: badgeX,
+            y: rightY - 2,
+            width: badgeWidth,
+            height: badgeHeight,
+            fill: BADGE_BG,
+            borderColor: LIGHT_GRAY,
+            borderWidth: 0.5
+          });
+
+          // Draw Skill Text
+          drawText(p, skill, badgeX + 5, rightY + 1, sizeBody, { color: BLACK });
+          badgeX += badgeWidth + 4; // space between badges
+        }
+        rightY -= (badgeHeight + 8);
+      } else {
+        // Flat skills without category: render as simple badge line wrapping
+        const skillsList = trimmed.split(',').map(s => s.trim()).filter(Boolean);
+        let badgeX = RIGHT_COL_X;
+        const badgeHeight = sizeBody + 6;
+
+        for (const skill of skillsList) {
+          const textW = tw(skill, sizeBody);
+          const badgeWidth = textW + 10;
+
+          if (badgeX + badgeWidth > RIGHT_COL_X + RIGHT_COL_W) {
+            badgeX = RIGHT_COL_X;
+            rightY -= (badgeHeight + 4);
+          }
+
+          p.drawRectangle({
+            x: badgeX,
+            y: rightY - 2,
+            width: badgeWidth,
+            height: badgeHeight,
+            fill: BADGE_BG,
+            borderColor: LIGHT_GRAY,
+            borderWidth: 0.5
+          });
+
+          drawText(p, skill, badgeX + 5, rightY + 1, sizeBody, { color: BLACK });
+          badgeX += badgeWidth + 4;
+        }
+        rightY -= (badgeHeight + 8);
+      }
+    }
+    rightY -= 5;
+  }
+
+  // Education Section
+  const eduSec = sections.find(s => s.title.toLowerCase().includes('education'));
+  if (eduSec) {
+    drawRightSectionHeader('Education');
+    for (const rawLine of eduSec.content) {
+      const trimmed = safeText(rawLine).trim();
+      if (!trimmed) continue;
+
+      if (/\d{4}/.test(trimmed) && !/(gpa|cgpa|grade|score)/i.test(trimmed)) {
+        const { label, date } = splitLabelAndDate(trimmed);
+        rightY -= 4;
+        drawText(p, safeText(label), RIGHT_COL_X, rightY, sizeSubtitle, { bold: true, color: BLACK });
+        
+        if (date) {
+          rightY -= lhSubtitle;
+          drawText(p, date, RIGHT_COL_X, rightY, sizeSubtitle - 0.5, { italic: true, color: GRAY });
+        }
+        rightY -= 6;
+        continue;
+      }
+
+      if (trimmed.startsWith('•')) {
+        const bulletTxt = trimmed.replace(/^•\s*/, '');
+        rightY = drawWrapped(p, bulletTxt, RIGHT_COL_X, rightY, RIGHT_COL_W, sizeBody, lhBody, { color: DARK_GRAY });
+        rightY -= 2;
+        continue;
+      }
+
+      rightY = drawWrapped(p, trimmed, RIGHT_COL_X, rightY, RIGHT_COL_W, sizeBody, lhBody, { color: DARK_GRAY });
+      rightY -= 2;
+    }
+  }
+
+  // --- Save ---
   const pdfBytes = await pdf.save();
   const blob     = new Blob([pdfBytes], { type: 'application/pdf' });
   saveAs(blob, `${cleanFile}_optimized.pdf`);

@@ -354,13 +354,13 @@ export async function generateResumePDF({
 
   // Contact Info Row
   const contactParts = [
-    finalPhone ? `📞 ${finalPhone}` : '',
-    finalEmail ? `✉ ${finalEmail}` : '',
-    finalLinkedIn ? `🔗 ${finalLinkedIn}` : '',
-    finalGitHub ? `💻 ${finalGitHub.replace(/^https?:\/\/(www\.)?/, '')}` : ''
+    finalPhone ? finalPhone : '',
+    finalEmail ? finalEmail : '',
+    finalLinkedIn ? finalLinkedIn.replace(/^https?:\/\/(www\.)?/, '') : '',
+    finalGitHub ? finalGitHub.replace(/^https?:\/\/(www\.)?/, '') : ''
   ].filter(Boolean);
 
-  const sep = '   ';
+  const sep = '   |   ';
   let cx = MARGIN_X;
   for (let i = 0; i < contactParts.length; i++) {
     const part = contactParts[i];

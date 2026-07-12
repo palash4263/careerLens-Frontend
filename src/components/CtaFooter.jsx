@@ -1,105 +1,73 @@
-import React, { useEffect, useRef } from "react";
-import { ArrowUpRight } from "lucide-react";
+import React from "react";
+import { Link } from "react-router-dom";
 import "./CtaFooter.css";
 
 const CtaFooter = () => {
-  const videoRef = useRef(null);
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    const src = "https://stream.mux.com/8wrHPCX2dC3msyYU9ObwqNdm00u3ViXvOSHUMRYSEe5Q.m3u8";
-
-    const initHls = (HlsClass) => {
-      const hls = new HlsClass();
-      hls.loadSource(src);
-      hls.attachMedia(video);
-      return hls;
-    };
-
-    let hlsInstance = null;
-
-    if (video.canPlayType("application/vnd.apple.mpegurl")) {
-      // Native HLS support (Safari, iOS)
-      video.src = src;
-    } else {
-      // Fallback: load HLS.js from CDN dynamically to prevent compile-time dependency errors
-      if (window.Hls) {
-        hlsInstance = initHls(window.Hls);
-      } else {
-        const script = document.createElement("script");
-        script.src = "https://cdn.jsdelivr.net/npm/hls.js@1.4.10/dist/hls.min.js";
-        script.async = true;
-        script.onload = () => {
-          if (window.Hls) {
-            hlsInstance = initHls(window.Hls);
-          }
-        };
-        document.body.appendChild(script);
-
-        return () => {
-          if (hlsInstance) {
-            hlsInstance.destroy();
-          }
-          if (document.body.contains(script)) {
-            document.body.removeChild(script);
-          }
-        };
-      }
-    }
-
-    return () => {
-      if (hlsInstance) {
-        hlsInstance.destroy();
-      }
-    };
-  }, []);
-
   return (
-    <section className="cta-section">
-      {/* Background HLS Video */}
-      <video
-        ref={videoRef}
-        autoPlay
-        loop
-        muted
-        playsInline
-        className="cta-video"
-      />
+    <footer className="aesthetic-footer">
+      <div className="footer-glow" />
+      <div className="footer-container">
+        <div className="footer-top">
+          {/* Logo & Brand Info */}
+          <div className="footer-brand">
+            <Link to="/dashboard" className="footer-logo">
+              <div className="footer-logo-orb">
+                <span className="footer-logo-icon">✦</span>
+                <div className="footer-logo-ring" />
+              </div>
+              <span className="footer-logo-text">
+                Career<span className="footer-logo-accent">Lens</span>
+              </span>
+            </Link>
+            <p className="footer-tagline">
+              Empowering job seekers with AI-driven resume optimization, real-time job matching, and interactive interview intelligence.
+            </p>
+          </div>
 
-      {/* Top fade */}
-      <div className="cta-fade-top" />
-      {/* Bottom fade */}
-      <div className="cta-fade-bottom" />
+          {/* Quick Links Column */}
+          <div className="footer-links-col">
+            <h4>Application</h4>
+            <div className="footer-links">
+              <Link to="/dashboard">Dashboard</Link>
+              <Link to="/resumes">Resumes</Link>
+              <Link to="/resume-optimizer">Resume Optimizer</Link>
+              <Link to="/jobs">Job Matches</Link>
+              <Link to="/interview">Mock Interview</Link>
+            </div>
+          </div>
 
-      {/* Content */}
-      <div className="cta-content">
-        <h2 className="cta-heading">
-          Your next career leap starts here.
-        </h2>
-        <p className="cta-subtext">
-          Optimize your resume for ATS, scan requirements, and ace mock interviews with AI-powered career intelligence.
-        </p>
-        <div className="cta-btn-row">
-          <button 
-            className="liquid-glass-strong"
-            onClick={() => window.open("/resumes", "_self")}
-          >
-            Optimize Resume
-            <ArrowUpRight style={{ width: '18px', height: '18px' }} />
-          </button>
-          <button 
-            className="cta-btn-solid"
-            onClick={() => window.open("/interview", "_self")}
-          >
-            Practice Interview
-            <ArrowUpRight style={{ width: '16px', height: '16px' }} />
-          </button>
+          {/* Developer / Creator info column */}
+          <div className="footer-links-col">
+            <h4>Creator & Contact</h4>
+            <div className="footer-links">
+              <span className="footer-contact-item">
+                📧 <a href="mailto:palashmishra47@gmail.com">palashmishra47@gmail.com</a>
+              </span>
+              <span className="footer-contact-item">
+                💼 <a href="https://linkedin.com/in/palash-mishra-6a68a71aa" target="_blank" rel="noopener noreferrer">LinkedIn Profile</a>
+              </span>
+              <span className="footer-contact-item">
+                🌐 <a href="https://github.com/palash4263" target="_blank" rel="noopener noreferrer">GitHub Account</a>
+              </span>
+            </div>
+          </div>
         </div>
 
+        <div className="footer-divider" />
+
+        <div className="footer-bottom">
+          <p className="footer-copy">
+            © 2026 CareerLens AI. Crafted for maximum career impact. All rights reserved.
+          </p>
+          <div className="footer-meta-links">
+            <span className="footer-status-indicator">
+              <span className="status-dot green" />
+              All Systems Operational
+            </span>
+          </div>
+        </div>
       </div>
-    </section>
+    </footer>
   );
 };
 

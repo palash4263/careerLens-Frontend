@@ -122,31 +122,31 @@ export const SecondaryButton = ({ href, children }) => {
 
 const plans = [
   {
-    name: "Course",
-    price: "5",
-    originalPrice: "19",
-    description: "Once. Lifetime. 73% off.",
+    name: "Professional Plan",
+    price: "250",
+    originalPrice: "499",
+    description: "Ideal for polishing your resume for a specific target role.",
     bg: "#161616",
     features: [
-      { text: "All courses and videos", included: true },
-      { text: "All modules. Lifetime access.", included: true },
-      { text: "AI Builder", included: true },
-      { text: "Unlimited Templates", included: false },
-      { text: "Unlimited Motion Videos", included: false },
+      { text: "10+ AI Resume Optimizations", included: true },
+      { text: "ATS Match Rating & Analysis", included: true },
+      { text: "Real AI Job Fetching from URL", included: true },
+      { text: "Premium PDF Generation & Downloads", included: true },
+      { text: "Unlimited AI Mock Interviews", included: false },
     ],
   },
   {
-    name: "Course + Lovable Templates",
-    price: "15",
-    originalPrice: "49",
-    description: "Once. Lifetime. Best deal.",
+    name: "Elite Pro Plan",
+    price: "600",
+    originalPrice: "1199",
+    description: "For active job seekers targetting multiple roles.",
     bg: "#252525",
     features: [
-      { text: "All courses and videos", included: true },
-      { text: "All modules. Lifetime access.", included: true },
-      { text: "AI Builder", included: true },
-      { text: "Unlimited Templates", included: true },
-      { text: "Unlimited Motion Videos", included: true },
+      { text: "Unlimited AI Resume Optimizations", included: true },
+      { text: "ATS Match Rating & Analysis", included: true },
+      { text: "Real AI Job Fetching from URL", included: true },
+      { text: "Premium PDF Generation & Downloads", included: true },
+      { text: "Unlimited AI Mock Interviews", included: true },
     ],
     featured: true,
     badge: "Best Value",
@@ -180,9 +180,9 @@ const PricingCard = ({ plan }) => {
 
         <FadeUp delay={0.1}>
           <div className="pricing-price-row">
-            <span className="pricing-price">${plan.price}</span>
+            <span className="pricing-price">₹{plan.price}</span>
             {plan.originalPrice && (
-              <span className="pricing-original-price">${plan.originalPrice}</span>
+              <span className="pricing-original-price">₹{plan.originalPrice}</span>
             )}
           </div>
         </FadeUp>
@@ -194,9 +194,9 @@ const PricingCard = ({ plan }) => {
         <FadeUp delay={0.3}>
           <div className="pricing-card-btn-wrap">
             {plan.featured ? (
-              <PrimaryButton href="/auth?mode=signup">Get Started</PrimaryButton>
+              <PrimaryButton href="/resume-optimizer">Get Started</PrimaryButton>
             ) : (
-              <SecondaryButton href="/auth?mode=signup">Get Started</SecondaryButton>
+              <SecondaryButton href="/resume-optimizer">Get Started</SecondaryButton>
             )}
           </div>
         </FadeUp>

@@ -6,14 +6,14 @@ const PAGE_WIDTH  = 595;
 const PAGE_HEIGHT = 842;
 const MARGIN_X    = 50;
 const MARGIN_TOP  = 36;
-const MARGIN_BOTTOM = 36;
+const MARGIN_BOTTOM = 48; // Increased bottom margin to prevent text touching the bottom edge
 
-// ====== COLOR PALETTE ======
-const PRIMARY    = rgb(0.09, 0.26, 0.55);   // deep navy blue
-const BLACK      = rgb(0.10, 0.10, 0.10);
-const DARK_GRAY  = rgb(0.30, 0.30, 0.30);
-const GRAY       = rgb(0.48, 0.48, 0.48);
-const LIGHT_GRAY = rgb(0.80, 0.80, 0.83);
+// ====== COLOR PALETTE (Modern Slate/Navy Aesthetic) ======
+const PRIMARY    = rgb(0.12, 0.20, 0.38);   // deep slate navy
+const BLACK      = rgb(0.15, 0.17, 0.22);   // dark off-black
+const DARK_GRAY  = rgb(0.33, 0.37, 0.44);   // slate grey
+const GRAY       = rgb(0.48, 0.52, 0.60);
+const LIGHT_GRAY = rgb(0.85, 0.87, 0.90);
 
 // =====================================================================
 // MARKDOWN STRIPPING – removes ALL markdown symbols before rendering
@@ -257,7 +257,6 @@ export async function generateResumePDF({
 }) {
   // --- Extract contact info (always prioritize userName) ---
   const finalName     = userName || extractName(resumeText) || 'Palash Mishra';
-  const finalJobTitle = extractJobTitle(resumeText)  || jobTitle  || 'Full Stack Developer';
   const finalEmail    = extractEmail(resumeText)     || email     || 'palashmishra47@gmail.com';
   const finalPhone    = extractPhoneNumber(resumeText) || phone   || '+91-7428477219';
   const finalLinkedIn = extractLinkedIn(resumeText)  || linkedin  || 'linkedin.com/in/palash-mishra-6a68a71aa';
@@ -313,12 +312,11 @@ export async function generateResumePDF({
   // ====================================================================
   // SINGLE PAGE COMPRESSION ALGORITHM (AESTHETIC & LEGIBLE LIMITS)
   // ====================================================================
-  const calculateTotalHeight = (sName, sTitle, sContact, sSection, sEntryHeader, sSubtitle, sBody, lBody, lEntryHeader, lSubtitle, gSec) => {
+  const calculateTotalHeight = (sName, sContact, sSection, sEntryHeader, sSubtitle, sBody, lBody, lEntryHeader, lSubtitle, gSec) => {
     let heightNeeded = 0;
     
-    // Header heights
-    heightNeeded += sName + 5;
-    heightNeeded += sTitle + 7;
+    // Header heights (no job title subtitle line)
+    heightNeeded += sName + 6;
     heightNeeded += sContact + 12;
     heightNeeded += 12; // divider rule
     
@@ -432,53 +430,50 @@ export async function generateResumePDF({
 
   // --- Dynamic Layout Metrics (Slightly larger, much more aesthetic starting sizes) ---
   let sizeName        = 22;
-  let sizeTitle       = 11.5;
-  let sizeContact     = 8.8;
-  let sizeSection     = 10.8;
-  let sizeEntryHeader = 10.0;
-  let sizeSubtitle    = 9.5;
-  let sizeBody        = 9.2;
+  let sizeContact     = 9.0;
+  let sizeSection     = 11.0;
+  let sizeEntryHeader = 10.2;
+  let sizeSubtitle    = 9.6;
+  let sizeBody        = 9.4;
 
-  let lhBody         = 13.0;
-  let lhEntryHeader = 14.0;
-  let lhSubtitle     = 13.0;
+  let lhBody         = 13.5;
+  let lhEntryHeader = 14.5;
+  let lhSubtitle     = 13.5;
   
-  let gapSection = 8.0;
+  let gapSection = 9.0;
   let marginY = MARGIN_TOP;
 
-  // Available vertical space is expanded (36px margins top/bottom = 770px available)
+  // Available vertical space is strictly enforced
   const availableHeight = PAGE_HEIGHT - MARGIN_TOP - MARGIN_BOTTOM; 
-  let requiredHeight = calculateTotalHeight(sizeName, sizeTitle, sizeContact, sizeSection, sizeEntryHeader, sizeSubtitle, sizeBody, lhBody, lhEntryHeader, lhSubtitle, gapSection);
+  let requiredHeight = calculateTotalHeight(sizeName, sizeContact, sizeSection, sizeEntryHeader, sizeSubtitle, sizeBody, lhBody, lhEntryHeader, lhSubtitle, gapSection);
 
   if (requiredHeight > availableHeight) {
     // Stage 1 Compression (Slightly compact, still highly aesthetic and readable)
     sizeName        = 20;
-    sizeTitle       = 11.0;
-    sizeContact     = 8.5;
-    sizeSection     = 10.2;
-    sizeEntryHeader = 9.5;
-    sizeSubtitle    = 9.0;
-    sizeBody        = 8.6;
-    lhBody          = 12.0;
-    lhEntryHeader   = 13.0;
-    lhSubtitle      = 12.0;
-    gapSection      = 6.0;
-    requiredHeight = calculateTotalHeight(sizeName, sizeTitle, sizeContact, sizeSection, sizeEntryHeader, sizeSubtitle, sizeBody, lhBody, lhEntryHeader, lhSubtitle, gapSection);
+    sizeContact     = 8.6;
+    sizeSection     = 10.5;
+    sizeEntryHeader = 9.6;
+    sizeSubtitle    = 9.1;
+    sizeBody        = 8.8;
+    lhBody          = 12.2;
+    lhEntryHeader   = 13.2;
+    lhSubtitle      = 12.2;
+    gapSection      = 6.5;
+    requiredHeight = calculateTotalHeight(sizeName, sizeContact, sizeSection, sizeEntryHeader, sizeSubtitle, sizeBody, lhBody, lhEntryHeader, lhSubtitle, gapSection);
   }
 
   if (requiredHeight > availableHeight) {
     // Stage 2 Compression (Minimum threshold to ensure a readable, premium single page)
     sizeName        = 18;
-    sizeTitle       = 10.0;
     sizeContact     = 8.2;
     sizeSection     = 9.8;
-    sizeEntryHeader = 9.0;
-    sizeSubtitle    = 8.5;
-    sizeBody        = 8.1;
-    lhBody          = 11.2;
-    lhEntryHeader   = 12.0;
-    lhSubtitle      = 11.2;
-    gapSection      = 4.5;
+    sizeEntryHeader = 9.2;
+    sizeSubtitle    = 8.6;
+    sizeBody        = 8.2;
+    lhBody          = 11.5;
+    lhEntryHeader   = 12.2;
+    lhSubtitle      = 11.5;
+    gapSection      = 5.0;
   }
 
   // --- Rendering engine ---
@@ -536,12 +531,9 @@ export async function generateResumePDF({
   // ====================================================================
   const nameW = tw(finalName, sizeName, { bold: true });
   drawText(p, finalName, (PAGE_WIDTH - nameW) / 2, cursorY, sizeName, { bold: true, color: PRIMARY });
-  cursorY -= sizeName + 5;
+  cursorY -= sizeName + 6;
 
-  const jtW = tw(finalJobTitle, sizeTitle, { italic: true });
-  drawText(p, finalJobTitle, (PAGE_WIDTH - jtW) / 2, cursorY, sizeTitle, { italic: true, color: DARK_GRAY });
-  cursorY -= sizeTitle + 7;
-
+  // ONLY SHOW DETAILS BELOW NAME (REMOVED TARGET JOB TITLE LINE)
   const contactParts = [finalEmail, finalPhone, finalLinkedIn];
   if (finalGitHub) contactParts.push(finalGitHub);
   const sep   = '  |  ';

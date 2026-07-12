@@ -91,8 +91,9 @@ export default function PremiumDropdown({
 
   return (
     <div
-      className="premium-dropdown-wrapper"
+      className={`premium-dropdown-wrapper ${isOpen ? 'is-open' : ''}`}
       ref={dropdownRef}
+      style={{ position: 'relative', zIndex: isOpen ? 1000 : 1 }}
     >
       <label className="premium-dropdown-label">
         <span className="label-icon">{icon}</span>

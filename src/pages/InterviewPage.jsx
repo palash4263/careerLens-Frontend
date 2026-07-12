@@ -403,8 +403,8 @@ const InterviewPage = () => {
                   </div>
                 </div>
               )}
-            </motion.div>
-          </div>
+            </div>
+          </motion.div>
         </div>
 
         {/* Bottom Section - Stats & Sessions */}

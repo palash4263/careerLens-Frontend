@@ -551,3 +551,261 @@
 .nb-notif-item-close:hover {
   color: #ef4444;
 }
+
+/* ==========================================================================
+   RESPONSIVE SIDEBAR & HAMBURGER TOGGLE
+   ========================================================================== */
+
+/* Hamburger menu button (hidden on desktop) */
+.nb-mobile-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 24px;
+  height: 18px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  z-index: 1010;
+}
+
+.nb-toggle-line {
+  width: 100%;
+  height: 2px;
+  background: #fff;
+  border-radius: 99px;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: left center;
+}
+
+/* Hamburger active transformation */
+.nb-mobile-toggle.active .line-1 {
+  transform: rotate(45deg) translateY(-2px);
+}
+.nb-mobile-toggle.active .line-2 {
+  opacity: 0;
+  transform: scale(0);
+}
+.nb-mobile-toggle.active .line-3 {
+  transform: rotate(-45deg) translateY(2px);
+}
+
+/* Sidebar Drawer Overlay */
+.nb-sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.4);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1005;
+  transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.nb-sidebar-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Sidebar Panel */
+.nb-sidebar {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: -280px; /* starts off-screen */
+  width: 280px;
+  background: rgba(8, 10, 24, 0.96);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 15px 0 50px rgba(0, 0, 0, 0.6);
+  z-index: 1006;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.nb-sidebar.active {
+  transform: translateX(280px); /* slide in */
+}
+
+/* Sidebar Header */
+.nb-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.nb-sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+}
+
+.nb-sidebar-avatar {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7c3aed, #0ea5e9);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13.5px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.nb-sidebar-online {
+  position: absolute;
+  bottom: -1px;
+  right: -1px;
+  width: 10px;
+  height: 10px;
+  background: #10b981;
+  border: 2px solid rgba(8, 10, 24, 1);
+  border-radius: 50%;
+}
+
+.nb-sidebar-user-info {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.35;
+}
+
+.nb-sidebar-user-name {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.nb-sidebar-user-role {
+  font-size: 10.5px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.nb-sidebar-close {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 26px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 4px;
+  transition: color 0.2s ease;
+}
+
+.nb-sidebar-close:hover {
+  color: #fff;
+}
+
+/* Sidebar Body (Links) */
+.nb-sidebar-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 16px;
+}
+
+.nb-sidebar-links {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nb-sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 18px;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 13.5px;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.nb-sidebar-link-icon {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.45);
+  transition: color 0.3s ease;
+}
+
+.nb-sidebar-link:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.03);
+}
+
+.nb-sidebar-link:hover .nb-sidebar-link-icon {
+  color: #a78bfa;
+}
+
+.nb-sidebar-link.active {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(37, 99, 235, 0.1));
+  border-color: rgba(124, 58, 237, 0.25);
+  color: #a78bfa;
+}
+
+.nb-sidebar-link.active .nb-sidebar-link-icon {
+  color: #a78bfa;
+}
+
+/* Sidebar Footer (Logout) */
+.nb-sidebar-footer {
+  padding: 20px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.nb-sidebar-logout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  background: rgba(239, 68, 68, 0.05);
+  color: #fca5a5;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.nb-sidebar-logout:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(239, 68, 68, 0.15);
+}
+
+/* Media Query Adaptations */
+@media (max-width: 900px) {
+  .nb-mobile-toggle {
+    display: flex;
+  }
+  .nb-logo {
+    margin-left: 8px;
+  }
+  .nb-right {
+    gap: 12px;
+  }
+  /* Hide desktop-only user profile on navbar */
+  .nb-user {
+    display: none;
+  }
+  .nb-divider {
+    display: none;
+  }
+  .nb-logout {
+    display: none;
+  }
+}

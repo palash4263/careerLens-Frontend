@@ -85,132 +85,208 @@ export default function Navbar() {
     { path: "/interview",       label: "Interview", icon: "◎" },
   ];
 
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   return (
-    <nav className={`nb-root${scrolled ? " nb-scrolled" : ""}`}>
-      <div className="nb-wrap">
+    <>
+      <nav className={`nb-root${scrolled ? " nb-scrolled" : ""}`}>
+        <div className="nb-wrap">
 
-        {/* ── Logo ── */}
-        <Link to="/dashboard" className="nb-logo">
-          <div className="nb-logo-orb">
-            <span className="nb-logo-icon">✦</span>
-            <div className="nb-logo-ring" />
-          </div>
-          <span className="nb-logo-text">
-            Career<span className="nb-logo-accent">Lens</span>
-          </span>
-          <span className="nb-logo-badge">AI</span>
-        </Link>
+          {/* Hamburger toggle button (visible on mobile/tablet) */}
+          <button 
+            className={`nb-mobile-toggle${sidebarOpen ? ' active' : ''}`}
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            aria-label="Toggle navigation menu"
+          >
+            <span className="nb-toggle-line line-1"></span>
+            <span className="nb-toggle-line line-2"></span>
+            <span className="nb-toggle-line line-3"></span>
+          </button>
 
-        {/* ── Nav links ── */}
-        <div className="nb-links">
-          {navLinks.map((link) => {
-            const active = location.pathname === link.path;
-            return (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={`nb-link${active ? " nb-active" : ""}`}
-              >
-                <span className="nb-link-icon">{link.icon}</span>
-                <span className="nb-link-label">{link.label}</span>
-                {active && <span className="nb-active-dot" />}
-              </Link>
-            );
-          })}
-        </div>
-
-        {/* ── Right cluster ── */}
-        <div className="nb-right">
-
-          {/* Notification */}
-          <div className="nb-notif-wrapper">
-            <button 
-              className={`nb-icon-btn${notifOpen ? " active" : ""}`}
-              onClick={() => setNotifOpen(!notifOpen)}
-              title="Notifications"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-                   stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                <path d="M13.73 21a2 2 0 01-3.46 0"/>
-              </svg>
-              {unreadCount > 0 && <span className="nb-notif-dot" />}
-            </button>
-
-            {notifOpen && (
-              <div className="nb-notif-dropdown">
-                <div className="nb-notif-header">
-                  <span className="nb-notif-title">Notifications</span>
-                  {unreadCount > 0 && (
-                    <button className="nb-notif-clear-btn" onClick={markAllRead}>
-                      Mark all read
-                    </button>
-                  )}
-                </div>
-                <div className="nb-notif-body">
-                  {notifications.length === 0 ? (
-                    <div className="nb-notif-empty">
-                      <span className="nb-notif-empty-icon">🎉</span>
-                      <span className="nb-notif-empty-text">All caught up!</span>
-                    </div>
-                  ) : (
-                    notifications.map((n) => (
-                      <div 
-                        key={n.id} 
-                        className={`nb-notif-item ${n.read ? 'read' : 'unread'}`}
-                        onClick={() => toggleRead(n.id)}
-                      >
-                        <div className="nb-notif-item-left">
-                          <span className={`nb-notif-type-dot ${n.type}`} />
-                          <div className="nb-notif-item-content">
-                            <span className="nb-notif-item-text">{n.text}</span>
-                            <span className="nb-notif-item-time">{n.time}</span>
-                          </div>
-                        </div>
-                        <button 
-                          className="nb-notif-item-close"
-                          onClick={(e) => removeNotif(n.id, e)}
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Divider */}
-          <div className="nb-divider" />
-
-          {/* User pill */}
-          <Link to="/profile" className="nb-user">
-            <div className="nb-avatar">
-              <span>{userInitials}</span>
-              <div className="nb-online" />
+          {/* ── Logo ── */}
+          <Link to="/dashboard" className="nb-logo" onClick={() => setSidebarOpen(false)}>
+            <div className="nb-logo-orb">
+              <span className="nb-logo-icon">✦</span>
+              <div className="nb-logo-ring" />
             </div>
-            <div className="nb-user-info">
-              <span className="nb-user-name">{userName}</span>
-              <span className="nb-user-role">{userRole}</span>
-            </div>
-            <svg className="nb-chevron" width="12" height="12" viewBox="0 0 24 24"
-                 fill="none" stroke="currentColor" strokeWidth="2.5">
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
+            <span className="nb-logo-text">
+              Career<span className="nb-logo-accent">Lens</span>
+            </span>
+            <span className="nb-logo-badge">AI</span>
           </Link>
 
-          {/* Logout */}
-          <button className="nb-logout" onClick={logout} title="Logout">
+          {/* ── Nav links (Desktop) ── */}
+          <div className="nb-links">
+            {navLinks.map((link) => {
+              const active = location.pathname === link.path;
+              return (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  className={`nb-link${active ? " nb-active" : ""}`}
+                >
+                  <span className="nb-link-icon">{link.icon}</span>
+                  <span className="nb-link-label">{link.label}</span>
+                  {active && <span className="nb-active-dot" />}
+                </Link>
+              );
+            })}
+          </div>
+
+          {/* ── Right cluster (Desktop/Tablet) ── */}
+          <div className="nb-right">
+
+            {/* Notification */}
+            <div className="nb-notif-wrapper">
+              <button 
+                className={`nb-icon-btn${notifOpen ? " active" : ""}`}
+                onClick={() => setNotifOpen(!notifOpen)}
+                title="Notifications"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                  <path d="M13.73 21a2 2 0 01-3.46 0"/>
+                </svg>
+                {unreadCount > 0 && <span className="nb-notif-dot" />}
+              </button>
+
+              {notifOpen && (
+                <div className="nb-notif-dropdown">
+                  <div className="nb-notif-header">
+                    <span className="nb-notif-title">Notifications</span>
+                    {unreadCount > 0 && (
+                      <button className="nb-notif-clear-btn" onClick={markAllRead}>
+                        Mark all read
+                      </button>
+                    )}
+                  </div>
+                  <div className="nb-notif-body">
+                    {notifications.length === 0 ? (
+                      <div className="nb-notif-empty">
+                        <span className="nb-notif-empty-icon">🎉</span>
+                        <span className="nb-notif-empty-text">All caught up!</span>
+                      </div>
+                    ) : (
+                      notifications.map((n) => (
+                        <div 
+                          key={n.id} 
+                          className={`nb-notif-item ${n.read ? 'read' : 'unread'}`}
+                          onClick={() => toggleRead(n.id)}
+                        >
+                          <div className="nb-notif-item-left">
+                            <span className={`nb-notif-type-dot ${n.type}`} />
+                            <div className="nb-notif-item-content">
+                              <span className="nb-notif-item-text">{n.text}</span>
+                              <span className="nb-notif-item-time">{n.time}</span>
+                            </div>
+                          </div>
+                          <button 
+                            className="nb-notif-item-close"
+                            onClick={(e) => removeNotif(n.id, e)}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Divider */}
+            <div className="nb-divider" />
+
+            {/* User pill */}
+            <Link to="/profile" className="nb-user">
+              <div className="nb-avatar">
+                <span>{userInitials}</span>
+                <div className="nb-online" />
+              </div>
+              <div className="nb-user-info">
+                <span className="nb-user-name">{userName}</span>
+                <span className="nb-user-role">{userRole}</span>
+              </div>
+              <svg className="nb-chevron" width="12" height="12" viewBox="0 0 24 24"
+                   fill="none" stroke="currentColor" strokeWidth="2.5">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </Link>
+
+            {/* Logout */}
+            <button className="nb-logout" onClick={logout} title="Logout">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+                <polyline points="16 17 21 12 16 7"/>
+                <line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      {/* ── Mobile Sidebar Drawer Overlay & Side Panel ── */}
+      <div 
+        className={`nb-sidebar-overlay${sidebarOpen ? ' active' : ''}`}
+        onClick={() => setSidebarOpen(false)}
+      />
+      <aside className={`nb-sidebar${sidebarOpen ? ' active' : ''}`}>
+        <div className="nb-sidebar-header">
+          {/* User profile details in header */}
+          <Link to="/profile" className="nb-sidebar-user" onClick={() => setSidebarOpen(false)}>
+            <div className="nb-sidebar-avatar">
+              <span>{userInitials}</span>
+              <div className="nb-sidebar-online" />
+            </div>
+            <div className="nb-sidebar-user-info">
+              <span className="nb-sidebar-user-name">{userName}</span>
+              <span className="nb-sidebar-user-role">{userRole}</span>
+            </div>
+          </Link>
+          <button 
+            className="nb-sidebar-close" 
+            onClick={() => setSidebarOpen(false)}
+            aria-label="Close menu"
+          >
+            ×
+          </button>
+        </div>
+
+        {/* Navigation list */}
+        <div className="nb-sidebar-body">
+          <nav className="nb-sidebar-links">
+            {navLinks.map((link) => {
+              const active = location.pathname === link.path;
+              return (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  className={`nb-sidebar-link${active ? " active" : ""}`}
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  <span className="nb-sidebar-link-icon">{link.icon}</span>
+                  <span className="nb-sidebar-link-label">{link.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+
+        {/* Footer logout */}
+        <div className="nb-sidebar-footer">
+          <button className="nb-sidebar-logout" onClick={() => { setSidebarOpen(false); logout(); }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                 stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                 stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ marginRight: '8px' }}>
               <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
               <polyline points="16 17 21 12 16 7"/>
               <line x1="21" y1="12" x2="9" y2="12"/>
             </svg>
+            Logout
           </button>
         </div>
-      </div>
-    </nav>
+      </aside>
+    </>
   );
 }

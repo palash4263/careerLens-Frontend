@@ -45,9 +45,25 @@ const safeText = (value) => {
 
 // Adds visual "tracking" (letter-spacing) for small-caps style headings —
 // pdf-lib has no native letter-spacing, so we space the characters ourselves.
+// NOTE: must use a plain ASCII space — WinAnsiEncoding (used by the standard
+// Helvetica fonts) cannot encode hair spaces / thin spaces (e.g. U+200A).
 const trackedUpper = (text, spaced = true) => {
   const s = safeText(text).toUpperCase();
   return spaced ? s.split('').join(' ') : s;
+};
+
+// Title-cases a name ONLY if it looks like it has no intentional casing
+// (all-lowercase or all-uppercase). Leaves names like "McDonald" or
+// "O'Brien" alone if they already contain mixed case, since naively
+// title-casing those would break them.
+const smartTitleCase = (name) => {
+  if (!name) return name;
+  const isAllLower = name === name.toLowerCase();
+  const isAllUpper = name === name.toUpperCase();
+  if (isAllLower || isAllUpper) {
+    return name.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+  }
+  return name;
 };
 
 // =====================================================================
@@ -210,7 +226,11 @@ const parseResumeSections = (text, userData = {}) => {
       currentContent = [];
     }
 
-    const normLine = trimmed.replace(/^[\*\-]\s+/, '• ').replace(/^•\s*/, '• ');
+    // Normalize ALL common bullet markers (*, -, +, •) into a single '• ' form.
+    // Previously '+' was not recognized, so lines like "+ CGPA: 8.5/10" fell
+    // through as plain text and got rendered as bold headers with a stray
+    // literal "+" in front of them.
+    const normLine = trimmed.replace(/^[\*\-\+]\s+/, '• ').replace(/^•\s*/, '• ');
     currentContent.push(normLine);
   }
 
@@ -253,10 +273,11 @@ export async function generateResumePDF({
   linkedin = null,
   userName = null,
 }) {
-  // --- Extract contact info. IMPORTANT: no hardcoded personal fallback data —
-  // if nothing can be found/provided, the field is simply omitted rather than
-  // silently stamping a stranger's name/email/phone onto someone else's resume.
-  const finalName     = userName || extractName(resumeText) || 'Your Name';
+  // --- Extract contact info. No hardcoded personal fallback data — if
+  // nothing can be found/provided, the field is simply omitted rather than
+  // silently stamping a stranger's info onto someone else's resume.
+  const rawName       = userName || extractName(resumeText) || 'Your Name';
+  const finalName     = smartTitleCase(rawName);
   const finalEmail    = extractEmail(resumeText)     || email     || '';
   const finalPhone    = extractPhoneNumber(resumeText) || phone   || '';
   const finalLinkedIn = extractLinkedIn(resumeText)  || linkedin  || '';
@@ -310,8 +331,13 @@ export async function generateResumePDF({
   };
 
   // ====================================================================
-  // SINGLE PAGE COMPRESSION ALGORITHM (AESTHETIC & LEGIBLE LIMITS)
+  // SINGLE PAGE COMPRESSION ALGORITHM (best-effort — tries to fit one page)
   // ====================================================================
+  // Content is stripped of its bullet marker before measuring, so the
+  // estimate matches what actually gets rendered (see `content` usage in
+  // the render loop below).
+  const stripBulletMarker = (t) => (t.startsWith('•') ? t.replace(/^•\s*/, '') : t);
+
   const calculateTotalHeight = (sName, sContact, sSection, sEntryHeader, sSubtitle, sBody, lBody, lEntryHeader, lSubtitle, gSec) => {
     let heightNeeded = 0;
 
@@ -327,98 +353,98 @@ export async function generateResumePDF({
         const trimmed = safeText(rawLine).trim();
         if (!trimmed) continue;
 
-        const isBullet  = trimmed.startsWith('•');
-        const bulletTxt = isBullet ? trimmed.replace(/^•\s*/, '') : '';
+        const isBullet = trimmed.startsWith('•');
+        const content   = stripBulletMarker(trimmed);
 
         if (key === 'summary') {
-          const linesCount = wrapText(trimmed, MAX_W, sBody).length;
+          const linesCount = wrapText(content, MAX_W, sBody).length;
           heightNeeded += linesCount * lBody + 2;
           continue;
         }
 
         if (key.includes('experience')) {
-          if (!isBullet && /\d{4}/.test(trimmed)) {
-            const { label } = splitLabelAndDate(trimmed);
+          if (!isBullet && /\d{4}/.test(content)) {
+            const { label } = splitLabelAndDate(content);
             const linesCount = wrapText(label, MAX_W - 100, sEntryHeader, { bold: true }).length;
             heightNeeded += linesCount * lEntryHeader + 2;
             continue;
           }
-          if (!isBullet && /\b(developer|engineer|intern|analyst|consultant|lead|architect|manager|designer|specialist|devops|sde)\b/i.test(trimmed)) {
-            const linesCount = wrapText(trimmed, MAX_W, sSubtitle, { italic: true }).length;
+          if (!isBullet && /\b(developer|engineer|intern|analyst|consultant|lead|architect|manager|designer|specialist|devops|sde)\b/i.test(content)) {
+            const linesCount = wrapText(content, MAX_W, sSubtitle, { italic: true }).length;
             heightNeeded += linesCount * lSubtitle + 2;
             continue;
           }
           if (isBullet) {
-            const linesCount = wrapText(bulletTxt, MAX_W - 16, sBody).length;
+            const linesCount = wrapText(content, MAX_W - 16, sBody).length;
             heightNeeded += linesCount * lBody + 2;
             continue;
           }
-          const linesCount = wrapText(trimmed, MAX_W, sBody).length;
+          const linesCount = wrapText(content, MAX_W, sBody).length;
           heightNeeded += linesCount * lBody + 2;
           continue;
         }
 
         if (key.includes('project')) {
-          if (!isBullet && trimmed.includes('|')) {
-            const parts = trimmed.split('|').map(pt => safeText(pt).trim());
+          if (!isBullet && content.includes('|')) {
+            const parts = content.split('|').map(pt => safeText(pt).trim());
             const display = parts[0];
             const linesCount = wrapText(display, MAX_W - 100, sEntryHeader, { bold: true }).length;
             heightNeeded += linesCount * lEntryHeader + 2;
             continue;
           }
-          if (!isBullet && /\d{4}/.test(trimmed)) {
-            const { label } = splitLabelAndDate(trimmed);
+          if (!isBullet && /\d{4}/.test(content)) {
+            const { label } = splitLabelAndDate(content);
             const linesCount = wrapText(label, MAX_W - 100, sEntryHeader, { bold: true }).length;
             heightNeeded += linesCount * lEntryHeader + 2;
             continue;
           }
-          if (!isBullet && trimmed.length < 80) {
-            const linesCount = wrapText(trimmed, MAX_W, sEntryHeader, { bold: true }).length;
+          if (!isBullet && content.length < 80) {
+            const linesCount = wrapText(content, MAX_W, sEntryHeader, { bold: true }).length;
             heightNeeded += linesCount * lEntryHeader + 2;
             continue;
           }
           if (isBullet) {
-            const linesCount = wrapText(bulletTxt, MAX_W - 16, sBody).length;
+            const linesCount = wrapText(content, MAX_W - 16, sBody).length;
             heightNeeded += linesCount * lBody + 2;
             continue;
           }
-          const linesCount = wrapText(trimmed, MAX_W, sBody).length;
+          const linesCount = wrapText(content, MAX_W, sBody).length;
           heightNeeded += linesCount * lBody + 2;
           continue;
         }
 
         if (key.includes('education')) {
-          if (/amity\s+international\s+school/i.test(trimmed)) continue;
-          if (/\d{4}/.test(trimmed) && !/(gpa|cgpa|grade|score)/i.test(trimmed)) {
-            const { label } = splitLabelAndDate(trimmed);
+          if (/amity\s+international\s+school/i.test(content)) continue;
+          if (/\d{4}/.test(content) && !/(gpa|cgpa|grade|score)/i.test(content)) {
+            const { label } = splitLabelAndDate(content);
             const linesCount = wrapText(label, MAX_W - 100, sSubtitle, { italic: true }).length;
             heightNeeded += linesCount * lSubtitle;
             continue;
           }
           if (!isBullet) {
-            const linesCount = wrapText(trimmed, MAX_W, sEntryHeader, { bold: true }).length;
+            const linesCount = wrapText(content, MAX_W, sEntryHeader, { bold: true }).length;
             heightNeeded += linesCount * lEntryHeader + 2;
             continue;
           }
-          const linesCount = wrapText(trimmed.replace(/^•\s*/, ''), MAX_W - 8, sBody).length;
+          const linesCount = wrapText(content, MAX_W - 8, sBody).length;
           heightNeeded += linesCount * lBody + 2;
           continue;
         }
 
         if (key.includes('skill') || key.includes('technolog')) {
-          if (trimmed.includes(':')) {
-            const colon  = trimmed.indexOf(':');
-            const value  = trimmed.slice(colon + 1).trim();
+          if (content.includes(':')) {
+            const colon  = content.indexOf(':');
+            const value  = content.slice(colon + 1).trim();
             const linesCount = wrapText(value, MAX_W - 80, sBody).length;
             heightNeeded += linesCount * lBody + 2;
             continue;
           }
-          const linesCount = wrapText(trimmed, MAX_W, sBody).length;
+          const linesCount = wrapText(content, MAX_W, sBody).length;
           heightNeeded += linesCount * lBody + 2;
           continue;
         }
 
-        const linesCount = wrapText(trimmed, MAX_W, sBody).length;
+        const linesCount = wrapText(content, MAX_W, sBody).length;
         heightNeeded += linesCount * lBody + 2;
       }
       heightNeeded += gSec;
@@ -440,7 +466,6 @@ export async function generateResumePDF({
   let lhSubtitle    = 13.5;
 
   let gapSection = 10.0;
-  let marginY = MARGIN_TOP;
 
   const availableHeight = PAGE_HEIGHT - MARGIN_TOP - MARGIN_BOTTOM;
   let requiredHeight = calculateTotalHeight(sizeName, sizeContact, sizeSection, sizeEntryHeader, sizeSubtitle, sizeBody, lhBody, lhEntryHeader, lhSubtitle, gapSection);
@@ -473,43 +498,59 @@ export async function generateResumePDF({
     lhSubtitle      = 11.5;
     gapSection      = 5.5;
   }
+  // IMPORTANT: if content still doesn't fit after Stage 2 (long resumes),
+  // we no longer keep shrinking or silently draw past the bottom edge.
+  // Stage 2 is treated as the minimum *readable* size, and the renderer
+  // below automatically flows overflow content onto additional pages
+  // (see `ensureSpace`) so nothing is ever lost or invisible.
 
-  // --- Rendering engine ---
-  const p = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-  let cursorY = PAGE_HEIGHT - marginY;
+  // ====================================================================
+  // RENDERING ENGINE (multi-page aware)
+  // ====================================================================
+  let page = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+  let cursorY = PAGE_HEIGHT - MARGIN_TOP;
 
-  const drawLine = (page, y, color = LIGHT_GRAY, thickness = 0.6, x1 = MARGIN_X, x2 = PAGE_WIDTH - MARGIN_X) =>
+  // Call before drawing any block. If the block wouldn't fit in the
+  // remaining space on the current page, starts a fresh page first.
+  const ensureSpace = (neededHeight) => {
+    if (cursorY - neededHeight < MARGIN_BOTTOM) {
+      page = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+      cursorY = PAGE_HEIGHT - MARGIN_TOP;
+    }
+  };
+
+  const drawLine = (y, color = LIGHT_GRAY, thickness = 0.6, x1 = MARGIN_X, x2 = PAGE_WIDTH - MARGIN_X) =>
     page.drawLine({ start: { x: x1, y }, end: { x: x2, y }, thickness, color });
 
-  const drawRect = (page, x, y, w, h, color) =>
+  const drawRect = (x, y, w, h, color) =>
     page.drawRectangle({ x, y, width: w, height: h, color });
 
-  const drawText = (page, text, x, y, size, opts = {}) => {
+  const drawText = (text, x, y, size, opts = {}) => {
     const s = safeText(text);
     if (!s) return;
     page.drawText(s, { x, y, size, font: pickFont(opts), color: opts.color || BLACK });
   };
 
-  const drawWrapped = (page, text, x, y, maxWidth, size, lineHeight, opts = {}) => {
+  const drawWrapped = (text, x, y, maxWidth, size, lineHeight, opts = {}) => {
     const lines = wrapText(text, maxWidth, size, opts);
     let cy = y;
     for (const ln of lines) {
-      drawText(page, ln, x, cy, size, opts);
+      drawText(ln, x, cy, size, opts);
       cy -= lineHeight;
     }
     return cy;
   };
 
   // Accent-colored dash bullet (reads cleaner than a round dot at small sizes)
-  const drawBullet = (page, text, x, y, maxWidth, size, lineHeight) => {
+  const drawBullet = (text, x, y, maxWidth, size, lineHeight) => {
     const s = safeText(text);
     if (!s) return y;
     const indent = 13;
-    drawText(page, '—', x, y, size, { color: ACCENT });
-    return drawWrapped(page, s, x + indent, y, maxWidth - indent, size, lineHeight);
+    drawText('—', x, y, size, { color: ACCENT });
+    return drawWrapped(s, x + indent, y, maxWidth - indent, size, lineHeight);
   };
 
-  const drawEntryHeader = (page, label, date, x, y, maxWidth, size, lineHeight, opts = {}) => {
+  const drawEntryHeader = (label, date, x, y, maxWidth, size, lineHeight, opts = {}) => {
     const lOpts = { bold: true, color: opts.color || PRIMARY };
     const dOpts = { italic: true, color: GRAY };
     if (date) {
@@ -517,13 +558,13 @@ export async function generateResumePDF({
       const labelMaxW = maxWidth - dw - 10;
       const lLines    = wrapText(label, labelMaxW, size, lOpts);
       let ly = y;
-      for (const ll of lLines) { drawText(page, ll, x, ly, size, lOpts); ly -= lineHeight; }
-      drawText(page, date, PAGE_WIDTH - MARGIN_X - dw, y, sizeSubtitle, dOpts);
+      for (const ll of lLines) { drawText(ll, x, ly, size, lOpts); ly -= lineHeight; }
+      drawText(date, PAGE_WIDTH - MARGIN_X - dw, y, sizeSubtitle, dOpts);
       return y - (lLines.length * lineHeight);
     } else {
       const lLines = wrapText(label, maxWidth, size, lOpts);
       let ly = y;
-      for (const ll of lLines) { drawText(page, ll, x, ly, size, lOpts); ly -= lineHeight; }
+      for (const ll of lLines) { drawText(ll, x, ly, size, lOpts); ly -= lineHeight; }
       return y - (lLines.length * lineHeight);
     }
   };
@@ -532,11 +573,11 @@ export async function generateResumePDF({
   // WRITE HEADER
   // ====================================================================
   const nameW = tw(finalName, sizeName, { bold: true });
-  drawText(p, finalName, (PAGE_WIDTH - nameW) / 2, cursorY, sizeName, { bold: true, color: PRIMARY });
+  drawText(finalName, (PAGE_WIDTH - nameW) / 2, cursorY, sizeName, { bold: true, color: PRIMARY });
 
   // Small gold accent tick centered under the name — a quiet signature touch
   const tickW = 26;
-  drawRect(p, (PAGE_WIDTH - tickW) / 2, cursorY - sizeName + 2, tickW, 1.6, ACCENT);
+  drawRect((PAGE_WIDTH - tickW) / 2, cursorY - sizeName + 2, tickW, 1.6, ACCENT);
   cursorY -= sizeName + 10;
 
   // Contact row — small gold dot separators instead of plain pipes
@@ -551,31 +592,34 @@ export async function generateResumePDF({
 
   for (let i = 0; i < contactParts.length; i++) {
     const part = contactParts[i];
-    drawText(p, part, cx, cursorY, sizeContact, cOpts);
+    drawText(part, cx, cursorY, sizeContact, cOpts);
     cx += tw(part, sizeContact, cOpts);
     if (i < contactParts.length - 1) {
       const midX = cx + dotGap / 2;
-      p.drawCircle({ x: midX, y: cursorY + sizeContact * 0.32, size: 1.1, color: ACCENT });
+      page.drawCircle({ x: midX, y: cursorY + sizeContact * 0.32, size: 1.1, color: ACCENT });
       cx += dotGap;
     }
   }
   cursorY -= 14;
 
-  // Header divider: short bold navy segment + long faint hairline (subtle asymmetry reads as designed, not templated)
-  drawLine(p, cursorY, PRIMARY, 1.4, MARGIN_X, MARGIN_X + 46);
-  drawLine(p, cursorY, RULE_FAINT, 0.75, MARGIN_X + 54, PAGE_WIDTH - MARGIN_X);
+  // Header divider: short bold navy segment + long faint hairline
+  drawLine(cursorY, PRIMARY, 1.4, MARGIN_X, MARGIN_X + 46);
+  drawLine(cursorY, RULE_FAINT, 0.75, MARGIN_X + 54, PAGE_WIDTH - MARGIN_X);
   cursorY -= 14;
 
   // ====================================================================
   // WRITE SECTIONS
   // ====================================================================
   for (const section of sections) {
-    // Section heading with small accent tab + tracked-out caps for a premium, editorial feel
+    // Reserve room for the heading itself + at least one line of content,
+    // so a section title never gets stranded alone at the bottom of a page.
+    ensureSpace(sizeSection + sizeBody + 24);
+
     const tabW = 3, tabH = sizeSection * 0.78;
-    drawRect(p, MARGIN_X, cursorY - tabH + sizeSection * 0.16, tabW, tabH, ACCENT);
-    drawText(p, trackedUpper(section.title), MARGIN_X + tabW + 7, cursorY, sizeSection, { bold: true, color: PRIMARY });
+    drawRect(MARGIN_X, cursorY - tabH + sizeSection * 0.16, tabW, tabH, ACCENT);
+    drawText(trackedUpper(section.title), MARGIN_X + tabW + 7, cursorY, sizeSection, { bold: true, color: PRIMARY });
     cursorY -= 4;
-    drawLine(p, cursorY, RULE_FAINT, 0.6);
+    drawLine(cursorY, RULE_FAINT, 0.6);
     cursorY -= 9;
 
     const key = section.title.toLowerCase();
@@ -584,16 +628,23 @@ export async function generateResumePDF({
       const trimmed = safeText(rawLine).trim();
       if (!trimmed) continue;
 
-      const isBullet  = trimmed.startsWith('•');
-      const bulletTxt = isBullet ? trimmed.replace(/^•\s*/, '') : '';
+      const isBullet = trimmed.startsWith('•');
+      // `content` is the line with any leading bullet marker stripped —
+      // used everywhere below instead of raw `trimmed` so no stray "•"
+      // or "+" characters leak into headers, dates, or labels.
+      const content = isBullet ? trimmed.replace(/^•\s*/, '') : trimmed;
 
       // -------- SUMMARY --------
       if (key === 'summary') {
         if (isBullet) {
-          cursorY = drawBullet(p, bulletTxt, MARGIN_X, cursorY, MAX_W, sizeBody, lhBody);
+          const lines = wrapText(content, MAX_W, sizeBody);
+          ensureSpace(lines.length * lhBody + 4);
+          cursorY = drawBullet(content, MARGIN_X, cursorY, MAX_W, sizeBody, lhBody);
           cursorY -= 2;
         } else {
-          cursorY = drawWrapped(p, trimmed, MARGIN_X, cursorY, MAX_W, sizeBody, lhBody, { color: DARK_GRAY });
+          const lines = wrapText(content, MAX_W, sizeBody);
+          ensureSpace(lines.length * lhBody + 5);
+          cursorY = drawWrapped(content, MARGIN_X, cursorY, MAX_W, sizeBody, lhBody, { color: DARK_GRAY });
           cursorY -= 3;
         }
         continue;
@@ -601,114 +652,147 @@ export async function generateResumePDF({
 
       // -------- EXPERIENCE --------
       if (key.includes('experience')) {
-        if (!isBullet && /\d{4}/.test(trimmed)) {
-          const { label, date } = splitLabelAndDate(trimmed);
-          cursorY = drawEntryHeader(p, safeText(label), date, MARGIN_X, cursorY, MAX_W, sizeEntryHeader, lhEntryHeader, { color: PRIMARY });
+        if (!isBullet && /\d{4}/.test(content)) {
+          const { label, date } = splitLabelAndDate(content);
+          const lines = wrapText(label, MAX_W - 100, sizeEntryHeader, { bold: true });
+          ensureSpace(lines.length * lhEntryHeader + 2);
+          cursorY = drawEntryHeader(safeText(label), date, MARGIN_X, cursorY, MAX_W, sizeEntryHeader, lhEntryHeader, { color: PRIMARY });
           cursorY -= 2;
           continue;
         }
-        if (!isBullet && /\b(developer|engineer|intern|analyst|consultant|lead|architect|manager|designer|specialist|devops|sde)\b/i.test(trimmed)) {
-          cursorY = drawWrapped(p, trimmed, MARGIN_X, cursorY, MAX_W, sizeSubtitle, lhSubtitle, { italic: true, color: ACCENT });
+        if (!isBullet && /\b(developer|engineer|intern|analyst|consultant|lead|architect|manager|designer|specialist|devops|sde)\b/i.test(content)) {
+          const lines = wrapText(content, MAX_W, sizeSubtitle, { italic: true });
+          ensureSpace(lines.length * lhSubtitle + 2);
+          cursorY = drawWrapped(content, MARGIN_X, cursorY, MAX_W, sizeSubtitle, lhSubtitle, { italic: true, color: ACCENT });
           cursorY -= 2;
           continue;
         }
         if (isBullet) {
-          cursorY = drawBullet(p, bulletTxt, MARGIN_X + 4, cursorY, MAX_W - 4, sizeBody, lhBody);
+          const lines = wrapText(content, MAX_W - 4, sizeBody);
+          ensureSpace(lines.length * lhBody + 2);
+          cursorY = drawBullet(content, MARGIN_X + 4, cursorY, MAX_W - 4, sizeBody, lhBody);
           cursorY -= 2;
           continue;
         }
-        cursorY = drawWrapped(p, trimmed, MARGIN_X, cursorY, MAX_W, sizeBody, lhBody);
+        const lines = wrapText(content, MAX_W, sizeBody);
+        ensureSpace(lines.length * lhBody + 2);
+        cursorY = drawWrapped(content, MARGIN_X, cursorY, MAX_W, sizeBody, lhBody);
         cursorY -= 2;
         continue;
       }
 
       // -------- PROJECTS --------
       if (key.includes('project')) {
-        if (!isBullet && trimmed.includes('|')) {
-          const parts = trimmed.split('|').map(pt => safeText(pt).trim());
+        if (!isBullet && content.includes('|')) {
+          const parts = content.split('|').map(pt => safeText(pt).trim());
           const name  = parts[0];
           const rest  = parts.slice(1).join(' | ');
           const { label: tech, date } = splitLabelAndDate(rest);
           const display = tech ? `${name}  |  ${tech}` : name;
-          cursorY = drawEntryHeader(p, display, date, MARGIN_X, cursorY, MAX_W, sizeEntryHeader, lhEntryHeader, { color: PRIMARY });
+          const lines = wrapText(display, MAX_W - 100, sizeEntryHeader, { bold: true });
+          ensureSpace(lines.length * lhEntryHeader + 2);
+          cursorY = drawEntryHeader(display, date, MARGIN_X, cursorY, MAX_W, sizeEntryHeader, lhEntryHeader, { color: PRIMARY });
           cursorY -= 2;
           continue;
         }
-        if (!isBullet && /\d{4}/.test(trimmed)) {
-          const { label, date } = splitLabelAndDate(trimmed);
-          cursorY = drawEntryHeader(p, safeText(label), date, MARGIN_X, cursorY, MAX_W, sizeEntryHeader, lhEntryHeader, { color: PRIMARY });
+        if (!isBullet && /\d{4}/.test(content)) {
+          const { label, date } = splitLabelAndDate(content);
+          const lines = wrapText(label, MAX_W - 100, sizeEntryHeader, { bold: true });
+          ensureSpace(lines.length * lhEntryHeader + 2);
+          cursorY = drawEntryHeader(safeText(label), date, MARGIN_X, cursorY, MAX_W, sizeEntryHeader, lhEntryHeader, { color: PRIMARY });
           cursorY -= 2;
           continue;
         }
-        if (!isBullet && trimmed.length < 80) {
-          cursorY = drawWrapped(p, trimmed, MARGIN_X, cursorY, MAX_W, sizeEntryHeader, lhEntryHeader, { bold: true, color: PRIMARY });
+        if (!isBullet && content.length < 80) {
+          const lines = wrapText(content, MAX_W, sizeEntryHeader, { bold: true });
+          ensureSpace(lines.length * lhEntryHeader + 2);
+          cursorY = drawWrapped(content, MARGIN_X, cursorY, MAX_W, sizeEntryHeader, lhEntryHeader, { bold: true, color: PRIMARY });
           cursorY -= 2;
           continue;
         }
         if (isBullet) {
-          cursorY = drawBullet(p, bulletTxt, MARGIN_X + 4, cursorY, MAX_W - 4, sizeBody, lhBody);
+          const lines = wrapText(content, MAX_W - 4, sizeBody);
+          ensureSpace(lines.length * lhBody + 2);
+          cursorY = drawBullet(content, MARGIN_X + 4, cursorY, MAX_W - 4, sizeBody, lhBody);
           cursorY -= 2;
           continue;
         }
-        cursorY = drawWrapped(p, trimmed, MARGIN_X, cursorY, MAX_W, sizeBody, lhBody);
+        const lines = wrapText(content, MAX_W, sizeBody);
+        ensureSpace(lines.length * lhBody + 2);
+        cursorY = drawWrapped(content, MARGIN_X, cursorY, MAX_W, sizeBody, lhBody);
         cursorY -= 2;
         continue;
       }
 
       // -------- EDUCATION --------
       if (key.includes('education')) {
-        if (/amity\s+international\s+school/i.test(trimmed)) continue;
+        if (/amity\s+international\s+school/i.test(content)) continue;
 
-        if (/\d{4}/.test(trimmed) && !/(gpa|cgpa|grade|score)/i.test(trimmed)) {
-          const { label, date } = splitLabelAndDate(trimmed);
+        if (/\d{4}/.test(content) && !/(gpa|cgpa|grade|score)/i.test(content)) {
+          const { label, date } = splitLabelAndDate(content);
           const lOpts = { italic: true, color: DARK_GRAY };
           const dOpts = { italic: true, color: GRAY };
           const lLines = wrapText(safeText(label), MAX_W - tw(date, sizeSubtitle, dOpts) - 10, sizeSubtitle, lOpts);
+          ensureSpace(lLines.length * lhSubtitle + 2);
           let ly = cursorY;
-          for (const ll of lLines) { drawText(p, ll, MARGIN_X + 8, ly, sizeSubtitle, lOpts); ly -= lhSubtitle; }
-          if (date) { const dw = tw(date, sizeSubtitle, dOpts); drawText(p, date, PAGE_WIDTH - MARGIN_X - dw, cursorY, sizeSubtitle, dOpts); }
+          for (const ll of lLines) { drawText(ll, MARGIN_X + 8, ly, sizeSubtitle, lOpts); ly -= lhSubtitle; }
+          if (date) { const dw = tw(date, sizeSubtitle, dOpts); drawText(date, PAGE_WIDTH - MARGIN_X - dw, cursorY, sizeSubtitle, dOpts); }
           cursorY = ly;
           continue;
         }
         if (!isBullet) {
-          cursorY = drawWrapped(p, trimmed, MARGIN_X, cursorY, MAX_W, sizeEntryHeader, lhEntryHeader, { bold: true, color: PRIMARY });
+          const lines = wrapText(content, MAX_W, sizeEntryHeader, { bold: true });
+          ensureSpace(lines.length * lhEntryHeader + 2);
+          cursorY = drawWrapped(content, MARGIN_X, cursorY, MAX_W, sizeEntryHeader, lhEntryHeader, { bold: true, color: PRIMARY });
           cursorY -= 2;
           continue;
         }
-        cursorY = drawWrapped(p, trimmed.replace(/^•\s*/, ''), MARGIN_X + 8, cursorY, MAX_W - 8, sizeBody, lhBody, { color: DARK_GRAY });
+        const lines = wrapText(content, MAX_W - 8, sizeBody);
+        ensureSpace(lines.length * lhBody + 2);
+        cursorY = drawWrapped(content, MARGIN_X + 8, cursorY, MAX_W - 8, sizeBody, lhBody, { color: DARK_GRAY });
         cursorY -= 2;
         continue;
       }
 
       // -------- SKILLS --------
       if (key.includes('skill') || key.includes('technolog')) {
-        if (trimmed.includes(':')) {
-          const colon  = trimmed.indexOf(':');
-          const label  = trimmed.slice(0, colon).trim();
-          const value  = trimmed.slice(colon + 1).trim();
+        if (content.includes(':')) {
+          const colon  = content.indexOf(':');
+          const label  = content.slice(0, colon).trim();
+          const value  = content.slice(colon + 1).trim();
           const lStr   = `${label}: `;
           const lW     = tw(lStr, sizeBody, { bold: true });
-          drawText(p, lStr, MARGIN_X, cursorY, sizeBody, { bold: true, color: PRIMARY });
-          cursorY = drawWrapped(p, value, MARGIN_X + lW, cursorY, MAX_W - lW, sizeBody, lhBody, { color: DARK_GRAY });
+          const lines  = wrapText(value, MAX_W - lW, sizeBody);
+          ensureSpace(lines.length * lhBody + 2);
+          drawText(lStr, MARGIN_X, cursorY, sizeBody, { bold: true, color: PRIMARY });
+          cursorY = drawWrapped(value, MARGIN_X + lW, cursorY, MAX_W - lW, sizeBody, lhBody, { color: DARK_GRAY });
           cursorY -= 2;
           continue;
         }
         if (isBullet) {
-          cursorY = drawBullet(p, bulletTxt, MARGIN_X, cursorY, MAX_W, sizeBody, lhBody);
+          const lines = wrapText(content, MAX_W, sizeBody);
+          ensureSpace(lines.length * lhBody + 2);
+          cursorY = drawBullet(content, MARGIN_X, cursorY, MAX_W, sizeBody, lhBody);
           cursorY -= 2;
           continue;
         }
-        cursorY = drawWrapped(p, trimmed, MARGIN_X, cursorY, MAX_W, sizeBody, lhBody, { color: DARK_GRAY });
+        const lines = wrapText(content, MAX_W, sizeBody);
+        ensureSpace(lines.length * lhBody + 2);
+        cursorY = drawWrapped(content, MARGIN_X, cursorY, MAX_W, sizeBody, lhBody, { color: DARK_GRAY });
         cursorY -= 2;
         continue;
       }
 
       // -------- DEFAULT --------
       if (isBullet) {
-        cursorY = drawBullet(p, bulletTxt, MARGIN_X, cursorY, MAX_W, sizeBody, lhBody);
+        const lines = wrapText(content, MAX_W, sizeBody);
+        ensureSpace(lines.length * lhBody + 2);
+        cursorY = drawBullet(content, MARGIN_X, cursorY, MAX_W, sizeBody, lhBody);
         cursorY -= 2;
       } else {
-        cursorY = drawWrapped(p, trimmed, MARGIN_X, cursorY, MAX_W, sizeBody, lhBody);
+        const lines = wrapText(content, MAX_W, sizeBody);
+        ensureSpace(lines.length * lhBody + 2);
+        cursorY = drawWrapped(content, MARGIN_X, cursorY, MAX_W, sizeBody, lhBody);
         cursorY -= 2;
       }
     }

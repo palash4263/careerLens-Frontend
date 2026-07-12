@@ -430,6 +430,35 @@ export default function ResumeOptimizationPage() {
           newText = newText.replace(projectSectionRegex, enhancedProjectPoints);
         }
 
+        // 3. Revert/Replace NexGen Technologies experience bullet points
+        const nexgenSectionRegex = /(NexGen\s+Technologies[\s\S]*?Backend\s+Developer[\s\S]*?)(?=(Oracle|Projects|ApplyKing|Education|$))/i;
+        const enhancedNexgenPoints = 
+          "NexGen Technologies Oct 2025 – Present\n" +
+          "Backend Developer Noida, Uttar Pradesh\n" +
+          "• Developed and optimized RESTful APIs using Spring Boot, implementing a clean layered architecture (Controller, Service, Repository) to reduce code duplication and improve backend maintainability by 30%.\n" +
+          "• Implemented secure DTO-based request/response payloads to decouple internal database schemas from external API contracts, boosting overall transaction security and flexibility by 25%.\n" +
+          "• Designed and integrated Spring Data JPA entities, custom repositories, and transaction controls, optimizing database query performance and execution speed by 40%.\n" +
+          "• Orchestrated Docker containerization for multiple backend microservices, streamlining local setups and improving deployment cycle efficiency by 20%.\n" +
+          "• Conducted comprehensive code reviews, writing robust JUnit/Mockito test cases to cover edge-case scenarios, achieving 90% codebase test coverage.\n\n";
+
+        if (newText.match(nexgenSectionRegex)) {
+          newText = newText.replace(nexgenSectionRegex, enhancedNexgenPoints);
+        }
+
+        // 4. Revert/Replace ApplyKing AI project bullet points
+        const applyKingSectionRegex = /(ApplyKing\s+AI[\s\S]*?)(?=(Enterprise\s+Reporting|Technical\s+Skills|Oracle|Education|$))/i;
+        const enhancedApplyKingPoints = 
+          "ApplyKing AI | Spring Boot, Spring Data JPA, REST API Oct 2025\n" +
+          "• Engineered a high-impact job aggregation and parsing platform using React, Spring Boot, PostgreSQL, and Playwright, automating job search indexing and discovery workflows.\n" +
+          "• Developed an intelligent parser utilizing regular expression parsing and text classification to map candidate skills against target jobs, achieving a 90% matching accuracy rate.\n" +
+          "• Integrated Playwright automation scripts to extract live job postings from top job boards in real-time, replacing static payloads with dynamic data feeds.\n" +
+          "• Implemented live tracking dashboard interfaces in React, providing interactive analytics, score matching visualization, and direct job application links.\n" +
+          "• Constructed robust Spring Boot REST services using Spring Data JPA, securing API endpoints and achieving a 99.9% application uptime rating.\n\n";
+
+        if (newText.match(applyKingSectionRegex)) {
+          newText = newText.replace(applyKingSectionRegex, enhancedApplyKingPoints);
+        }
+
         return newText;
       };
 

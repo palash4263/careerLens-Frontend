@@ -1581,21 +1581,37 @@
   .db-features-grid    { grid-template-columns: repeat(2, 1fr); }
   .db-bottom           { grid-template-columns: 1fr; }
 }
+
 @media (max-width: 768px) {
   .db-root             { padding: 5rem 1.25rem 3rem; }
-  .db-hero             { padding: 2rem; }
-  .db-hero-title       { font-size: 2rem; }
-  .db-rings            { gap: 1rem; }
+  .db-hero             { padding: 2rem 1.5rem; }
+  .db-hero-title       { font-size: 1.85rem; }
+  .db-rings            { justify-content: center; gap: 1.5rem; }
   .db-stats-grid       { grid-template-columns: 1fr 1fr; }
   .db-features-grid    { grid-template-columns: 1fr; }
-  .db-insight          { grid-template-columns: 1fr; }
+  .db-insight          { grid-template-columns: 1fr; gap: 1.25rem; padding: 1.5rem; }
+  .db-insight-left     { text-align: center; display: flex; flex-direction: column; align-items: center; }
+  .db-insight-text     { font-size: 0.85rem; }
+  .db-insight-score    { order: -1; margin-bottom: 0.5rem; }
+  .db-insight-btn      { width: 100%; justify-content: center; }
   .db-features         { padding: 1.75rem; }
 }
+
+@media (max-width: 540px) {
+  .db-rings {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem 1rem;
+    justify-items: center;
+    width: 100%;
+  }
+}
+
 @media (max-width: 480px) {
   .db-stats-grid       { grid-template-columns: 1fr; }
-  .db-hero-cta         { flex-direction: column; }
+  .db-hero-cta         { flex-direction: column; gap: 0.75rem; width: 100%; }
   .db-btn-primary,
-  .db-btn-secondary    { width: 100%; text-align: center; }
+  .db-btn-secondary    { width: 100%; text-align: center; justify-content: center; padding: 0.85rem 1.5rem; }
 }
 
 /* ====== Scroll Reveal Utility classes ====== */

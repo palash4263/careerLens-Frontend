@@ -162,8 +162,7 @@ const PricingCard = ({ plan }) => {
       className="relative h-full p-2 sm:p-3"
     >
       <div
-        className="pricing-card-inner"
-        style={{ backgroundColor: plan.bg }}
+        className={`pricing-card-inner ${plan.featured ? 'featured' : ''}`}
       >
         {plan.badge && (
           <div className="pricing-badge">

@@ -316,6 +316,11 @@
   stroke-width: 4;
   stroke-linecap: round;
   transition: stroke-dashoffset 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: circleDraw 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes circleDraw {
+  from { stroke-dashoffset: 163.36; }
 }
 
 .perf-value {
@@ -580,10 +585,14 @@
 }
 
 .stat-premium-card:hover {
-  transform: translateY(-2px);
-  border-color: var(--border-medium);
-  box-shadow: var(--shadow-hover);
+  transform: translateY(-5px);
+  border-color: rgba(255, 255, 255, 0.15);
 }
+
+.stat-premium-card.card-glow-purple:hover { box-shadow: 0 10px 30px rgba(124, 59, 237, 0.15); }
+.stat-premium-card.card-glow-blue:hover { box-shadow: 0 10px 30px rgba(59, 130, 246, 0.15); }
+.stat-premium-card.card-glow-green:hover { box-shadow: 0 10px 30px rgba(16, 185, 129, 0.15); }
+.stat-premium-card.card-glow-orange:hover { box-shadow: 0 10px 30px rgba(245, 158, 11, 0.15); }
 
 .card-glow-purple { border-left: 3px solid var(--purple); }
 .card-glow-blue { border-left: 3px solid var(--blue); }

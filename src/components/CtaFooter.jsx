@@ -1,15 +1,44 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import "./CtaFooter.css";
 
 const CtaFooter = () => {
+  const containerVariants = {
+    hidden: { opacity: 0, y: 30 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.8,
+        staggerChildren: 0.15,
+        ease: [0.16, 1, 0.3, 1]
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] }
+    }
+  };
+
   return (
-    <footer className="aesthetic-footer">
+    <motion.footer 
+      className="aesthetic-footer"
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, amount: 0.15 }}
+      variants={containerVariants}
+    >
       <div className="footer-glow" />
       <div className="footer-container">
         <div className="footer-top">
           {/* Logo & Brand Info */}
-          <div className="footer-brand">
+          <motion.div className="footer-brand" variants={itemVariants}>
             <Link to="/dashboard" className="footer-logo">
               <div className="footer-logo-orb">
                 <span className="footer-logo-icon">✦</span>
@@ -22,10 +51,10 @@ const CtaFooter = () => {
             <p className="footer-tagline">
               Empowering job seekers with AI-driven resume optimization, real-time job matching, and interactive interview intelligence.
             </p>
-          </div>
+          </motion.div>
 
           {/* Quick Links Column */}
-          <div className="footer-links-col">
+          <motion.div className="footer-links-col" variants={itemVariants}>
             <h4>Application</h4>
             <div className="footer-links">
               <Link to="/dashboard">Dashboard</Link>
@@ -34,10 +63,10 @@ const CtaFooter = () => {
               <Link to="/jobs">Job Matches</Link>
               <Link to="/interview">Mock Interview</Link>
             </div>
-          </div>
+          </motion.div>
 
           {/* Developer / Creator info column */}
-          <div className="footer-links-col">
+          <motion.div className="footer-links-col" variants={itemVariants}>
             <h4>Creator & Contact</h4>
             <div className="footer-links">
               <span className="footer-contact-item">
@@ -50,12 +79,12 @@ const CtaFooter = () => {
                 🌐 <a href="https://github.com/palash4263" target="_blank" rel="noopener noreferrer">GitHub Account</a>
               </span>
             </div>
-          </div>
+          </motion.div>
         </div>
 
-        <div className="footer-divider" />
+        <motion.div className="footer-divider" variants={itemVariants} />
 
-        <div className="footer-bottom">
+        <motion.div className="footer-bottom" variants={itemVariants}>
           <p className="footer-copy">
             © 2026 CareerLens AI. Crafted for maximum career impact. All rights reserved.
           </p>
@@ -65,9 +94,9 @@ const CtaFooter = () => {
               All Systems Operational
             </span>
           </div>
-        </div>
+        </motion.div>
       </div>
-    </footer>
+    </motion.footer>
   );
 };
 

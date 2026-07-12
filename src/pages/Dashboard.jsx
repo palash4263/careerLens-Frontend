@@ -112,11 +112,12 @@ function Dashboard() {
   ];
 
   return (
-    <div className="db-root">
-      {/* ── Ambient background orbs ── */}
-      <div className="db-orb db-orb-1" />
-      <div className="db-orb db-orb-2" />
-      <div className="db-orb db-orb-3" />
+    <div className="db-page-wrapper">
+      <div className="db-root">
+        {/* ── Ambient background orbs ── */}
+        <div className="db-orb db-orb-1" />
+        <div className="db-orb db-orb-2" />
+        <div className="db-orb db-orb-3" />
 
       <div className="db-content">
 
@@ -546,6 +547,7 @@ function Dashboard() {
           </section>
 
         </div>
+      </div>
       </div>
       <PricingSection />
       <CtaFooter />

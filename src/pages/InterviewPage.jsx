@@ -1,6 +1,7 @@
 // InterviewPage.jsx - Playable AI Interview Simulator Dashboard
 import React, { useState, useEffect, useRef } from 'react';
 import { useScrollReveal } from "../hooks/useScrollReveal";
+import { motion } from 'framer-motion';
 import "../assets/InterviewPage.css";
 
 const questionsBank = {
@@ -179,7 +180,12 @@ const InterviewPage = () => {
     <div className="interview-wrapper">
       <div className="interview-page-content">
         {/* Header */}
-        <div className="interview-header-premium">
+        <motion.div 
+          className="interview-header-premium"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
           <div className="header-badge-premium">
             <span className="badge-dot"></span>
             <span className="badge-icon">◆</span>
@@ -190,12 +196,17 @@ const InterviewPage = () => {
             Deploy custom real-time adaptive audio or text conversational environments 
             to iron out critical communication blockages.
           </p>
-        </div>
+        </motion.div>
 
         {/* Main Grid */}
         <div className="interview-main-grid">
           {/* Left Panel - Config */}
-          <div className="config-panel-premium scroll-reveal-left">
+          <motion.div 
+            className="config-panel-premium scroll-reveal-left"
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+          >
             <div className="config-header">
               <h3>⚙️ Simulation Parameters</h3>
               <p className="config-sub">Select your target assessment vertical:</p>
@@ -261,10 +272,15 @@ const InterviewPage = () => {
                 ))}
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Right Panel - Terminal */}
-          <div className="terminal-panel-premium scroll-reveal-right">
+          <motion.div 
+            className="terminal-panel-premium scroll-reveal-right"
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.15 }}
+          >
             <div className="terminal-topbar-premium">
               <div className="terminal-dots-premium">
                 <span className="dot red" onClick={handleStopSimulation}></span>
@@ -387,12 +403,17 @@ const InterviewPage = () => {
                   </div>
                 </div>
               )}
-            </div>
+            </motion.div>
           </div>
         </div>
 
         {/* Bottom Section - Stats & Sessions */}
-        <div className="interview-bottom-grid">
+        <motion.div 
+          className="interview-bottom-grid"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.25 }}
+        >
           {/* Stats Cards */}
           <div className="stats-premium-grid">
             <div className="stat-premium-card card-glow-purple">
@@ -469,10 +490,15 @@ const InterviewPage = () => {
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Recent Sessions Table */}
-        <section className="sessions-premium">
+        <motion.section 
+          className="sessions-premium"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.35 }}
+        >
           <div className="sessions-header">
             <h3>📋 Recent Sessions</h3>
             <span className="sessions-count">{recentSessions.length} sessions</span>
@@ -517,7 +543,7 @@ const InterviewPage = () => {
               </tbody>
             </table>
           </div>
-        </section>
+        </motion.section>
       </div>
 
       {/* Toast Alert */}

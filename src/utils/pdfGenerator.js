@@ -5,8 +5,8 @@ import { saveAs } from "file-saver";
 const PAGE_WIDTH  = 595;
 const PAGE_HEIGHT = 842;
 const MARGIN_X    = 50;
-const MARGIN_TOP  = 48;
-const MARGIN_BOTTOM = 44;
+const MARGIN_TOP  = 36;
+const MARGIN_BOTTOM = 36;
 
 // ====== COLOR PALETTE ======
 const PRIMARY    = rgb(0.09, 0.26, 0.55);   // deep navy blue
@@ -229,7 +229,16 @@ const splitLabelAndDate = (text) => {
   const m = t.match(DATE_PATTERN);
   if (!m) return { label: t, date: '' };
   const date  = m[0].trim();
-  const label = t.slice(0, m.index).trim().replace(/[-–—,|]\s*$/, '').trim();
+  let label = t.slice(0, m.index).trim();
+  
+  // Clean up trailing open parentheses or brackets left over from parsing dates
+  label = label
+    .replace(/[-–—,|]\s*$/, '') // trailing separators
+    .trim()
+    .replace(/\(\s*$/, '')      // trailing open parenthesis (e.g. "Oracle (")
+    .replace(/\[\s*$/, '')      // trailing open bracket
+    .trim();
+    
   return { label: label || t, date: label ? date : '' };
 };
 
@@ -246,8 +255,8 @@ export async function generateResumePDF({
   linkedin = null,
   userName = null,
 }) {
-  // --- Extract contact info ---
-  const finalName     = extractName(resumeText)     || userName  || 'Palash Mishra';
+  // --- Extract contact info (always prioritize userName) ---
+  const finalName     = userName || extractName(resumeText) || 'Palash Mishra';
   const finalJobTitle = extractJobTitle(resumeText)  || jobTitle  || 'Full Stack Developer';
   const finalEmail    = extractEmail(resumeText)     || email     || 'palashmishra47@gmail.com';
   const finalPhone    = extractPhoneNumber(resumeText) || phone   || '+91-7428477219';
@@ -302,7 +311,7 @@ export async function generateResumePDF({
   };
 
   // ====================================================================
-  // SINGLE PAGE COMPRESSION ALGORITHM
+  // SINGLE PAGE COMPRESSION ALGORITHM (AESTHETIC & LEGIBLE LIMITS)
   // ====================================================================
   const calculateTotalHeight = (sName, sTitle, sContact, sSection, sEntryHeader, sSubtitle, sBody, lBody, lEntryHeader, lSubtitle, gSec) => {
     let heightNeeded = 0;
@@ -314,7 +323,7 @@ export async function generateResumePDF({
     heightNeeded += 12; // divider rule
     
     for (const section of sections) {
-      heightNeeded += 18; // Heading spacing overhead
+      heightNeeded += 14; // Heading spacing overhead
       const key = section.title.toLowerCase();
       
       for (const rawLine of section.content) {
@@ -421,63 +430,55 @@ export async function generateResumePDF({
     return heightNeeded;
   };
 
-  // --- Dynamic Layout Metrics ---
-  let sizeName        = 19;
-  let sizeTitle       = 10.5;
-  let sizeContact     = 8.2;
-  let sizeSection     = 10.2;
-  let sizeEntryHeader = 9.5;
-  let sizeSubtitle    = 9.0;
-  let sizeBody        = 8.8;
+  // --- Dynamic Layout Metrics (Slightly larger, much more aesthetic starting sizes) ---
+  let sizeName        = 22;
+  let sizeTitle       = 11.5;
+  let sizeContact     = 8.8;
+  let sizeSection     = 10.8;
+  let sizeEntryHeader = 10.0;
+  let sizeSubtitle    = 9.5;
+  let sizeBody        = 9.2;
 
-  let lhBody         = 12.0;
-  let lhEntryHeader = 13.0;
-  let lhSubtitle     = 12.0;
+  let lhBody         = 13.0;
+  let lhEntryHeader = 14.0;
+  let lhSubtitle     = 13.0;
   
-  let gapSection = 6.0;
+  let gapSection = 8.0;
   let marginY = MARGIN_TOP;
 
-  // Pre-flight check & scale loop (target: 746 available vertical pixels)
-  const availableHeight = PAGE_HEIGHT - MARGIN_TOP - MARGIN_BOTTOM; // 842 - 48 - 44 = 750
+  // Available vertical space is expanded (36px margins top/bottom = 770px available)
+  const availableHeight = PAGE_HEIGHT - MARGIN_TOP - MARGIN_BOTTOM; 
   let requiredHeight = calculateTotalHeight(sizeName, sizeTitle, sizeContact, sizeSection, sizeEntryHeader, sizeSubtitle, sizeBody, lhBody, lhEntryHeader, lhSubtitle, gapSection);
 
   if (requiredHeight > availableHeight) {
-    // Stage 1 compression
-    sizeBody = 8.2;
-    lhBody = 11.2;
+    // Stage 1 Compression (Slightly compact, still highly aesthetic and readable)
+    sizeName        = 20;
+    sizeTitle       = 11.0;
+    sizeContact     = 8.5;
+    sizeSection     = 10.2;
+    sizeEntryHeader = 9.5;
+    sizeSubtitle    = 9.0;
+    sizeBody        = 8.6;
+    lhBody          = 12.0;
+    lhEntryHeader   = 13.0;
+    lhSubtitle      = 12.0;
+    gapSection      = 6.0;
+    requiredHeight = calculateTotalHeight(sizeName, sizeTitle, sizeContact, sizeSection, sizeEntryHeader, sizeSubtitle, sizeBody, lhBody, lhEntryHeader, lhSubtitle, gapSection);
+  }
+
+  if (requiredHeight > availableHeight) {
+    // Stage 2 Compression (Minimum threshold to ensure a readable, premium single page)
+    sizeName        = 18;
+    sizeTitle       = 10.0;
+    sizeContact     = 8.2;
+    sizeSection     = 9.8;
     sizeEntryHeader = 9.0;
-    lhEntryHeader = 12.0;
-    sizeSubtitle = 8.5;
-    lhSubtitle = 11.2;
-    gapSection = 4.0;
-    requiredHeight = calculateTotalHeight(sizeName, sizeTitle, sizeContact, sizeSection, sizeEntryHeader, sizeSubtitle, sizeBody, lhBody, lhEntryHeader, lhSubtitle, gapSection);
-  }
-
-  if (requiredHeight > availableHeight) {
-    // Stage 2 compression (compact layout)
-    sizeBody = 7.8;
-    lhBody = 10.5;
-    sizeEntryHeader = 8.5;
-    lhEntryHeader = 11.0;
-    sizeSubtitle = 8.0;
-    lhSubtitle = 10.5;
-    sizeSection = 9.5;
-    sizeName = 17;
-    gapSection = 3.0;
-    requiredHeight = calculateTotalHeight(sizeName, sizeTitle, sizeContact, sizeSection, sizeEntryHeader, sizeSubtitle, sizeBody, lhBody, lhEntryHeader, lhSubtitle, gapSection);
-  }
-
-  if (requiredHeight > availableHeight) {
-    // Stage 3 compression (absolute minimums to force fit on single page)
-    sizeBody = 7.3;
-    lhBody = 9.6;
-    sizeEntryHeader = 8.0;
-    lhEntryHeader = 10.2;
-    sizeSubtitle = 7.6;
-    lhSubtitle = 9.8;
-    sizeSection = 9.0;
-    sizeName = 15;
-    gapSection = 1.5;
+    sizeSubtitle    = 8.5;
+    sizeBody        = 8.1;
+    lhBody          = 11.2;
+    lhEntryHeader   = 12.0;
+    lhSubtitle      = 11.2;
+    gapSection      = 4.5;
   }
 
   // --- Rendering engine ---
@@ -571,9 +572,9 @@ export async function generateResumePDF({
   // ====================================================================
   for (const section of sections) {
     drawText(p, section.title.toUpperCase(), MARGIN_X, cursorY, sizeSection, { bold: true, color: PRIMARY });
-    cursorY -= 4;
-    drawLine(p, cursorY, LIGHT_GRAY, 0.6);
-    cursorY -= 8;
+    cursorY -= 3;
+    drawLine(p, cursorY, LIGHT_GRAY, 0.5);
+    cursorY -= 7;
 
     const key = section.title.toLowerCase();
 

@@ -47,7 +47,7 @@ const safeText = (value) => {
 // pdf-lib has no native letter-spacing, so we space the characters ourselves.
 const trackedUpper = (text, spaced = true) => {
   const s = safeText(text).toUpperCase();
-  return spaced ? s.split('').join('\u200a\u200a') : s;
+  return spaced ? s.split('').join(' ') : s;
 };
 
 // =====================================================================

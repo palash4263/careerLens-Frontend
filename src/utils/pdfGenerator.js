@@ -691,8 +691,7 @@ export async function generateResumePDF({
     y: cursorY - (isLong ? 4 : 2),
     width: FULL_W,
     height: bannerH,
-    fill: rgb(0.93, 0.96, 0.98),
-    borderRadius: 4
+    color: rgb(0.93, 0.96, 0.98),
   });
 
   // Center contact text inside the banner
@@ -879,8 +878,7 @@ export async function generateResumePDF({
             y: rightY - 2,
             width: badgeWidth,
             height: badgeHeight,
-            fill: PRIMARY,
-            borderRadius: 3
+            color: PRIMARY,
           });
 
           // Draw Skill Text
@@ -908,8 +906,7 @@ export async function generateResumePDF({
             y: rightY - 2,
             width: badgeWidth,
             height: badgeHeight,
-            fill: PRIMARY,
-            borderRadius: 3
+            color: PRIMARY,
           });
 
           drawText(p, skill, badgeX + 5, rightY + 1, sizeBody, { color: rgb(1, 1, 1) });

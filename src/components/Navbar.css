@@ -39,7 +39,7 @@
   gap: 10px;
   text-decoration: none;
   flex-shrink: 0;
-  padding: 6px 14px 6px 6px;
+  padding: 8px 16px 8px 8px;
   border-radius: 999px;
   border: 1px solid transparent;
   transition: background-color 160ms ease, border-color 160ms ease;
@@ -48,23 +48,24 @@
 .nb-logo:hover {
   background: var(--shell-nav-surface);
   border-color: var(--shell-nav-border);
+  box-shadow: var(--shell-nav-shadow);
 }
 
 .nb-logo-orb {
   position: relative;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--shell-nav-surface-strong);
+  background: var(--shell-nav-accent-soft);
   border-radius: 50%;
-  border: 1px solid rgba(201, 162, 39, 0.18);
+  border: 1px solid var(--shell-nav-accent);
   flex-shrink: 0;
 }
 
 .nb-logo-icon {
-  font-size: 15px;
+  font-size: 18px;
   color: var(--shell-nav-accent);
   display: block;
   line-height: 1;
@@ -74,7 +75,7 @@
   position: absolute;
   inset: -4px;
   border-radius: 50%;
-  border: 1px solid rgba(201, 162, 39, 0.12);
+  border: 1px solid rgba(201, 162, 39, 0.18);
 }
 
 .nb-logo-ring::after {
@@ -87,13 +88,13 @@
   height: 5px;
   border-radius: 50%;
   background: var(--shell-nav-accent);
-  box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.12);
+  box-shadow: 0 0 0 4px rgba(201, 162, 39, 0.14);
 }
 
 .nb-logo-text {
-  font-size: 18px;
+  font-size: 19px;
   font-weight: 800;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
   color: var(--shell-nav-text);
   font-family: var(--cl-font-body);
 }
@@ -103,11 +104,11 @@
 }
 
 .nb-logo-badge {
-  font-size: 8px;
+  font-size: 9px;
   font-weight: 800;
   letter-spacing: 0.07em;
   color: var(--shell-nav-text);
-  background: var(--shell-nav-accent-soft);
+  background: var(--shell-nav-accent);
   padding: 2px 7px;
   border-radius: 999px;
   align-self: flex-start;

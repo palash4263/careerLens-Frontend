@@ -16,6 +16,8 @@ import AtsPage from "./pages/AtsPage";
 import InterviewPage from "./pages/InterviewPage";
 import ResumeOptimizationPage from "./pages/ResumeOptimizationPage";
 import ProfilePage from "./pages/ProfilePage";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 // ✅ Protected Route wrapper
 function ProtectedRoute({ children }) {
@@ -43,7 +45,9 @@ function Layout() {
   const hideNavbar =
     location.pathname === "/" ||
     location.pathname === "/login" ||
-    location.pathname === "/register";
+    location.pathname === "/register" ||
+    location.pathname === "/forgot-password" ||
+    location.pathname === "/reset-password";
 
   // ✅ Show nothing while checking authentication
   if (loading) {
@@ -67,6 +71,8 @@ function Layout() {
           <Route path="/" element={<Login />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
           {/* ✅ Protected Routes - With Navbar */}
           <Route 

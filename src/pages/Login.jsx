@@ -1,6 +1,6 @@
 // src/pages/Login.jsx
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import { login, googleSignIn } from "../services/authService";
 import "./Login.css";
@@ -144,8 +144,8 @@ function Login() {
 
           <div className={`field ${focused === "password" ? "is-focused" : ""} ${errors.password ? "has-error" : ""}`}>
             <div className="field-label-row">
-              <label htmlFor="password">Password</label>
-              <a href="/forgot-password" className="field-aside-link">Forgot?</a>
+               <label htmlFor="password">Password</label>
+               <Link to="/forgot-password" className="field-aside-link">Forgot?</Link>
             </div>
             <input
               id="password"

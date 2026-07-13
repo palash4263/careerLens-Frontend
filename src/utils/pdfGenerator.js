@@ -652,41 +652,53 @@ export async function generateResumePDF({
   };
 
   // ====================================================================
-  // DRAW HEADER (Left Aligned as in Marcus Hall Template)
+  // DRAW HEADER (NovoResume Carolyn Potter Style)
   // ====================================================================
+  // Top page accent bar
+  p.drawRectangle({
+    x: 0,
+    y: PAGE_HEIGHT - 6,
+    width: PAGE_WIDTH,
+    height: 6,
+    fill: PRIMARY
+  });
+  
   // Name
   drawText(p, finalName.toUpperCase(), MARGIN_X, cursorY, sizeName, { bold: true, color: BLACK });
-  cursorY -= sizeName + 4;
+  cursorY -= sizeName + (isLong ? 2 : 4);
 
   // Job Title
-  drawText(p, finalJobTitle, MARGIN_X, cursorY, sizeTitle, { bold: true, color: PRIMARY });
-  cursorY -= sizeTitle + 8;
+  if (finalJobTitle) {
+    drawText(p, finalJobTitle.toUpperCase(), MARGIN_X, cursorY, sizeTitle, { bold: true, color: PRIMARY });
+    cursorY -= sizeTitle + (isLong ? 6 : 8);
+  }
 
-  // Contact Info Row
+  // Contact Info Row in colored Banner
   const contactParts = [
-    finalPhone ? finalPhone : '',
-    finalEmail ? finalEmail : '',
-    finalLinkedIn ? finalLinkedIn.replace(/^https?:\/\/(www\.)?/, '') : '',
-    finalGitHub ? finalGitHub.replace(/^https?:\/\/(www\.)?/, '') : ''
+    finalPhone ? `Phone: ${finalPhone}` : '',
+    finalEmail ? `Email: ${finalEmail}` : '',
+    finalLinkedIn ? `LinkedIn: ${finalLinkedIn.replace(/^https?:\/\/(www\.)?/, '')}` : '',
+    finalGitHub ? `GitHub: ${finalGitHub.replace(/^https?:\/\/(www\.)?/, '')}` : ''
   ].filter(Boolean);
 
-  const sep = '   |   ';
-  let cx = MARGIN_X;
-  for (let i = 0; i < contactParts.length; i++) {
-    const part = contactParts[i];
-    drawText(p, part, cx, cursorY, sizeContact, { color: DARK_GRAY });
-    cx += tw(part, sizeContact) + tw(sep, sizeContact);
-  }
-  cursorY -= 15;
-
-  // Divider
-  p.drawLine({
-    start: { x: MARGIN_X, y: cursorY },
-    end: { x: PAGE_WIDTH - MARGIN_X, y: cursorY },
-    thickness: 1.0,
-    color: LIGHT_GRAY
+  const sep = '   •   ';
+  const contactStr = contactParts.join(sep);
+  const bannerH = isLong ? 15 : 18;
+  
+  // Draw light-teal banner background
+  p.drawRectangle({
+    x: MARGIN_X,
+    y: cursorY - (isLong ? 4 : 2),
+    width: FULL_W,
+    height: bannerH,
+    fill: rgb(0.93, 0.96, 0.98),
+    borderRadius: 4
   });
-  cursorY -= 15;
+
+  // Center contact text inside the banner
+  const contactW = tw(contactStr, sizeContact);
+  drawText(p, contactStr, MARGIN_X + (FULL_W - contactW) / 2, cursorY - (isLong ? 1 : 0), sizeContact, { color: DARK_GRAY });
+  cursorY -= bannerH + (isLong ? 10 : 15);
 
   const topColumnsY = cursorY; // Keep columns synchronized at this top level
 
@@ -867,13 +879,12 @@ export async function generateResumePDF({
             y: rightY - 2,
             width: badgeWidth,
             height: badgeHeight,
-            fill: BADGE_BG,
-            borderColor: LIGHT_GRAY,
-            borderWidth: 0.5
+            fill: PRIMARY,
+            borderRadius: 3
           });
 
           // Draw Skill Text
-          drawText(p, skill, badgeX + 5, rightY + 1, sizeBody, { color: BLACK });
+          drawText(p, skill, badgeX + 5, rightY + 1, sizeBody, { color: rgb(1, 1, 1) });
           badgeX += badgeWidth + 4; // space between badges
         }
         rightY -= (badgeHeight + 8);
@@ -897,12 +908,11 @@ export async function generateResumePDF({
             y: rightY - 2,
             width: badgeWidth,
             height: badgeHeight,
-            fill: BADGE_BG,
-            borderColor: LIGHT_GRAY,
-            borderWidth: 0.5
+            fill: PRIMARY,
+            borderRadius: 3
           });
 
-          drawText(p, skill, badgeX + 5, rightY + 1, sizeBody, { color: BLACK });
+          drawText(p, skill, badgeX + 5, rightY + 1, sizeBody, { color: rgb(1, 1, 1) });
           badgeX += badgeWidth + 4;
         }
         rightY -= (badgeHeight + 8);

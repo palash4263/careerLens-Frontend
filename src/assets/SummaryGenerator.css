@@ -1,0 +1,536 @@
+/* SummaryGenerator.css */
+
+.sumgen-root {
+  min-height: calc(100vh - 72px);
+  background: radial-gradient(120% 120% at 50% 10%, #0c0f1d 40%, #030408 100%);
+  color: #f8fafc;
+  font-family: 'Inter', sans-serif;
+  padding: 3rem 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Background elements */
+.sumgen-bg-glow {
+  position: absolute;
+  top: 10%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(124, 58, 237, 0.15) 0%, transparent 70%);
+  pointer-events: none;
+  filter: blur(80px);
+}
+
+.sumgen-container {
+  max-width: 1200px;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 4rem;
+  align-items: center;
+  position: relative;
+  z-index: 10;
+}
+
+@media (max-width: 968px) {
+  .sumgen-container {
+    grid-template-columns: 1fr;
+    gap: 3rem;
+  }
+}
+
+/* Left Hero Column */
+.sumgen-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.5rem;
+}
+
+.sumgen-badge {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.25em;
+  font-weight: 700;
+  color: #a78bfa;
+  background: rgba(124, 58, 237, 0.12);
+  border: 1px solid rgba(124, 58, 237, 0.25);
+  padding: 6px 14px;
+  border-radius: 100px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sumgen-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 3.5rem;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  color: #ffffff;
+  margin: 0;
+  max-width: 15ch;
+}
+
+.sumgen-title-gradient {
+  background: linear-gradient(135deg, #a78bfa 0%, #3b82f6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.sumgen-subtitle {
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: #94a3b8;
+  margin: 0;
+  max-width: 45ch;
+}
+
+/* Features Grid */
+.sumgen-features {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  margin-top: 1.5rem;
+  width: 100%;
+}
+
+@media (max-width: 480px) {
+  .sumgen-features {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sumgen-feature-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  color: #cbd5e1;
+}
+
+.sumgen-feature-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+/* Right Card Widget */
+.sumgen-widget-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.sumgen-glow-box {
+  position: absolute;
+  inset: -10px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(59, 130, 246, 0.2));
+  filter: blur(12px);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.sumgen-card {
+  position: relative;
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 2rem;
+  z-index: 2;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
+}
+
+.sumgen-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 1.75rem;
+}
+
+.sumgen-header-icon-container {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(124, 58, 237, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #a78bfa;
+}
+
+.sumgen-header-text h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.sumgen-header-text p {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+/* Selector and upload panels */
+.sumgen-label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #64748b;
+  margin-bottom: 8px;
+}
+
+.sumgen-form-group {
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+.sumgen-select {
+  width: 100%;
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  padding: 10px 12px;
+  border-radius: 10px;
+  outline: none;
+  font-size: 0.88rem;
+  transition: all 0.25s ease;
+  cursor: pointer;
+}
+
+.sumgen-select:focus {
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.2);
+}
+
+/* Drag and Drop Zone */
+.sumgen-dropzone {
+  border: 2px dashed rgba(255, 255, 255, 0.15);
+  background: rgba(30, 41, 59, 0.5);
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 1rem;
+}
+
+.sumgen-dropzone.dragging {
+  border-color: #7c3aed;
+  background: rgba(124, 58, 237, 0.06);
+}
+
+.sumgen-dropzone-icon {
+  color: #64748b;
+  transition: color 0.25s ease;
+}
+
+.sumgen-dropzone:hover .sumgen-dropzone-icon {
+  color: #a78bfa;
+}
+
+.sumgen-dropzone-text {
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+.sumgen-dropzone-subtext {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+/* File Selected State */
+.sumgen-file-selected {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(124, 58, 237, 0.1);
+  border: 1px dashed rgba(124, 58, 237, 0.3);
+  border-radius: 10px;
+  padding: 8px 12px;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+  color: #a78bfa;
+}
+
+.sumgen-file-selected button {
+  background: transparent;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  font-size: 1.1rem;
+}
+
+/* Textarea input */
+.sumgen-textarea {
+  width: 100%;
+  min-height: 100px;
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  padding: 10px 12px;
+  border-radius: 10px;
+  outline: none;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  resize: vertical;
+  font-family: inherit;
+  transition: all 0.25s ease;
+}
+
+.sumgen-textarea:focus {
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.2);
+}
+
+/* Buttons */
+.sumgen-btn-primary {
+  width: 100%;
+  background: linear-gradient(135deg, #7c3aed 0%, #3b82f6 100%);
+  color: #ffffff;
+  border: none;
+  padding: 12px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.92rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+}
+
+.sumgen-btn-primary:hover:not(:disabled) {
+  opacity: 0.95;
+  transform: translateY(-1px);
+}
+
+.sumgen-btn-primary:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.sumgen-btn-primary:disabled {
+  background: #334155;
+  color: #64748b;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+/* Start Here pointer arrow styling */
+.sumgen-pointer {
+  position: absolute;
+  top: 15%;
+  left: -90px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+}
+
+@media (max-width: 1100px) {
+  .sumgen-pointer {
+    display: none;
+  }
+}
+
+.sumgen-pointer-text {
+  font-family: 'Outfit', sans-serif;
+  font-style: italic;
+  font-size: 0.82rem;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  padding: 4px 10px;
+  border-radius: 100px;
+  margin-bottom: 4px;
+}
+
+/* Overlay Loader */
+.sumgen-loader-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(6px);
+  border-radius: 20px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.sumgen-spinner {
+  width: 48px;
+  height: 48px;
+  border: 3px solid rgba(124, 58, 237, 0.2);
+  border-top-color: #7c3aed;
+  border-radius: 50%;
+  animation: sumgen-spin 1s linear infinite;
+}
+
+@keyframes sumgen-spin {
+  to { transform: rotate(360deg); }
+}
+
+.sumgen-loader-text {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.sumgen-loader-sub {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  max-width: 80%;
+  text-align: center;
+}
+
+/* Output Area styling */
+.sumgen-result-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.sumgen-result-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sumgen-result-header h4 {
+  margin: 0;
+  font-size: 0.92rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #a78bfa;
+}
+
+.sumgen-result-box {
+  background: #1e293b;
+  border: 1px solid rgba(124, 58, 237, 0.25);
+  border-radius: 12px;
+  padding: 1.25rem;
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: #e2e8f0;
+  white-space: pre-wrap;
+  position: relative;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.sumgen-result-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.sumgen-btn-secondary {
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.sumgen-btn-secondary:hover {
+  background: #334155;
+  color: #ffffff;
+}
+
+.sumgen-btn-secondary:active {
+  transform: scale(0.97);
+}
+
+/* Tone suggestions */
+.sumgen-tone-container {
+  margin-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 1rem;
+}
+
+.sumgen-tone-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  letter-spacing: 0.05em;
+}
+
+.sumgen-tone-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sumgen-tone-chip {
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.18);
+  color: #93c5fd;
+  font-size: 0.75rem;
+  padding: 6px 12px;
+  border-radius: 100px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sumgen-tone-chip:hover {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: #3b82f6;
+  color: #ffffff;
+}
+
+.sumgen-tone-chip:active {
+  transform: scale(0.96);
+}
+
+/* Toast alert styling */
+.sumgen-toast {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  background: #10b981;
+  color: #ffffff;
+  padding: 10px 18px;
+  border-radius: 8px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+  font-size: 0.88rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 1000;
+}

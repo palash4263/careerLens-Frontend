@@ -84,6 +84,7 @@ export default function Navbar() {
     { path: "/dashboard",       label: "Dashboard", icon: "⊞" },
     { path: "/resumes",         label: "Resumes",   icon: "◧" },
     { path: "/templates",       label: "Templates", icon: "🎨" },
+    { path: "/summary-generator",label: "Summary",   icon: "📝" },
     { path: "/jobs",            label: "Jobs",      icon: "◈" },
     { path: "/resume-optimizer",label: "Optimizer", icon: "⚡" },
     { path: "/interview",       label: "Interview", icon: "◎" },

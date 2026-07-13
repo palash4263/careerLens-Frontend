@@ -326,6 +326,7 @@ export default function ResumeOptimizationPage() {
   const [viewMode, setViewMode] = useState('side-by-side');
   const [downloading, setDownloading] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState('two-column');
+  const [editedText, setEditedText] = useState("");
   const [celebrationKey, setCelebrationKey] = useState(0);
   const [mobileCompareTab, setMobileCompareTab] = useState('optimized');
   const reduceMotion = useReducedMotion();
@@ -483,6 +484,7 @@ export default function ResumeOptimizationPage() {
       };
 
       setResult(normalized);
+      setEditedText(optText);
     } catch (err) {
       console.error(err);
       setError(err.response?.data?.detail || "Resume optimization failed. Try again.");
@@ -517,7 +519,7 @@ export default function ResumeOptimizationPage() {
       const userData = getUserData();
 
       await generateResumePDF({
-        resumeText: result.optimizedText,
+        resumeText: editedText || result.optimizedText,
         fileName: fileName,
         score: result.optimizedScore || 0,
         jobTitle: jobTitle,
@@ -1273,64 +1275,8 @@ export default function ResumeOptimizationPage() {
                 </div>
               </div>
 
-              {/* Score Dashboard — this is the page's signature moment: the confetti
-                  intensity is driven by the actual point improvement, not a fixed effect. */}
-              <div className="score-dashboard-modern score-dashboard-anchor">
-                <ScoreConfetti trigger={celebrationKey} intensity={delta ? delta / 15 : 0.5} />
-                <div className="score-dashboard-header">
-                  <h3>
-                    <BarChart3 size={18} />
-                    ATS Score Analysis
-                  </h3>
-                  <span className="score-improvement-badge">
-                    <TrendingUp size={14} />
-                    {delta > 0 ? `${delta}% improvement` : 'Needs improvement'}
-                  </span>
-                </div>
-                <div className="score-dashboard-grid">
-                  <ScoreRing
-                    label="Original Score"
-                    value={result.originalScore}
-                    tone="muted"
-                    animate={true}
-                    delay={0.2}
-                  />
-
-                  <motion.div
-                    className="score-arrow-modern"
-                    animate={reduceMotion ? {} : { x: [0, 10, 0] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
-                    <ArrowRight size={32} />
-                  </motion.div>
-
-                  <motion.div
-                    className="score-circle-wrapper premium"
-                    animate={reduceMotion ? {} : { scale: [1, 1.03, 1] }}
-                    transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
-                  >
-                    <ScoreRing
-                      label="Optimized Score"
-                      value={result.optimizedScore}
-                      tone="positive"
-                      animate={true}
-                      delay={0.4}
-                    />
-                    <div className="score-circle-glow-ring"></div>
-                  </motion.div>
-
-                  <ScoreRing
-                    label="Points Gained"
-                    value={delta > 0 ? delta : 0}
-                    tone="success"
-                    animate={true}
-                    delay={0.6}
-                  />
-                </div>
-              </div>
-
               {/* View Toggle */}
-              <div className="view-toggle-modern">
+              <div className="view-toggle-modern" style={{ marginBottom: '1.5rem' }}>
                 <button
                   className={viewMode === 'side-by-side' ? 'active' : ''}
                   onClick={() => setViewMode('side-by-side')}
@@ -1374,9 +1320,9 @@ export default function ResumeOptimizationPage() {
                           ✨ Optimized
                         </button>
                       </div>
-                      <span className="compare-hint">Scroll to see all changes</span>
+                      <span className="compare-hint">✏️ Edit the optimized column directly below</span>
                     </div>
-
+ 
                     <div className="compare-grid-modern">
                       <motion.div
                         className={`compare-col-modern before ${mobileCompareTab === 'original' ? 'mobile-visible' : 'mobile-hidden'}`}
@@ -1386,13 +1332,12 @@ export default function ResumeOptimizationPage() {
                       >
                         <div className="compare-tag-modern before">
                           <span>📄</span> Original
-                          <span className="tag-score">{result.originalScore}%</span>
                         </div>
                         <div className="compare-content-modern">
                           <pre>{formatResumeForDisplay(result.originalText)}</pre>
                         </div>
                       </motion.div>
-
+ 
                       <motion.div
                         className={`compare-col-modern after ${mobileCompareTab === 'optimized' ? 'mobile-visible' : 'mobile-hidden'}`}
                         initial={{ x: 30, opacity: 0 }}
@@ -1400,19 +1345,36 @@ export default function ResumeOptimizationPage() {
                         transition={{ delay: 0.2 }}
                       >
                         <div className="compare-tag-modern after">
-                          <span>✨</span> Optimized
-                          <span className="tag-score">{result.optimizedScore}%</span>
+                          <span>✨</span> Optimized (Live Editor)
                           <motion.span
                             className="new-badge-modern"
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
                             transition={{ delay: 0.4, type: "spring", stiffness: 260, damping: 14 }}
                           >
-                            IMPROVED
+                            EDITABLE
                           </motion.span>
                         </div>
-                        <div className="compare-content-modern">
-                          <pre>{formatAndHighlightText(result.optimizedText, result.keywords)}</pre>
+                        <div className="compare-content-modern" style={{ padding: 0 }}>
+                          <textarea
+                            value={editedText}
+                            onChange={(e) => setEditedText(e.target.value)}
+                            style={{
+                              width: '100%',
+                              height: '420px',
+                              background: 'transparent',
+                              border: 'none',
+                              color: '#e2e8f0',
+                              fontFamily: 'monospace, Courier New, monospace',
+                              fontSize: '0.82rem',
+                              lineHeight: '1.5',
+                              padding: '1rem',
+                              resize: 'none',
+                              outline: 'none',
+                              overflowY: 'auto'
+                            }}
+                            placeholder="Edit your optimized resume text here..."
+                          />
                         </div>
                       </motion.div>
                     </div>
@@ -1438,7 +1400,7 @@ export default function ResumeOptimizationPage() {
                       <div className="resume-view-actions">
                         <button
                           className="resume-view-btn"
-                          onClick={() => copyToClipboard(result.optimizedText, setCopySuccess)}
+                          onClick={() => copyToClipboard(editedText || result.optimizedText, setCopySuccess)}
                         >
                           <Copy size={16} />
                           Copy
@@ -1477,15 +1439,31 @@ export default function ResumeOptimizationPage() {
                         <div className="score-badge-item">
                           <span className="badge-label">Status</span>
                           <span className="badge-value" style={{ color: '#34d399', fontSize: '12px' }}>
-                            <span className="status-dot"></span> Optimized
+                            <span className="status-dot"></span> Optimized (Live Editor)
                           </span>
                         </div>
                       </div>
 
-                      <div className="resume-text-container">
-                        <div className="resume-text-content">
-                          {renderResumeContent()}
-                        </div>
+                      <div className="resume-text-container" style={{ padding: 0 }}>
+                        <textarea
+                          value={editedText}
+                          onChange={(e) => setEditedText(e.target.value)}
+                          style={{
+                            width: '100%',
+                            height: '600px',
+                            background: 'transparent',
+                            border: 'none',
+                            color: '#f8fafc',
+                            fontFamily: 'monospace, Courier New, monospace',
+                            fontSize: '0.85rem',
+                            lineHeight: '1.6',
+                            padding: '1.5rem',
+                            resize: 'none',
+                            outline: 'none',
+                            overflowY: 'auto'
+                          }}
+                          placeholder="Edit your optimized resume text here..."
+                        />
                       </div>
 
                       {result.recommendations?.length > 0 && (

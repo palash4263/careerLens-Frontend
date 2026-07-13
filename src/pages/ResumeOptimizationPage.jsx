@@ -1164,19 +1164,51 @@ export default function ResumeOptimizationPage() {
                       boxShadow: selectedTemplate === 'two-column' ? '0 0 16px rgba(124, 58, 237, 0.2)' : 'none'
                     }}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-                      <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff', fontFamily: 'Outfit, sans-serif' }}>Modern Split (Two-Column)</span>
-                      <input 
-                        type="radio" 
-                        name="resumeTemplate"
-                        checked={selectedTemplate === 'two-column'} 
-                        onChange={() => setSelectedTemplate('two-column')}
-                        style={{ accentColor: '#7c3aed', cursor: 'pointer' }}
-                      />
+                    <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
+                      {/* Mini Two-Column Visual Mockup */}
+                      <div style={{
+                        width: '44px',
+                        height: '58px',
+                        background: 'rgba(15, 23, 42, 0.6)',
+                        border: selectedTemplate === 'two-column' ? '1px solid rgba(124, 58, 237, 0.4)' : '1px solid rgba(255, 255, 255, 0.08)',
+                        borderRadius: '6px',
+                        padding: '4px',
+                        display: 'flex',
+                        gap: '3px',
+                        flexShrink: 0,
+                        boxShadow: 'inset 0 1px 4px rgba(0,0,0,0.5)'
+                      }}>
+                        {/* Sidebar */}
+                        <div style={{ width: '35%', background: 'rgba(124, 58, 237, 0.3)', borderRadius: '2px', display: 'flex', flexDirection: 'column', gap: '3px', padding: '2px 1px' }}>
+                          <div style={{ height: '3px', background: 'rgba(255,255,255,0.4)', borderRadius: '1px' }}></div>
+                          <div style={{ height: '3px', background: 'rgba(255,255,255,0.2)', borderRadius: '1px' }}></div>
+                          <div style={{ height: '3px', background: 'rgba(255,255,255,0.2)', borderRadius: '1px' }}></div>
+                        </div>
+                        {/* Main Body */}
+                        <div style={{ width: '60%', display: 'flex', flexDirection: 'column', gap: '3px', padding: '2px 1px' }}>
+                          <div style={{ height: '4px', background: 'rgba(255,255,255,0.5)', borderRadius: '1px', width: '80%' }}></div>
+                          <div style={{ height: '2px', background: 'rgba(255,255,255,0.2)', borderRadius: '1px' }}></div>
+                          <div style={{ height: '2px', background: 'rgba(255,255,255,0.2)', borderRadius: '1px' }}></div>
+                        </div>
+                      </div>
+
+                      {/* Text Details */}
+                      <div style={{ flexGrow: 1 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                          <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff', fontFamily: 'Outfit, sans-serif' }}>Modern Split (Two-Column)</span>
+                          <input 
+                            type="radio" 
+                            name="resumeTemplate"
+                            checked={selectedTemplate === 'two-column'} 
+                            onChange={() => setSelectedTemplate('two-column')}
+                            style={{ accentColor: '#7c3aed', cursor: 'pointer' }}
+                          />
+                        </div>
+                        <p style={{ margin: 0, fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', lineHeight: '1.4' }}>
+                          Modern split sidebar layout with rounded skill badges. Great for engineering, designs, and tech roles.
+                        </p>
+                      </div>
                     </div>
-                    <p style={{ margin: 0, fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', lineHeight: '1.4' }}>
-                      Modern split sidebar layout with rounded skill badges. Great for engineering, designs, and tech roles.
-                    </p>
                   </div>
 
                   {/* Option 2: Single Column */}
@@ -1192,19 +1224,51 @@ export default function ResumeOptimizationPage() {
                       boxShadow: selectedTemplate === 'single-column' ? '0 0 16px rgba(124, 58, 237, 0.2)' : 'none'
                     }}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-                      <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff', fontFamily: 'Outfit, sans-serif' }}>Classic Navy (Single-Column)</span>
-                      <input 
-                        type="radio" 
-                        name="resumeTemplate"
-                        checked={selectedTemplate === 'single-column'} 
-                        onChange={() => setSelectedTemplate('single-column')}
-                        style={{ accentColor: '#7c3aed', cursor: 'pointer' }}
-                      />
+                    <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
+                      {/* Mini Single-Column Visual Mockup */}
+                      <div style={{
+                        width: '44px',
+                        height: '58px',
+                        background: 'rgba(15, 23, 42, 0.6)',
+                        border: selectedTemplate === 'single-column' ? '1px solid rgba(124, 58, 237, 0.4)' : '1px solid rgba(255, 255, 255, 0.08)',
+                        borderRadius: '6px',
+                        padding: '4px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '3px',
+                        flexShrink: 0,
+                        boxShadow: 'inset 0 1px 4px rgba(0,0,0,0.5)'
+                      }}>
+                        {/* Centered header */}
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', paddingBottom: '3px', borderBottom: '0.5px solid rgba(255,255,255,0.08)' }}>
+                          <div style={{ height: '3px', background: 'rgba(124, 58, 237, 0.5)', borderRadius: '1px', width: '50%' }}></div>
+                          <div style={{ height: '1.5px', background: 'rgba(255,255,255,0.3)', borderRadius: '1px', width: '70%' }}></div>
+                        </div>
+                        {/* Body content */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', padding: '2px 0' }}>
+                          <div style={{ height: '3px', background: 'rgba(255,255,255,0.4)', borderRadius: '1px', width: '80%' }}></div>
+                          <div style={{ height: '2px', background: 'rgba(255,255,255,0.2)', borderRadius: '1px' }}></div>
+                          <div style={{ height: '2px', background: 'rgba(255,255,255,0.2)', borderRadius: '1px' }}></div>
+                        </div>
+                      </div>
+
+                      {/* Text Details */}
+                      <div style={{ flexGrow: 1 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                          <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff', fontFamily: 'Outfit, sans-serif' }}>Classic Navy (Single-Column)</span>
+                          <input 
+                            type="radio" 
+                            name="resumeTemplate"
+                            checked={selectedTemplate === 'single-column'} 
+                            onChange={() => setSelectedTemplate('single-column')}
+                            style={{ accentColor: '#7c3aed', cursor: 'pointer' }}
+                          />
+                        </div>
+                        <p style={{ margin: 0, fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', lineHeight: '1.4' }}>
+                          Elegant full-width single column design. Highly readable, corporate-friendly, and optimized for ATS parsers.
+                        </p>
+                      </div>
                     </div>
-                    <p style={{ margin: 0, fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', lineHeight: '1.4' }}>
-                      Elegant full-width single column design. Highly readable, corporate-friendly, and optimized for ATS parsers.
-                    </p>
                   </div>
                 </div>
               </div>

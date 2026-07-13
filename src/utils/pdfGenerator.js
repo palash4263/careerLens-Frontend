@@ -16,6 +16,20 @@ const GRAY         = rgb(0.50, 0.55, 0.62);
 const LIGHT_GRAY   = rgb(0.88, 0.90, 0.94);   // badge borders
 const BADGE_BG     = rgb(0.96, 0.97, 0.98);   // light gray badge background
 
+// Helper to convert HEX colors to pdf-lib rgb values
+const hexToRgbColor = (hex) => {
+  if (!hex || typeof hex !== 'string') return rgb(0.09, 0.38, 0.78);
+  const cleanHex = hex.replace('#', '');
+  const r = parseInt(cleanHex.substring(0, 2), 16) / 255;
+  const g = parseInt(cleanHex.substring(2, 4), 16) / 255;
+  const b = parseInt(cleanHex.substring(4, 6), 16) / 255;
+  return rgb(
+    Number.isNaN(r) ? 0.09 : r,
+    Number.isNaN(g) ? 0.38 : g,
+    Number.isNaN(b) ? 0.78 : b
+  );
+};
+
 // =====================================================================
 // MARKDOWN STRIPPING & SAFE TEXT
 // =====================================================================
@@ -236,7 +250,10 @@ async function generateSingleColumnPDF({
   phone    = null,
   linkedin = null,
   userName = null,
+  primaryColor = '#1761c7',
+  fontFamily = 'Rubik',
 }) {
+  const PRIMARY = primaryColor ? hexToRgbColor(primaryColor) : rgb(0.09, 0.38, 0.78);
   const finalName     = userName || extractName(resumeText) || 'Palash Mishra';
   const finalJobTitle = jobTitle  || extractJobTitle(resumeText)  || 'Full Stack Developer';
   const finalEmail    = email     || extractEmail(resumeText)     || 'palashmishra47@gmail.com';
@@ -529,6 +546,8 @@ export async function generateResumePDF({
   linkedin = null,
   userName = null,
   templateType = 'two-column',
+  primaryColor = '#1761c7',
+  fontFamily = 'Rubik',
 }) {
   if (templateType === 'single-column') {
     return await generateSingleColumnPDF({
@@ -540,8 +559,11 @@ export async function generateResumePDF({
       phone,
       linkedin,
       userName,
+      primaryColor,
+      fontFamily,
     });
   }
+  const PRIMARY = primaryColor ? hexToRgbColor(primaryColor) : rgb(0.09, 0.38, 0.78);
   // --- Extract contact info ---
   const finalName     = userName || extractName(resumeText) || 'Palash Mishra';
   const finalJobTitle = jobTitle  || extractJobTitle(resumeText)  || 'Full Stack Developer';

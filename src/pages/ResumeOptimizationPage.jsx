@@ -1,6 +1,6 @@
 // src/pages/ResumeOptimizationPage.jsx - Complete with PDF Download + Enhanced Motion
 import { useEffect, useRef, useState } from "react";
-import { motion, AnimatePresence, useInView, useMotionValue, useSpring, useReducedMotion } from "framer-motion";
+import { motion, AnimatePresence, useInView, useMotionValue, useSpring, useReducedMotion, animate } from "framer-motion";
 import {
   Copy,
   Check,
@@ -42,6 +42,24 @@ const copyToClipboard = async (text, setCopySuccess) => {
     setTimeout(() => setCopySuccess(false), 3000);
   }
 };
+
+// Premium customizer themes & fonts (mimicking Enhancv aesthetics)
+const PREMIUM_THEMES = [
+  { name: 'Royal Blue', hex: '#1761c7', label: 'Indigo' },
+  { name: 'Emerald Teal', hex: '#0f9f6e', label: 'Teal' },
+  { name: 'Amethyst Violet', hex: '#7c3aed', label: 'Purple' },
+  { name: 'Amber Orange', hex: '#d97706', label: 'Orange' },
+  { name: 'Crimson Rose', hex: '#e02424', label: 'Crimson' },
+  { name: 'Charcoal Slate', hex: '#475569', label: 'Slate' },
+];
+
+const PREMIUM_FONTS = [
+  { name: 'Rubik', family: "'Rubik', 'Outfit', sans-serif" },
+  { name: 'Lato', family: "'Lato', 'Inter', sans-serif" },
+  { name: 'Raleway', family: "'Raleway', 'Outfit', sans-serif" },
+  { name: 'Exo', family: "'Exo', 'Inter', sans-serif" },
+  { name: 'Chivo', family: "'Chivo', 'Courier New', monospace" },
+];
 
 const formatResumeForDisplay = (text) => {
   if (!text) return "Not available";
@@ -326,9 +344,56 @@ export default function ResumeOptimizationPage() {
   const [viewMode, setViewMode] = useState('side-by-side');
   const [downloading, setDownloading] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState('two-column');
+  const [selectedColor, setSelectedColor] = useState('#1761c7');
+  const [selectedFont, setSelectedFont] = useState('Rubik');
   const [editedText, setEditedText] = useState("");
   const [celebrationKey, setCelebrationKey] = useState(0);
   const [mobileCompareTab, setMobileCompareTab] = useState('optimized');
+  
+  // Custom cursor & playground states
+  const [mouseOverPlayground, setMouseOverPlayground] = useState(false);
+  const playgroundRef = useRef(null);
+  
+  const cursorX = useMotionValue(200);
+  const cursorY = useMotionValue(250);
+  const cursorXSpring = useSpring(cursorX, { stiffness: 140, damping: 22 });
+  const cursorYSpring = useSpring(cursorY, { stiffness: 140, damping: 22 });
+
+  const handlePlaygroundMouseMove = (e) => {
+    if (!playgroundRef.current) return;
+    const rect = playgroundRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    cursorX.set(x);
+    cursorY.set(y);
+    setMouseOverPlayground(true);
+  };
+
+  useEffect(() => {
+    if (mouseOverPlayground) return;
+    
+    // Auto demo path sequence: Color circle -> font selection -> back
+    const controlsX = animate(cursorX, [360, 360, 100, 100, 360], {
+      duration: 10,
+      repeat: Infinity,
+      repeatType: "reverse",
+      ease: "easeInOut"
+    });
+    
+    const controlsY = animate(cursorY, [110, 140, 350, 320, 110], {
+      duration: 10,
+      repeat: Infinity,
+      repeatType: "reverse",
+      ease: "easeInOut"
+    });
+    
+    return () => {
+      controlsX.stop();
+      controlsY.stop();
+    };
+  }, [mouseOverPlayground, cursorX, cursorY]);
+
   const reduceMotion = useReducedMotion();
 
   // Ambient hero glow that drifts very gently toward the cursor. Purely atmospheric —
@@ -527,7 +592,9 @@ export default function ResumeOptimizationPage() {
         phone: userData.phone,
         linkedin: userData.linkedin,
         userName: userData.name,
-        templateType: selectedTemplate
+        templateType: selectedTemplate,
+        primaryColor: selectedColor,
+        fontFamily: selectedFont
       });
     } catch (error) {
       console.error('PDF download error:', error);
@@ -1302,6 +1369,13 @@ export default function ResumeOptimizationPage() {
                   Side by Side
                 </button>
                 <button
+                  className={viewMode === 'design-playground' ? 'active' : ''}
+                  onClick={() => setViewMode('design-playground')}
+                >
+                  <Sparkles size={16} />
+                  Design Playground
+                </button>
+                <button
                   className={viewMode === 'resume-view' ? 'active' : ''}
                   onClick={() => setViewMode('resume-view')}
                 >
@@ -1393,6 +1467,246 @@ export default function ResumeOptimizationPage() {
                             placeholder="Edit your optimized resume text here..."
                           />
                         </div>
+                      </motion.div>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Design Playground View */}
+                {viewMode === 'design-playground' && (
+                  <motion.div
+                    key="design-playground"
+                    initial={{ opacity: 0, scale: 0.98 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.98 }}
+                    transition={{ duration: 0.4 }}
+                    style={{ marginBottom: '2rem' }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem', flexWrap: 'wrap', gap: '10px' }}>
+                      <div>
+                        <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#fff', display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'Outfit, sans-serif' }}>
+                          🎨 Interactive Styling Simulator
+                        </h3>
+                        <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.78rem', color: 'rgba(255,255,255,0.45)' }}>
+                          Hover over the canvas to browse style choices, or try themes out in real-time. Customized styles apply to downloaded PDFs.
+                        </p>
+                      </div>
+                      <span style={{ fontSize: '0.76rem', background: 'rgba(124, 58, 237, 0.1)', color: '#a78bfa', padding: '4px 10px', borderRadius: '12px', border: '1px solid rgba(124, 58, 237, 0.2)', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <Sparkles size={12} /> Premium Styling
+                      </span>
+                    </div>
+
+                    <div className="design-playground-modern" ref={playgroundRef} onMouseMove={handlePlaygroundMouseMove} onMouseLeave={() => setMouseOverPlayground(false)}>
+                      {/* Grid overlay */}
+                      <div className="design-playground-dotgrid" />
+
+                      {/* Moving background glow blobs */}
+                      <motion.div 
+                        className="design-playground-blob"
+                        animate={{ 
+                          scale: [1, 1.25, 0.95, 1],
+                          x: [-40, 30, -20, -40],
+                          y: [20, -30, 40, 20]
+                        }}
+                        transition={{ 
+                          duration: 12, 
+                          repeat: Infinity, 
+                          ease: 'easeInOut' 
+                        }}
+                        style={{ top: '20%', left: '20%' }}
+                      />
+                      <motion.div 
+                        className="design-playground-blob"
+                        animate={{ 
+                          scale: [1.1, 0.9, 1.2, 1.1],
+                          x: [30, -40, 20, 30],
+                          y: [-30, 20, -40, -30]
+                        }}
+                        transition={{ 
+                          duration: 15, 
+                          repeat: Infinity, 
+                          ease: 'easeInOut' 
+                        }}
+                        style={{ bottom: '20%', right: '20%', background: 'radial-gradient(circle, rgba(59,130,246,0.2) 0%, rgba(16,185,129,0.06) 50%, rgba(0,0,0,0) 70%)' }}
+                      />
+
+                      {/* Floating Color Palette */}
+                      <div className="floating-widget" style={{ position: 'absolute', top: '24px', right: '24px', width: '110px' }}>
+                        <div className="widget-title">Colors</div>
+                        <div className="widget-colors-grid">
+                          {PREMIUM_THEMES.map((theme) => (
+                            <button
+                              key={theme.hex}
+                              className={`color-dot-btn ${selectedColor === theme.hex ? 'active' : ''}`}
+                              style={{ backgroundColor: theme.hex }}
+                              onClick={() => setSelectedColor(theme.hex)}
+                              title={theme.name}
+                            />
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Floating Font Styles */}
+                      <div className="floating-widget" style={{ position: 'absolute', bottom: '24px', left: '24px', width: '135px' }}>
+                        <div className="widget-title">Font Style</div>
+                        <div className="widget-font-list">
+                          {PREMIUM_FONTS.map((fontOpt) => (
+                            <div
+                              key={fontOpt.name}
+                              className={`font-option-row ${selectedFont === fontOpt.name ? 'active' : ''}`}
+                              onClick={() => setSelectedFont(fontOpt.name)}
+                              style={{ fontFamily: fontOpt.family }}
+                            >
+                              <span>{fontOpt.name}</span>
+                              {selectedFont === fontOpt.name && <Check size={10} style={{ color: '#10b981' }} />}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Mini Resume Card Mockup */}
+                      <div className="mini-resume-card">
+                        {/* Selected Color bar accent */}
+                        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '4px', backgroundColor: selectedColor }} />
+
+                        {selectedTemplate === 'two-column' ? (
+                          <div className="mini-resume-twocol" style={{ fontFamily: PREMIUM_FONTS.find(f => f.name === selectedFont)?.family || 'Rubik, sans-serif' }}>
+                            {/* Left Column */}
+                            <div className="mini-resume-left">
+                              {/* Header block */}
+                              <div style={{ marginBottom: '14px' }}>
+                                <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#111', textTransform: 'uppercase', letterSpacing: '0.02em', lineHeight: '1.2' }}>
+                                  {getUserData().name}
+                                </div>
+                                <div style={{ fontSize: '7.5px', fontWeight: '700', color: selectedColor, textTransform: 'uppercase', marginTop: '2px', letterSpacing: '0.04em' }}>
+                                  {jobDescriptions.find(j => j.id === Number(selectedJobDescription))?.title || 'Professional Resume'}
+                                </div>
+                              </div>
+
+                              {/* Contact Row Mini */}
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px', background: 'rgba(230, 242, 255, 0.45)', borderRadius: '3px', padding: '4px 6px', marginBottom: '14px' }}>
+                                <div style={{ height: '3.5px', width: '30px', background: 'rgba(0,0,0,0.18)', borderRadius: '1px' }}></div>
+                                <div style={{ height: '3.5px', width: '45px', background: 'rgba(0,0,0,0.18)', borderRadius: '1px' }}></div>
+                                <div style={{ height: '3.5px', width: '25px', background: 'rgba(0,0,0,0.18)', borderRadius: '1px' }}></div>
+                              </div>
+
+                              {/* Experience block */}
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                                <div style={{ fontSize: '7px', fontWeight: 'bold', color: selectedColor, textTransform: 'uppercase', borderBottom: `0.75px solid ${selectedColor}`, paddingBottom: '2px', width: '100%', letterSpacing: '0.04em' }}>
+                                  Experience
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginTop: '2px' }}>
+                                  <div style={{ height: '5px', width: '80%', background: '#333', borderRadius: '1px' }}></div>
+                                  <div style={{ height: '3.5px', width: '35%', background: '#888', borderRadius: '1px' }}></div>
+                                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2px', marginTop: '1px' }}>
+                                    <div style={{ height: '2px', width: '90%', background: '#ccc' }}></div>
+                                    <div style={{ height: '2px', width: '95%', background: '#ccc' }}></div>
+                                    <div style={{ height: '2px', width: '80%', background: '#ccc' }}></div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Right Column */}
+                            <div className="mini-resume-right">
+                              {/* Skills section with badges */}
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                <div style={{ fontSize: '7px', fontWeight: 'bold', color: selectedColor, textTransform: 'uppercase', borderBottom: `0.75px solid ${selectedColor}`, paddingBottom: '2px', width: '100%', letterSpacing: '0.04em' }}>
+                                  Skills
+                                </div>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3.5px', marginTop: '2px' }}>
+                                  {['React', 'Node.js', 'AWS', 'Next.js', 'Docker', 'REST'].map(skill => (
+                                    <span key={skill} style={{ fontSize: '5px', padding: '1.8px 4px', background: selectedColor, color: '#fff', borderRadius: '2px', fontWeight: 'bold' }}>
+                                      {skill}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Education section */}
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginTop: '14px' }}>
+                                <div style={{ fontSize: '7px', fontWeight: 'bold', color: selectedColor, textTransform: 'uppercase', borderBottom: `0.75px solid ${selectedColor}`, paddingBottom: '2px', width: '100%', letterSpacing: '0.04em' }}>
+                                  Education
+                                </div>
+                                <div style={{ marginTop: '2px' }}>
+                                  <div style={{ height: '4px', width: '85%', background: '#222', borderRadius: '1px' }}></div>
+                                  <div style={{ height: '3px', width: '60%', background: '#888', borderRadius: '1px', marginTop: '2px' }}></div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="mini-resume-onecol" style={{ fontFamily: PREMIUM_FONTS.find(f => f.name === selectedFont)?.family || 'Rubik, sans-serif' }}>
+                            {/* Centered Header block */}
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '14px' }}>
+                              <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#111', textTransform: 'uppercase', letterSpacing: '0.02em', textAlign: 'center' }}>
+                                {getUserData().name}
+                              </div>
+                              <div style={{ fontSize: '7.5px', fontWeight: '700', color: '#666', textTransform: 'uppercase', marginTop: '2px', letterSpacing: '0.04em', textAlign: 'center' }}>
+                                {jobDescriptions.find(j => j.id === Number(selectedJobDescription))?.title || 'Professional Resume'}
+                              </div>
+                              <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', marginTop: '4px' }}>
+                                <div style={{ height: '3.5px', width: '25px', background: 'rgba(0,0,0,0.18)', borderRadius: '1px' }}></div>
+                                <div style={{ height: '3.5px', width: '35px', background: 'rgba(0,0,0,0.18)', borderRadius: '1px' }}></div>
+                                <div style={{ height: '3.5px', width: '25px', background: 'rgba(0,0,0,0.18)', borderRadius: '1px' }}></div>
+                              </div>
+                            </div>
+
+                            {/* Summary */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginBottom: '12px' }}>
+                              <div style={{ fontSize: '7px', fontWeight: 'bold', color: selectedColor, textTransform: 'uppercase', width: '100%', letterSpacing: '0.04em' }}>
+                                Summary
+                              </div>
+                              <div style={{ height: '0.75px', backgroundColor: '#e5e7eb', width: '100%', marginBottom: '2px' }} />
+                              <div style={{ height: '3px', width: '100%', background: '#ccc' }}></div>
+                              <div style={{ height: '3px', width: '95%', background: '#ccc' }}></div>
+                            </div>
+
+                            {/* Experience block */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginBottom: '12px' }}>
+                              <div style={{ fontSize: '7px', fontWeight: 'bold', color: selectedColor, textTransform: 'uppercase', width: '100%', letterSpacing: '0.04em' }}>
+                                Experience
+                              </div>
+                              <div style={{ height: '0.75px', backgroundColor: '#e5e7eb', width: '100%', marginBottom: '2px' }} />
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2px' }}>
+                                <div style={{ height: '5px', width: '50%', background: '#333', borderRadius: '1px' }}></div>
+                                <div style={{ height: '4px', width: '20%', background: '#888', borderRadius: '1px' }}></div>
+                              </div>
+                              <div style={{ height: '3.5px', width: '30%', background: '#888', borderRadius: '1px', marginTop: '1px' }}></div>
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2px', marginTop: '3px' }}>
+                                <div style={{ height: '2px', width: '98%', background: '#ccc' }}></div>
+                                <div style={{ height: '2px', width: '92%', background: '#ccc' }}></div>
+                              </div>
+                            </div>
+
+                            {/* Skills Section */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                              <div style={{ fontSize: '7px', fontWeight: 'bold', color: selectedColor, textTransform: 'uppercase', width: '100%', letterSpacing: '0.04em' }}>
+                                Technical Skills
+                              </div>
+                              <div style={{ height: '0.75px', backgroundColor: '#e5e7eb', width: '100%', marginBottom: '2px' }} />
+                              <div style={{ fontSize: '5.5px', color: '#333', lineHeight: '1.3', marginTop: '2px' }}>
+                                <span style={{ fontWeight: 'bold' }}>Languages:</span> JavaScript, TypeScript, Python, HTML/CSS
+                              </div>
+                              <div style={{ fontSize: '5.5px', color: '#333', lineHeight: '1.3' }}>
+                                <span style={{ fontWeight: 'bold' }}>Frameworks:</span> React, Node.js, Next.js, Express, Docker
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Labeled custom cursor */}
+                      <motion.div 
+                        className="custom-demo-cursor" 
+                        style={{ 
+                          x: cursorXSpring, 
+                          y: cursorYSpring, 
+                          '--cursor-color': selectedColor 
+                        }}
+                      >
+                        <div className="custom-demo-cursor-pointer" />
+                        <div className="custom-demo-cursor-pill">{getUserData().name.split(' ')[0]}</div>
                       </motion.div>
                     </div>
                   </motion.div>

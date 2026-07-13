@@ -109,6 +109,37 @@ const extractName = (rawText) => {
   return null;
 };
 
+const extractNameFromFilename = (fileName) => {
+  if (!fileName || typeof fileName !== 'string' || fileName.toLowerCase() === 'resume') return null;
+  
+  // Strip extension
+  let clean = fileName.replace(/\.pdf$/i, '');
+  
+  // Strip common suffixes
+  clean = clean
+    .replace(/[_.\-]optimized/i, '')
+    .replace(/[_.\-]resume/i, '')
+    .replace(/resume/i, '');
+    
+  // Strip trailing numbers (e.g. 2026, 2025, (2), etc.)
+  clean = clean.replace(/\d+/g, '').replace(/\(\s*\)/g, '');
+  
+  // Replace underscores and hyphens with spaces
+  clean = clean.replace(/[_\-]+/g, ' ').trim();
+  
+  // Insert spaces before capital letters (CamelCase split) if no spaces exist
+  if (!clean.includes(' ')) {
+    clean = clean.replace(/([a-z])([A-Z])/g, '$1 $2');
+  }
+  
+  // Capitalize each word
+  const words = clean.split(/\s+/).filter(Boolean);
+  if (words.length === 0) return null;
+  
+  const formatted = words.map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+  return formatted || null;
+};
+
 const extractJobTitle = (rawText) => {
   if (!rawText) return null;
   const lines = rawText.split('\n');
@@ -254,7 +285,7 @@ async function generateSingleColumnPDF({
   fontFamily = 'Rubik',
 }) {
   const PRIMARY = primaryColor ? hexToRgbColor(primaryColor) : rgb(0.09, 0.38, 0.78);
-  const finalName     = extractName(resumeText) || userName || 'Palash Mishra';
+  const finalName     = extractNameFromFilename(fileName) || extractName(resumeText) || userName || 'Palash Mishra';
   const finalJobTitle = extractJobTitle(resumeText) || jobTitle || 'Full Stack Developer';
   const finalEmail    = extractEmail(resumeText) || email || 'palashmishra47@gmail.com';
   const finalPhone    = extractPhoneNumber(resumeText) || phone || '+91-7428477219';
@@ -565,7 +596,7 @@ export async function generateResumePDF({
   }
   const PRIMARY = primaryColor ? hexToRgbColor(primaryColor) : rgb(0.09, 0.38, 0.78);
   // --- Extract contact info ---
-  const finalName     = extractName(resumeText) || userName || 'Palash Mishra';
+  const finalName     = extractNameFromFilename(fileName) || extractName(resumeText) || userName || 'Palash Mishra';
   const finalJobTitle = extractJobTitle(resumeText) || jobTitle || 'Full Stack Developer';
   const finalEmail    = extractEmail(resumeText) || email || 'palashmishra47@gmail.com';
   const finalPhone    = extractPhoneNumber(resumeText) || phone || '+91-7428477219';

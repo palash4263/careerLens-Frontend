@@ -10,9 +10,7 @@ export const optimizeResume = async (resumeId, jobDescriptionId) => {
 };
 
 export const optimizeSection = async (resumeId, sectionName, jobDescriptionId, customPrompt = "") => {
-  const response = await api.post(
-    `/optimization/optimize-section?resume_id=${resumeId}&section_name=${sectionName}&job_description_id=${jobDescriptionId}`,
-    { prompt: customPrompt, instructions: customPrompt }
-  );
+  const url = `/optimization/optimize-section?resume_id=${resumeId}&section_name=${sectionName}&job_description_id=${jobDescriptionId}&prompt=${encodeURIComponent(customPrompt)}&instructions=${encodeURIComponent(customPrompt)}`;
+  const response = await api.post(url, null);
   return response.data;
 };

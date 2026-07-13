@@ -2094,13 +2094,15 @@ export default function ResumeOptimizationPage() {
 
                           return (
                             <div key={sectionKey} className="section-editor-card" style={{
-                              background: 'rgba(30, 41, 59, 0.45)',
-                              border: '1px solid rgba(255, 255, 255, 0.08)',
-                              borderRadius: '12px',
+                              background: '#ffffff',
+                              border: '1px solid #e2e8f0',
+                              borderRadius: '16px',
                               padding: '16px',
                               display: 'flex',
                               flexDirection: 'column',
-                              gap: '10px',
+                              gap: '12px',
+                              position: 'relative',
+                              boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -1px rgba(0,0,0,0.01)',
                               transition: 'all 0.25s ease'
                             }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', fontWeight: 'bold', color: '#a78bfa', fontFamily: 'Outfit, sans-serif' }}>

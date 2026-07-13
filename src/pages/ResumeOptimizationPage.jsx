@@ -661,7 +661,7 @@ export default function ResumeOptimizationPage() {
         optimizedScore: response.estimated_new_score || 88,
         originalText: origText,
         optimizedText: optText,
-        keywords: response.improvements?.matched_job_skills || ['React', 'Node.js', 'AWS', 'MongoDB'],
+        keywords: response.improvements?.missing_skills || response.improvements?.added_skills || response.improvements?.missing_job_skills || ['Docker', 'Kubernetes', 'GraphQL', 'TypeScript'],
         changes: response.improvements?.added_skills?.map(skill => ({
           title: "Added Skill",
           description: `Added "${skill}" to your resume`
@@ -1915,8 +1915,8 @@ export default function ResumeOptimizationPage() {
                         </div>
                         <div className="score-badge-divider"></div>
                         <div className="score-badge-item">
-                          <span className="badge-label">Keywords</span>
-                          <span className="badge-value" style={{ color: '#60a5fa' }}>{result.keywords?.length || 0}</span>
+                          <span className="badge-label">Missing Keywords</span>
+                          <span className="badge-value" style={{ color: '#fbbf24' }}>{result.keywords?.length || 0}</span>
                         </div>
                         <div className="score-badge-divider"></div>
                         <div className="score-badge-item">
@@ -2002,8 +2002,8 @@ export default function ResumeOptimizationPage() {
               {result.keywords?.length > 0 && (
                 <Reveal className="keywords-modern" delay={0.1}>
                   <div className="keywords-header">
-                    <h3><Target size={18} /> Matched Keywords</h3>
-                    <span className="keywords-count">{result.keywords.length} keywords</span>
+                    <h3><Target size={18} style={{ color: '#fbbf24' }} /> Missing Keywords</h3>
+                    <span className="keywords-count" style={{ background: 'rgba(251, 191, 36, 0.1)', color: '#fbbf24', border: '1px solid rgba(251, 191, 36, 0.2)' }}>{result.keywords.length} missing</span>
                   </div>
                   <motion.div
                     className="keywords-grid-modern"
@@ -2017,8 +2017,9 @@ export default function ResumeOptimizationPage() {
                         key={idx}
                         variants={staggerItem}
                         whileHover={{ scale: 1.1, y: -2 }}
+                        style={{ border: '1px solid rgba(251, 191, 36, 0.15)', background: 'rgba(251, 191, 36, 0.02)' }}
                       >
-                        <span className="keyword-dot-modern"></span>
+                        <span className="keyword-dot-modern" style={{ backgroundColor: '#fbbf24', boxShadow: '0 0 8px #fbbf24' }}></span>
                         {kw}
                       </motion.span>
                     ))}

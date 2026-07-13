@@ -106,7 +106,15 @@ function Login() {
     <div className="login-shell">
       <aside className="login-brand">
         <div className="login-brand-inner">
-          <span className="login-mark">✦</span>
+          <svg className="login-mark-svg" viewBox="0 0 100 100" width="48" height="48" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="50" cy="50" r="42" fill="none" stroke="#FBBF24" strokeWidth="4" />
+            <circle cx="50" cy="50" r="24" fill="none" stroke="#FBBF24" strokeWidth="4" />
+            <circle cx="50" cy="50" r="8" fill="#FBBF24" />
+            <line x1="50" y1="2" x2="50" y2="98" stroke="#FBBF24" strokeWidth="4" />
+            <line x1="2" y1="50" x2="98" y2="50" stroke="#FBBF24" strokeWidth="4" />
+            <line x1="16" y1="16" x2="84" y2="84" stroke="#FBBF24" strokeWidth="4" />
+            <line x1="16" y1="84" x2="84" y2="16" stroke="#FBBF24" strokeWidth="4" />
+          </svg>
           <p className="login-quote">
             "Unlock the hidden potential of your professional story."
           </p>

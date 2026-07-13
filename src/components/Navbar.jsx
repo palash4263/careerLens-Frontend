@@ -115,14 +115,21 @@ export default function Navbar() {
 
           {/* ── Logo ── */}
           <Link to="/dashboard" className="nb-logo" onClick={() => setSidebarOpen(false)}>
-            <div className="nb-logo-orb">
-              <span className="nb-logo-icon">✦</span>
-              <div className="nb-logo-ring" />
+            <div className="nb-logo-orb-custom">
+              <svg viewBox="0 0 100 100" width="36" height="36" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="50" cy="50" r="42" fill="none" stroke="#FBBF24" strokeWidth="4" />
+                <circle cx="50" cy="50" r="24" fill="none" stroke="#FBBF24" strokeWidth="4" />
+                <circle cx="50" cy="50" r="8" fill="#FBBF24" />
+                <line x1="50" y1="2" x2="50" y2="98" stroke="#FBBF24" strokeWidth="4" />
+                <line x1="2" y1="50" x2="98" y2="50" stroke="#FBBF24" strokeWidth="4" />
+                <line x1="16" y1="16" x2="84" y2="84" stroke="#FBBF24" strokeWidth="4" />
+                <line x1="16" y1="84" x2="84" y2="16" stroke="#FBBF24" strokeWidth="4" />
+              </svg>
             </div>
-            <span className="nb-logo-text">
-              Career<span className="nb-logo-accent">Lens</span>
-            </span>
-            <span className="nb-logo-badge">AI</span>
+            <div className="nb-logo-text-col">
+              <span className="nb-logo-text-custom">CareerLens</span>
+              <span className="nb-logo-badge-custom">AI</span>
+            </div>
           </Link>
 
           {/* ── Nav links (Desktop) ── */}

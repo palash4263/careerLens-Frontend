@@ -1289,6 +1289,7 @@ export default function ResumeOptimizationPage() {
                       </p>
                     </div>
                   </div>
+                </div>
               </div>
 
               {/* View Toggle */}

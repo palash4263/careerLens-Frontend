@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import api from "../api/axiosConfig";
-import "./Login.css"; // Reuse premium login card styles
+import "./Login.css"; // Uses the premium redesigned login shell styles
 
 function ResetPassword() {
   const navigate = useNavigate();
@@ -14,6 +14,7 @@ function ResetPassword() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  
   const [focusedPass, setFocusedPass] = useState(false);
   const [focusedConf, setFocusedConf] = useState(false);
 
@@ -42,7 +43,6 @@ function ResetPassword() {
         password,
       });
       setSuccess(response.data.message || "Password reset successfully!");
-      // Redirect to login after 3 seconds
       setTimeout(() => {
         navigate("/login");
       }, 3000);
@@ -55,75 +55,74 @@ function ResetPassword() {
   };
 
   return (
-    <div className="auth-container">
-      {/* Glow Orbs */}
-      <div className="auth-orb purple" />
-      <div className="auth-orb pink" />
+    <div className="login-shell">
+      {/* Brand Side Panel */}
+      <aside className="login-brand">
+        <div className="login-brand-inner">
+          <span className="login-mark">✦</span>
+          <p className="login-quote">
+            "Unlock the hidden potential of your professional story."
+          </p>
+          <span className="login-quote-attr">CareerLens AI</span>
+        </div>
+      </aside>
 
-      <div className="auth-card-wrapper">
-        <div className="auth-card">
-          <div className="auth-header">
-            <h1 className="auth-title">Create New Password</h1>
-            <p className="auth-subtitle">
-              Enter and confirm your new secure password
-            </p>
+      {/* Reset Password Form Panel */}
+      <main className="login-panel">
+        <form className="login-form" onSubmit={handleSubmit} noValidate>
+          <header className="login-header">
+            <span className="login-eyebrow">Security</span>
+            <h1>New Password</h1>
+            <p className="login-sub">Create and confirm your new secure account password.</p>
+          </header>
+
+          {error && <div className="login-alert" role="alert" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.2)' }}>{error}</div>}
+          {success && <div className="login-alert" role="alert" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', borderColor: 'rgba(16, 185, 129, 0.2)' }}>{success}</div>}
+
+          <div className={`field ${focusedPass ? "is-focused" : ""}`}>
+            <label htmlFor="password">New Password</label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onFocus={() => setFocusedPass(true)}
+              onBlur={() => setFocusedPass(false)}
+              required
+            />
+            <span className="field-line" />
           </div>
 
-          <form onSubmit={handleSubmit} className="auth-form">
-            {error && <div className="auth-error-alert">{error}</div>}
-            {success && <div className="auth-success-alert">{success}</div>}
+          <div className={`field ${focusedConf ? "is-focused" : ""}`}>
+            <label htmlFor="confirmPassword">Confirm Password</label>
+            <input
+              id="confirmPassword"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              onFocus={() => setFocusedConf(true)}
+              onBlur={() => setFocusedConf(false)}
+              required
+            />
+            <span className="field-line" />
+          </div>
 
-            <div className={`auth-input-group ${focusedPass ? "focused" : ""}`}>
-              <span className="auth-input-icon">🔒</span>
-              <input
-                type="password"
-                placeholder="New Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onFocus={() => setFocusedPass(true)}
-                onBlur={() => setFocusedPass(false)}
-                required
-              />
-            </div>
+          <button type="submit" className="login-submit" disabled={loading || success}>
+            <span>{loading ? "Saving Password…" : "Save Password"}</span>
+          </button>
 
-            <div className={`auth-input-group ${focusedConf ? "focused" : ""}`}>
-              <span className="auth-input-icon">🔒</span>
-              <input
-                type="password"
-                placeholder="Confirm New Password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                onFocus={() => setFocusedConf(true)}
-                onBlur={() => setFocusedConf(false)}
-                required
-              />
-            </div>
-
-            <button type="submit" className="auth-submit-btn" disabled={loading || success}>
-              {loading ? (
-                <>
-                  <span className="auth-spinner" />
-                  Saving Password...
-                </>
-              ) : (
-                "Save Password"
-              )}
-            </button>
-          </form>
-
-          <div className="auth-footer">
+          <footer className="login-footer">
             <p>
               Back to{" "}
-              <Link to="/login" className="auth-link">
+              <Link to="/login" className="login-signup-link">
                 Log In
               </Link>
             </p>
-          </div>
-        </div>
-      </div>
+          </footer>
+        </form>
+      </main>
     </div>
   );
 }
 
 export default ResetPassword;
-// 

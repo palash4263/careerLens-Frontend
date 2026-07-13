@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../api/axiosConfig";
-import "./Login.css"; // Reuse the premium login card styling & animations
+import "./Login.css"; // Uses the premium redesigned login shell styles
 
 function ForgotPassword() {
   const navigate = useNavigate();
@@ -34,59 +34,59 @@ function ForgotPassword() {
   };
 
   return (
-    <div className="auth-container">
-      {/* Glow Orbs */}
-      <div className="auth-orb purple" />
-      <div className="auth-orb pink" />
+    <div className="login-shell">
+      {/* Brand Side Panel */}
+      <aside className="login-brand">
+        <div className="login-brand-inner">
+          <span className="login-mark">✦</span>
+          <p className="login-quote">
+            "Unlock the hidden potential of your professional story."
+          </p>
+          <span className="login-quote-attr">CareerLens AI</span>
+        </div>
+      </aside>
 
-      <div className="auth-card-wrapper">
-        <div className="auth-card">
-          <div className="auth-header">
-            <h1 className="auth-title">Reset Password</h1>
-            <p className="auth-subtitle">
-              Enter your email and we'll send you a password reset link
-            </p>
+      {/* Forgot Password Form Panel */}
+      <main className="login-panel">
+        <form className="login-form" onSubmit={handleSubmit} noValidate>
+          <header className="login-header">
+            <span className="login-eyebrow">Security</span>
+            <h1>Reset Password</h1>
+            <p className="login-sub">Enter your email and we'll send you a password reset link.</p>
+          </header>
+
+          {error && <div className="login-alert" role="alert" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.2)' }}>{error}</div>}
+          {success && <div className="login-alert" role="alert" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', borderColor: 'rgba(16, 185, 129, 0.2)' }}>{success}</div>}
+
+          <div className={`field ${focused ? "is-focused" : ""}`}>
+            <label htmlFor="email">Email address</label>
+            <input
+              id="email"
+              type="email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onFocus={() => setFocused(true)}
+              onBlur={() => setFocused(false)}
+              required
+            />
+            <span className="field-line" />
           </div>
 
-          <form onSubmit={handleSubmit} className="auth-form">
-            {error && <div className="auth-error-alert">{error}</div>}
-            {success && <div className="auth-success-alert">{success}</div>}
+          <button type="submit" className="login-submit" disabled={loading}>
+            <span>{loading ? "Sending Link…" : "Send Reset Link"}</span>
+          </button>
 
-            <div className={`auth-input-group ${focused ? "focused" : ""}`}>
-              <span className="auth-input-icon">✉</span>
-              <input
-                type="email"
-                placeholder="Email Address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                onFocus={() => setFocused(true)}
-                onBlur={() => setFocused(false)}
-                required
-              />
-            </div>
-
-            <button type="submit" className="auth-submit-btn" disabled={loading}>
-              {loading ? (
-                <>
-                  <span className="auth-spinner" />
-                  Sending Link...
-                </>
-              ) : (
-                "Send Reset Link"
-              )}
-            </button>
-          </form>
-
-          <div className="auth-footer">
+          <footer className="login-footer">
             <p>
               Remembered your password?{" "}
-              <Link to="/login" className="auth-link">
+              <Link to="/login" className="login-signup-link">
                 Log In
               </Link>
             </p>
-          </div>
-        </div>
-      </div>
+          </footer>
+        </form>
+      </main>
     </div>
   );
 }

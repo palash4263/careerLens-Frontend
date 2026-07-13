@@ -43,6 +43,90 @@ const copyToClipboard = async (text, setCopySuccess) => {
   }
 };
 
+const getSectionIcon = (sectionKey) => {
+  switch (sectionKey) {
+    case 'Summary': return '📄';
+    case 'Experience': return '💼';
+    case 'Projects': return '🛠️';
+    case 'Skills': return '🚀';
+    case 'Education': return '🎓';
+    case 'Certifications': return '🏆';
+    case 'Languages': return '🗣️';
+    default: return '📝';
+  }
+};
+
+const parseSectionsFromText = (text) => {
+  const sections = {
+    Summary: '',
+    Experience: '',
+    Projects: '',
+    Skills: '',
+    Education: '',
+    Certifications: '',
+    Languages: ''
+  };
+  
+  if (!text) return sections;
+  
+  const rawLines = text.split('\n');
+  let currentSection = 'Summary';
+  let currentLines = [];
+
+  const SECTION_ALIASES = {
+    Summary:        ['Summary', 'Professional Summary', 'Objective', 'Profile', 'About'],
+    Education:      ['Education', 'Academic Background'],
+    Experience:     ['Experience', 'Work Experience', 'Professional Experience', 'Employment History', 'Career History'],
+    Projects:       ['Projects', 'Personal Projects', 'Key Projects', 'Academic Projects'],
+    Skills:         ['Skills', 'Technical Skills', 'Core Skills', 'Skills Summary', 'Technologies'],
+    Certifications: ['Certifications', 'Certificates', 'Licenses & Certifications', 'Awards & Certifications'],
+    Languages:      ['Languages', 'Language Proficiency'],
+  };
+  const CANONICAL_SECTIONS = Object.keys(SECTION_ALIASES);
+
+  const matchHeader = (line) => {
+    const cleaned = line.replace(/[:#\-_*]/g, '').trim();
+    for (const canonical of CANONICAL_SECTIONS) {
+      for (const alias of SECTION_ALIASES[canonical]) {
+        if (new RegExp(`^${alias}\\s*$`, 'i').test(cleaned)) {
+          return canonical;
+        }
+        if (new RegExp(`^${alias}:`, 'i').test(cleaned)) {
+          return canonical;
+        }
+      }
+    }
+    return null;
+  };
+
+  for (const line of rawLines) {
+    const headerSec = matchHeader(line);
+    if (headerSec) {
+      if (currentLines.length > 0) {
+        sections[currentSection] = currentLines.join('\n').trim();
+      }
+      currentSection = headerSec;
+      currentLines = [];
+    } else {
+      currentLines.push(line);
+    }
+  }
+
+  if (currentLines.length > 0) {
+    sections[currentSection] = currentLines.join('\n').trim();
+  }
+
+  return sections;
+};
+
+const reconstructResumeText = (sectionsObj) => {
+  if (!sectionsObj) return '';
+  return Object.entries(sectionsObj)
+    .filter(([_, content]) => content && content.trim() !== '')
+    .map(([title, content]) => `${title}:\n${content}`)
+    .join('\n\n');
+};
+
 // Premium customizer themes & fonts (mimicking Enhancv aesthetics)
 const PREMIUM_THEMES = [
   { name: 'Royal Blue', hex: '#1761c7', label: 'Indigo' },
@@ -346,7 +430,15 @@ export default function ResumeOptimizationPage() {
   const [selectedTemplate, setSelectedTemplate] = useState('two-column');
   const [selectedColor, setSelectedColor] = useState('#1761c7');
   const [selectedFont, setSelectedFont] = useState('Rubik');
-  const [editedText, setEditedText] = useState("");
+  const [editedSections, setEditedSections] = useState({
+    Summary: '',
+    Experience: '',
+    Projects: '',
+    Skills: '',
+    Education: '',
+    Certifications: '',
+    Languages: '',
+  });
   const [celebrationKey, setCelebrationKey] = useState(0);
   const [mobileCompareTab, setMobileCompareTab] = useState('optimized');
   
@@ -549,7 +641,7 @@ export default function ResumeOptimizationPage() {
       };
 
       setResult(normalized);
-      setEditedText(optText);
+      setEditedSections(parseSectionsFromText(optText));
     } catch (err) {
       console.error(err);
       setError(err.response?.data?.detail || "Resume optimization failed. Try again.");
@@ -584,7 +676,7 @@ export default function ResumeOptimizationPage() {
       const userData = getUserData();
 
       await generateResumePDF({
-        resumeText: editedText || result.optimizedText,
+        resumeText: reconstructResumeText(editedSections) || result.optimizedText,
         fileName: fileName,
         score: result.optimizedScore || 0,
         jobTitle: jobTitle,
@@ -1446,26 +1538,54 @@ export default function ResumeOptimizationPage() {
                             EDITABLE
                           </motion.span>
                         </div>
-                        <div className="compare-content-modern" style={{ padding: 0 }}>
-                          <textarea
-                            value={editedText}
-                            onChange={(e) => setEditedText(e.target.value)}
-                            style={{
-                              width: '100%',
-                              height: '420px',
-                              background: 'transparent',
-                              border: 'none',
-                              color: '#e2e8f0',
-                              fontFamily: 'monospace, Courier New, monospace',
-                              fontSize: '0.82rem',
-                              lineHeight: '1.5',
-                              padding: '1rem',
-                              resize: 'none',
-                              outline: 'none',
-                              overflowY: 'auto'
-                            }}
-                            placeholder="Edit your optimized resume text here..."
-                          />
+                        <div className="compare-content-modern" style={{ padding: '1rem', overflowY: 'auto', maxHeight: '420px', display: 'flex', flexDirection: 'column', gap: '1rem', background: 'rgba(15, 23, 42, 0.4)' }}>
+                          {Object.keys(editedSections).map(sectionKey => {
+                            const sectionContent = editedSections[sectionKey];
+                            const isPrimary = ['Summary', 'Experience', 'Projects', 'Skills', 'Education'].includes(sectionKey);
+                            if (!isPrimary && (!sectionContent || !sectionContent.trim())) return null;
+
+                            return (
+                              <div key={sectionKey} className="section-editor-card" style={{
+                                background: 'rgba(30, 41, 59, 0.45)',
+                                border: '1px solid rgba(255, 255, 255, 0.08)',
+                                borderRadius: '12px',
+                                padding: '12px 14px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '8px',
+                                transition: 'all 0.25s ease'
+                              }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', fontWeight: 'bold', color: '#a78bfa', fontFamily: 'Outfit, sans-serif' }}>
+                                  <span>{getSectionIcon(sectionKey)}</span>
+                                  <span>{sectionKey}</span>
+                                </div>
+                                <textarea
+                                  value={sectionContent}
+                                  onChange={(e) => {
+                                    setEditedSections(prev => ({
+                                      ...prev,
+                                      [sectionKey]: e.target.value
+                                    }));
+                                  }}
+                                  style={{
+                                    width: '100%',
+                                    minHeight: '80px',
+                                    background: 'rgba(15, 23, 42, 0.3)',
+                                    border: '1px solid rgba(255,255,255,0.04)',
+                                    borderRadius: '8px',
+                                    color: '#e2e8f0',
+                                    fontFamily: 'monospace, Courier New, monospace',
+                                    fontSize: '0.8rem',
+                                    lineHeight: '1.4',
+                                    padding: '8px 10px',
+                                    resize: 'vertical',
+                                    outline: 'none',
+                                  }}
+                                  placeholder={`Add information for ${sectionKey}...`}
+                                />
+                              </div>
+                            );
+                          })}
                         </div>
                       </motion.div>
                     </div>
@@ -1731,7 +1851,7 @@ export default function ResumeOptimizationPage() {
                       <div className="resume-view-actions">
                         <button
                           className="resume-view-btn"
-                          onClick={() => copyToClipboard(editedText || result.optimizedText, setCopySuccess)}
+                          onClick={() => copyToClipboard(reconstructResumeText(editedSections) || result.optimizedText, setCopySuccess)}
                         >
                           <Copy size={16} />
                           Copy
@@ -1775,26 +1895,54 @@ export default function ResumeOptimizationPage() {
                         </div>
                       </div>
 
-                      <div className="resume-text-container" style={{ padding: 0 }}>
-                        <textarea
-                          value={editedText}
-                          onChange={(e) => setEditedText(e.target.value)}
-                          style={{
-                            width: '100%',
-                            height: '600px',
-                            background: 'transparent',
-                            border: 'none',
-                            color: '#f8fafc',
-                            fontFamily: 'monospace, Courier New, monospace',
-                            fontSize: '0.85rem',
-                            lineHeight: '1.6',
-                            padding: '1.5rem',
-                            resize: 'none',
-                            outline: 'none',
-                            overflowY: 'auto'
-                          }}
-                          placeholder="Edit your optimized resume text here..."
-                        />
+                      <div className="resume-text-container" style={{ padding: '1.5rem', overflowY: 'auto', maxHeight: '600px', display: 'flex', flexDirection: 'column', gap: '1.25rem', background: 'rgba(15, 23, 42, 0.25)' }}>
+                        {Object.keys(editedSections).map(sectionKey => {
+                          const sectionContent = editedSections[sectionKey];
+                          const isPrimary = ['Summary', 'Experience', 'Projects', 'Skills', 'Education'].includes(sectionKey);
+                          if (!isPrimary && (!sectionContent || !sectionContent.trim())) return null;
+
+                          return (
+                            <div key={sectionKey} className="section-editor-card" style={{
+                              background: 'rgba(30, 41, 59, 0.45)',
+                              border: '1px solid rgba(255, 255, 255, 0.08)',
+                              borderRadius: '12px',
+                              padding: '16px',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '10px',
+                              transition: 'all 0.25s ease'
+                            }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', fontWeight: 'bold', color: '#a78bfa', fontFamily: 'Outfit, sans-serif' }}>
+                                <span>{getSectionIcon(sectionKey)}</span>
+                                <span>{sectionKey} Section</span>
+                              </div>
+                              <textarea
+                                value={sectionContent}
+                                onChange={(e) => {
+                                  setEditedSections(prev => ({
+                                    ...prev,
+                                    [sectionKey]: e.target.value
+                                  }));
+                                }}
+                                style={{
+                                  width: '100%',
+                                  minHeight: '120px',
+                                  background: 'rgba(15, 23, 42, 0.3)',
+                                  border: '1px solid rgba(255,255,255,0.04)',
+                                  borderRadius: '8px',
+                                  color: '#f8fafc',
+                                  fontFamily: 'monospace, Courier New, monospace',
+                                  fontSize: '0.85rem',
+                                  lineHeight: '1.5',
+                                  padding: '12px 14px',
+                                  resize: 'vertical',
+                                  outline: 'none',
+                                }}
+                                placeholder={`Enter your ${sectionKey} details...`}
+                              />
+                            </div>
+                          );
+                        })}
                       </div>
 
                       {result.recommendations?.length > 0 && (

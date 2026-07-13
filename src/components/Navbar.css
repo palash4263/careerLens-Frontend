@@ -1,5 +1,3 @@
-/* Performance-first navbar shell */
-
 .nb-root {
   position: fixed;
   top: 0;
@@ -23,16 +21,16 @@
   height: 60px;
   padding: 0 20px 0 14px;
   border-radius: 999px;
-  background: rgba(2, 6, 23, 0.96);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.24);
+  background: var(--shell-nav-bg);
+  border: 1px solid var(--shell-nav-border);
+  box-shadow: var(--shell-nav-shadow);
   transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
 }
 
 .nb-scrolled .nb-wrap {
-  background: rgba(2, 6, 23, 0.98);
-  border-color: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+  background: var(--shell-nav-bg-scrolled);
+  border-color: var(--shell-nav-border-strong);
+  box-shadow: var(--shell-nav-shadow-scrolled);
 }
 
 .nb-logo {
@@ -48,8 +46,8 @@
 }
 
 .nb-logo:hover {
-  background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(255, 255, 255, 0.07);
+  background: var(--shell-nav-surface);
+  border-color: var(--shell-nav-border);
 }
 
 .nb-logo-orb {
@@ -59,15 +57,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(167, 139, 250, 0.14);
+  background: var(--shell-nav-surface-strong);
   border-radius: 50%;
-  border: 1px solid rgba(167, 139, 250, 0.2);
+  border: 1px solid rgba(201, 162, 39, 0.18);
   flex-shrink: 0;
 }
 
 .nb-logo-icon {
   font-size: 15px;
-  color: #a78bfa;
+  color: var(--shell-nav-accent);
   display: block;
   line-height: 1;
 }
@@ -76,7 +74,7 @@
   position: absolute;
   inset: -4px;
   border-radius: 50%;
-  border: 1px solid rgba(167, 139, 250, 0.12);
+  border: 1px solid rgba(201, 162, 39, 0.12);
 }
 
 .nb-logo-ring::after {
@@ -88,28 +86,28 @@
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: #a78bfa;
-  box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.12);
+  background: var(--shell-nav-accent);
+  box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.12);
 }
 
 .nb-logo-text {
   font-size: 18px;
   font-weight: 800;
   letter-spacing: -0.03em;
-  color: rgba(255, 255, 255, 0.9);
-  font-family: "Inter", sans-serif;
+  color: var(--shell-nav-text);
+  font-family: var(--cl-font-body);
 }
 
 .nb-logo-accent {
-  color: #60a5fa;
+  color: var(--shell-nav-accent);
 }
 
 .nb-logo-badge {
   font-size: 8px;
   font-weight: 800;
   letter-spacing: 0.07em;
-  color: white;
-  background: rgba(124, 58, 237, 0.18);
+  color: var(--shell-nav-text);
+  background: var(--shell-nav-accent-soft);
   padding: 2px 7px;
   border-radius: 999px;
   align-self: flex-start;
@@ -122,7 +120,7 @@
   align-items: center;
   gap: 2px;
   padding: 4px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--shell-nav-surface);
   border-radius: 999px;
 }
 
@@ -133,7 +131,7 @@
   gap: 7px;
   padding: 7px 18px;
   border-radius: 999px;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--shell-nav-text-muted);
   text-decoration: none;
   font-size: 13px;
   font-weight: 500;
@@ -143,8 +141,8 @@
 }
 
 .nb-link:hover {
-  color: rgba(255, 255, 255, 0.85);
-  background: rgba(255, 255, 255, 0.05);
+  color: var(--shell-nav-text);
+  background: var(--shell-nav-surface-strong);
 }
 
 .nb-link-icon {
@@ -160,8 +158,8 @@
 }
 
 .nb-link.nb-active {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.09);
+  color: var(--shell-nav-text);
+  background: var(--shell-nav-surface-strong);
 }
 
 .nb-link.nb-active .nb-link-icon {
@@ -176,7 +174,7 @@
   width: 14px;
   height: 2px;
   border-radius: 999px;
-  background: #a78bfa;
+  background: var(--shell-nav-accent);
 }
 
 .nb-right {
@@ -195,9 +193,9 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  background: rgba(255, 255, 255, 0.03);
-  color: rgba(255, 255, 255, 0.45);
+  border: 1px solid var(--shell-nav-border);
+  background: var(--shell-nav-surface);
+  color: var(--shell-nav-text-muted);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -206,9 +204,9 @@
 }
 
 .nb-icon-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.9);
-  border-color: rgba(255, 255, 255, 0.12);
+  background: var(--shell-nav-surface-strong);
+  color: var(--shell-nav-text);
+  border-color: var(--shell-nav-border-strong);
   transform: translateY(-1px);
 }
 
@@ -223,14 +221,14 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #ef4444;
-  border: 1.5px solid rgba(2, 6, 23, 0.9);
+  background: var(--shell-nav-danger);
+  border: 1.5px solid var(--shell-nav-bg);
 }
 
 .nb-divider {
   width: 1px;
   height: 22px;
-  background: rgba(255, 255, 255, 0.07);
+  background: var(--shell-nav-border);
 }
 
 .nb-user {
@@ -239,16 +237,16 @@
   gap: 9px;
   padding: 4px 12px 4px 4px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--shell-nav-border);
+  background: var(--shell-nav-surface);
   text-decoration: none;
   transition: background-color 160ms ease, border-color 160ms ease;
   cursor: pointer;
 }
 
 .nb-user:hover {
-  background: rgba(255, 255, 255, 0.07);
-  border-color: rgba(255, 255, 255, 0.12);
+  background: var(--shell-nav-surface-strong);
+  border-color: var(--shell-nav-border-strong);
 }
 
 .nb-avatar {
@@ -256,19 +254,19 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: rgba(124, 58, 237, 0.22);
+  background: var(--shell-nav-surface-strong);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 11px;
   font-weight: 800;
-  color: white;
-  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.12);
+  color: var(--shell-nav-text);
+  box-shadow: 0 0 0 2px rgba(201, 162, 39, 0.12);
   flex-shrink: 0;
 }
 
 .nb-avatar span {
-  -webkit-text-fill-color: white;
+  -webkit-text-fill-color: currentColor;
 }
 
 .nb-online {
@@ -278,8 +276,8 @@
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background: #10b981;
-  border: 1.5px solid rgba(2, 6, 23, 0.9);
+  background: var(--shell-nav-success);
+  border: 1.5px solid var(--shell-nav-bg);
 }
 
 .nb-user-info {
@@ -291,34 +289,34 @@
 .nb-user-name {
   font-size: 12.5px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--shell-nav-text);
 }
 
 .nb-user-role {
   font-size: 10px;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.35);
+  color: var(--shell-nav-text-faint);
   letter-spacing: 0.01em;
 }
 
 .nb-chevron {
-  color: rgba(255, 255, 255, 0.25);
+  color: var(--shell-nav-text-faint);
   transition: transform 160ms ease, color 160ms ease;
   display: block;
 }
 
 .nb-user:hover .nb-chevron {
   transform: translateY(2px);
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--shell-nav-text-muted);
 }
 
 .nb-logout {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  border: 1px solid rgba(239, 68, 68, 0.12);
-  background: rgba(239, 68, 68, 0.04);
-  color: rgba(252, 165, 165, 0.7);
+  border: 1px solid rgba(179, 67, 43, 0.16);
+  background: rgba(179, 67, 43, 0.06);
+  color: var(--shell-nav-danger);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -327,9 +325,9 @@
 }
 
 .nb-logout:hover {
-  background: rgba(239, 68, 68, 0.15);
-  border-color: rgba(239, 68, 68, 0.35);
-  color: #fca5a5;
+  background: rgba(179, 67, 43, 0.14);
+  border-color: rgba(179, 67, 43, 0.28);
+  color: var(--shell-nav-danger);
   transform: translateY(-1px);
 }
 
@@ -342,10 +340,10 @@
   top: calc(100% + 12px);
   right: -10px;
   width: 320px;
-  background: rgba(4, 6, 16, 0.96);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--shell-nav-bg-scrolled);
+  border: 1px solid var(--shell-nav-border);
   border-radius: 18px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--shell-nav-shadow-scrolled);
   overflow: hidden;
   animation: slideInNavNotif 0.2s ease-out forwards;
   z-index: 1001;
@@ -367,14 +365,14 @@
   justify-content: space-between;
   align-items: center;
   padding: 14px 18px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  background: rgba(255, 255, 255, 0.01);
+  border-bottom: 1px solid var(--shell-nav-border);
+  background: var(--shell-nav-surface);
 }
 
 .nb-notif-title {
   font-size: 13.5px;
   font-weight: 700;
-  color: #fff;
+  color: var(--shell-nav-text);
   letter-spacing: -0.01em;
 }
 
@@ -383,15 +381,15 @@
   border: none;
   font-size: 11px;
   font-weight: 600;
-  color: #a78bfa;
+  color: var(--shell-nav-accent);
   cursor: pointer;
   transition: color 160ms ease;
-  font-family: "Inter", sans-serif;
+  font-family: var(--cl-font-body);
   padding: 0;
 }
 
 .nb-notif-clear-btn:hover {
-  color: #fff;
+  color: var(--shell-nav-text);
 }
 
 .nb-notif-body {
@@ -409,7 +407,7 @@
   padding: 2.5rem 1.5rem;
   text-align: center;
   gap: 8px;
-  color: rgba(255, 255, 255, 0.35);
+  color: var(--shell-nav-text-faint);
 }
 
 .nb-notif-empty-icon {
@@ -420,7 +418,7 @@
 .nb-notif-empty-text {
   font-size: 12.5px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--shell-nav-text-muted);
 }
 
 .nb-notif-item {
@@ -429,21 +427,21 @@
   align-items: flex-start;
   gap: 12px;
   padding: 12px 18px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid var(--shell-nav-border);
   cursor: pointer;
   transition: background-color 160ms ease;
 }
 
 .nb-notif-item:hover {
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--shell-nav-surface);
 }
 
 .nb-notif-item.unread {
-  background: rgba(167, 139, 250, 0.03);
+  background: rgba(201, 162, 39, 0.06);
 }
 
 .nb-notif-item.unread:hover {
-  background: rgba(167, 139, 250, 0.05);
+  background: rgba(201, 162, 39, 0.1);
 }
 
 .nb-notif-item-left {
@@ -463,15 +461,15 @@
 }
 
 .nb-notif-type-dot.success {
-  background: #10b981;
+  background: var(--shell-nav-success);
 }
 
 .nb-notif-type-dot.info {
-  background: #3b82f6;
+  background: var(--shell-info);
 }
 
 .nb-notif-type-dot.job {
-  background: #f59e0b;
+  background: var(--shell-warning);
 }
 
 .nb-notif-item-content {
@@ -484,25 +482,25 @@
 
 .nb-notif-item-text {
   font-size: 11.5px;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--shell-nav-text);
   line-height: 1.45;
   font-weight: 500;
 }
 
 .nb-notif-item.read .nb-notif-item-text {
-  color: rgba(255, 255, 255, 0.35);
+  color: var(--shell-nav-text-faint);
   font-weight: 400;
 }
 
 .nb-notif-item-time {
   font-size: 10px;
-  color: rgba(255, 255, 255, 0.3);
+  color: var(--shell-nav-text-faint);
 }
 
 .nb-notif-item-close {
   background: transparent;
   border: none;
-  color: rgba(255, 255, 255, 0.2);
+  color: var(--shell-nav-text-faint);
   font-size: 16px;
   cursor: pointer;
   padding: 0;
@@ -513,7 +511,7 @@
 }
 
 .nb-notif-item-close:hover {
-  color: #ef4444;
+  color: var(--shell-nav-danger);
 }
 
 .nb-mobile-toggle {
@@ -532,7 +530,7 @@
 .nb-toggle-line {
   width: 100%;
   height: 2px;
-  background: #fff;
+  background: var(--shell-nav-text);
   border-radius: 99px;
   transition: transform 160ms ease, opacity 160ms ease;
   transform-origin: left center;
@@ -554,7 +552,7 @@
 .nb-sidebar-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(2, 6, 23, 0.4);
+  background: rgba(27, 36, 31, 0.14);
   opacity: 0;
   pointer-events: none;
   z-index: 1005;
@@ -572,9 +570,9 @@
   bottom: 0;
   left: -280px;
   width: 280px;
-  background: rgba(8, 10, 24, 0.98);
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 12px 0 28px rgba(0, 0, 0, 0.34);
+  background: var(--shell-nav-bg-scrolled);
+  border-right: 1px solid var(--shell-nav-border);
+  box-shadow: var(--shell-nav-shadow-scrolled);
   z-index: 1006;
   display: flex;
   flex-direction: column;
@@ -590,7 +588,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 24px 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--shell-nav-border);
 }
 
 .nb-sidebar-user {
@@ -605,14 +603,14 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: rgba(124, 58, 237, 0.22);
-  color: #fff;
+  background: var(--shell-nav-surface-strong);
+  color: var(--shell-nav-text);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
   font-size: 13.5px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--shell-nav-border);
 }
 
 .nb-sidebar-online {
@@ -621,8 +619,8 @@
   right: -1px;
   width: 10px;
   height: 10px;
-  background: #10b981;
-  border: 2px solid rgba(8, 10, 24, 1);
+  background: var(--shell-nav-success);
+  border: 2px solid var(--shell-nav-bg-scrolled);
   border-radius: 50%;
 }
 
@@ -635,18 +633,18 @@
 .nb-sidebar-user-name {
   font-size: 13.5px;
   font-weight: 700;
-  color: #fff;
+  color: var(--shell-nav-text);
 }
 
 .nb-sidebar-user-role {
   font-size: 10.5px;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--shell-nav-text-faint);
 }
 
 .nb-sidebar-close {
   background: transparent;
   border: none;
-  color: rgba(255, 255, 255, 0.4);
+  color: var(--shell-nav-text-faint);
   font-size: 26px;
   cursor: pointer;
   line-height: 1;
@@ -655,7 +653,7 @@
 }
 
 .nb-sidebar-close:hover {
-  color: #fff;
+  color: var(--shell-nav-text);
 }
 
 .nb-sidebar-body {
@@ -675,7 +673,7 @@
   align-items: center;
   gap: 14px;
   padding: 12px 18px;
-  color: rgba(255, 255, 255, 0.65);
+  color: var(--shell-nav-text-muted);
   font-size: 13.5px;
   font-weight: 600;
   text-decoration: none;
@@ -686,33 +684,33 @@
 
 .nb-sidebar-link-icon {
   font-size: 16px;
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--shell-nav-text-faint);
   transition: color 160ms ease;
 }
 
 .nb-sidebar-link:hover {
-  background: rgba(255, 255, 255, 0.04);
-  color: #fff;
-  border-color: rgba(255, 255, 255, 0.03);
+  background: var(--shell-nav-surface);
+  color: var(--shell-nav-text);
+  border-color: var(--shell-nav-border);
 }
 
 .nb-sidebar-link:hover .nb-sidebar-link-icon {
-  color: #a78bfa;
+  color: var(--shell-nav-accent);
 }
 
 .nb-sidebar-link.active {
-  background: rgba(124, 58, 237, 0.14);
-  border-color: rgba(124, 58, 237, 0.18);
-  color: #a78bfa;
+  background: var(--shell-nav-surface-strong);
+  border-color: var(--shell-nav-border-strong);
+  color: var(--shell-nav-accent);
 }
 
 .nb-sidebar-link.active .nb-sidebar-link-icon {
-  color: #a78bfa;
+  color: var(--shell-nav-accent);
 }
 
 .nb-sidebar-footer {
   padding: 20px 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-top: 1px solid var(--shell-nav-border);
 }
 
 .nb-sidebar-logout {
@@ -722,9 +720,9 @@
   width: 100%;
   padding: 12px;
   border-radius: 12px;
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  background: rgba(239, 68, 68, 0.05);
-  color: #fca5a5;
+  border: 1px solid rgba(179, 67, 43, 0.16);
+  background: rgba(179, 67, 43, 0.06);
+  color: var(--shell-nav-danger);
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
@@ -732,9 +730,9 @@
 }
 
 .nb-sidebar-logout:hover {
-  background: rgba(239, 68, 68, 0.15);
-  border-color: rgba(239, 68, 68, 0.4);
-  color: #fff;
+  background: rgba(179, 67, 43, 0.14);
+  border-color: rgba(179, 67, 43, 0.28);
+  color: var(--shell-nav-danger);
 }
 
 @media (max-width: 1100px) {

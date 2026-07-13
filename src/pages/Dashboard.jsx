@@ -299,7 +299,7 @@ function Dashboard() {
           ].map((s, i) => (
             <div
               key={s.label}
-              className={`psc-card${activeCards[i] ? ' psc-active' : ''} scroll-reveal`}
+              className="psc-card psc-active scroll-reveal"
               style={{
                 "--card-glow-color": s.color,
                 "--card-glow-dim": `${s.color}33`,
@@ -323,20 +323,26 @@ function Dashboard() {
               </div>
               {/* Content */}
               <div className="psc-content">
-                {/* Toggle pinned top-right */}
-                <button
-                  className={`psc-toggle${activeCards[i] ? ' psc-toggle-active' : ''}`}
-                  onClick={() => toggleCard(i)}
-                  aria-label={`Toggle ${s.label} details`}
-                >
-                  <div className="psc-handle" />
-                  <span className="psc-toggle-label">{activeCards[i] ? 'On' : 'Off'}</span>
-                </button>
+                {/* Premium Glassmorphic Badge with Emoji */}
+                <div className="psc-icon-badge" style={{
+                  position: 'absolute',
+                  top: '0.4rem',
+                  right: '0.4rem',
+                  background: 'rgba(255, 255, 255, 0.04)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '12px',
+                  padding: '6px 8px',
+                  fontSize: '1.2rem',
+                  backdropFilter: 'blur(8px)',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                }}>
+                  {s.emoji}
+                </div>
                 {/* Value centered in card */}
                 <div className="psc-center-val">
                   <span
                     className="psc-value"
-                    style={{ color: activeCards[i] ? '#ffffff' : 'rgba(255,255,255,0.65)' }}
+                    style={{ color: '#ffffff' }}
                   >
                     {s.value}
                   </span>

@@ -325,6 +325,7 @@ export default function ResumeOptimizationPage() {
   const [copySuccess, setCopySuccess] = useState(false);
   const [viewMode, setViewMode] = useState('side-by-side');
   const [downloading, setDownloading] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState('two-column');
   const [celebrationKey, setCelebrationKey] = useState(0);
   const [mobileCompareTab, setMobileCompareTab] = useState('optimized');
   const reduceMotion = useReducedMotion();
@@ -523,7 +524,8 @@ export default function ResumeOptimizationPage() {
         email: userData.email,
         phone: userData.phone,
         linkedin: userData.linkedin,
-        userName: userData.name
+        userName: userData.name,
+        templateType: selectedTemplate
       });
     } catch (error) {
       console.error('PDF download error:', error);
@@ -1120,6 +1122,90 @@ export default function ResumeOptimizationPage() {
                       <><Copy size={16} /> Copy Optimized</>
                     )}
                   </motion.button>
+                </div>
+              </div>
+
+              {/* Template Selector Section */}
+              <div className="template-selector-container" style={{
+                background: 'rgba(30, 41, 59, 0.4)',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: '16px',
+                padding: '1.25rem',
+                marginBottom: '1.5rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.85rem'
+              }}>
+                <h4 style={{ margin: 0, fontSize: '0.95rem', color: '#fff', display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'Outfit, sans-serif', fontWeight: 'bold' }}>
+                  🎨 Select Resume Layout Template
+                </h4>
+                <p style={{ margin: 0, fontSize: '0.78rem', color: 'rgba(255,255,255,0.45)', lineHeight: '1.4' }}>
+                  Choose the design layout you want for your generated PDF file.
+                </p>
+                
+                <div className="template-grid" style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: '1rem',
+                  marginTop: '0.25rem'
+                }}>
+                  {/* Option 1: Two Column */}
+                  <div 
+                    onClick={() => setSelectedTemplate('two-column')}
+                    style={{
+                      background: selectedTemplate === 'two-column' ? 'rgba(124, 58, 237, 0.12)' : 'rgba(255, 255, 255, 0.02)',
+                      border: selectedTemplate === 'two-column' ? '1.5px solid #7c3aed' : '1px solid rgba(255, 255, 255, 0.06)',
+                      borderRadius: '12px',
+                      padding: '1rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.25s ease',
+                      boxShadow: selectedTemplate === 'two-column' ? '0 0 16px rgba(124, 58, 237, 0.2)' : 'none'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff', fontFamily: 'Outfit, sans-serif' }}>Modern Split (Two-Column)</span>
+                      <input 
+                        type="radio" 
+                        name="resumeTemplate"
+                        checked={selectedTemplate === 'two-column'} 
+                        onChange={() => setSelectedTemplate('two-column')}
+                        style={{ accentColor: '#7c3aed', cursor: 'pointer' }}
+                      />
+                    </div>
+                    <p style={{ margin: 0, fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', lineHeight: '1.4' }}>
+                      Modern split sidebar layout with rounded skill badges. Great for engineering, designs, and tech roles.
+                    </p>
+                  </div>
+
+                  {/* Option 2: Single Column */}
+                  <div 
+                    onClick={() => setSelectedTemplate('single-column')}
+                    style={{
+                      background: selectedTemplate === 'single-column' ? 'rgba(124, 58, 237, 0.12)' : 'rgba(255, 255, 255, 0.02)',
+                      border: selectedTemplate === 'single-column' ? '1.5px solid #7c3aed' : '1px solid rgba(255, 255, 255, 0.06)',
+                      borderRadius: '12px',
+                      padding: '1rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.25s ease',
+                      boxShadow: selectedTemplate === 'single-column' ? '0 0 16px rgba(124, 58, 237, 0.2)' : 'none'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff', fontFamily: 'Outfit, sans-serif' }}>Classic Navy (Single-Column)</span>
+                      <input 
+                        type="radio" 
+                        name="resumeTemplate"
+                        checked={selectedTemplate === 'single-column'} 
+                        onChange={() => setSelectedTemplate('single-column')}
+                        style={{ accentColor: '#7c3aed', cursor: 'pointer' }}
+                      />
+                    </div>
+                    <p style={{ margin: 0, fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', lineHeight: '1.4' }}>
+                      Elegant full-width single column design. Highly readable, corporate-friendly, and optimized for ATS parsers.
+                    </p>
+                  </div>
                 </div>
               </div>
 

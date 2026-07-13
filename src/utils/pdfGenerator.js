@@ -225,6 +225,313 @@ const splitLabelAndDate = (text) => {
 };
 
 // =====================================================================
+// ELEGANT SINGLE-COLUMN PDF GENERATION
+// =====================================================================
+async function generateSingleColumnPDF({
+  resumeText,
+  fileName = 'resume',
+  score    = 0,
+  jobTitle = null,
+  email    = null,
+  phone    = null,
+  linkedin = null,
+  userName = null,
+}) {
+  const finalName     = userName || extractName(resumeText) || 'Palash Mishra';
+  const finalJobTitle = jobTitle  || extractJobTitle(resumeText)  || 'Full Stack Developer';
+  const finalEmail    = email     || extractEmail(resumeText)     || 'palashmishra47@gmail.com';
+  const finalPhone    = phone     || extractPhoneNumber(resumeText) || '+91-7428477219';
+  const finalLinkedIn = linkedin  || extractLinkedIn(resumeText)  || 'linkedin.com/in/palash-mishra-6a68a71aa';
+  const finalGitHub   = extractGitHub(resumeText)    || '';
+
+  // Initialize Document
+  const pdf      = await PDFDocument.create();
+  const font     = await pdf.embedFont(StandardFonts.Helvetica);
+  const bold     = await pdf.embedFont(StandardFonts.HelveticaBold);
+  const italic   = await pdf.embedFont(StandardFonts.HelveticaOblique);
+  const boldItal = await pdf.embedFont(StandardFonts.HelveticaBoldOblique);
+
+  const pickFont = ({ bold: b, italic: i } = {}) => {
+    if (b && i) return boldItal;
+    if (b)      return bold;
+    if (i)      return italic;
+    return font;
+  };
+
+  const sections  = parseResumeSections(resumeText, { userName: finalName, email: finalEmail, phone: finalPhone, linkedin: finalLinkedIn });
+  const cleanFile = safeText(fileName).replace(/\.pdf$/i, '');
+
+  const FULL_W   = PAGE_WIDTH - MARGIN_X * 2;
+  let p = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+  let y = PAGE_HEIGHT - MARGIN_TOP;
+
+  const tw = (text, size, opts = {}) =>
+    pickFont(opts).widthOfTextAtSize(safeText(text), size);
+
+  const drawText = (page, text, x, yVal, size, opts = {}) => {
+    const f = pickFont(opts);
+    const color = opts.color || BLACK;
+    page.drawText(safeText(text), { x, y: yVal, size, font: f, color });
+  };
+
+  const wrapText = (text, maxWidth, size, opts = {}) => {
+    const s = safeText(text);
+    if (!s) return [];
+    const useFont = pickFont(opts);
+    const words   = s.split(' ');
+    const lines   = [];
+    let cur       = '';
+    for (const word of words) {
+      const test = cur ? `${cur} ${word}` : word;
+      if (useFont.widthOfTextAtSize(test, size) <= maxWidth) {
+        cur = test;
+      } else {
+        if (cur) lines.push(cur);
+        if (useFont.widthOfTextAtSize(word, size) > maxWidth) {
+          lines.push(word);
+          cur = '';
+        } else {
+          cur = word;
+        }
+      }
+    }
+    if (cur) lines.push(cur);
+    return lines;
+  };
+
+  const drawWrapped = (page, text, x, yVal, maxWidth, size, lineHeight, opts = {}) => {
+    const lines = wrapText(text, maxWidth, size, opts);
+    let curY = yVal;
+    for (const line of lines) {
+      if (curY < MARGIN_BOTTOM + 15) {
+        page = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+        curY = PAGE_HEIGHT - MARGIN_TOP;
+        p = page; // update current page ref
+      }
+      drawText(page, line, x, curY, size, opts);
+      curY -= lineHeight;
+    }
+    return curY;
+  };
+
+  const drawBullet = (page, text, x, yVal, maxWidth, size, lineHeight) => {
+    if (yVal < MARGIN_BOTTOM + 15) {
+      page = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+      yVal = PAGE_HEIGHT - MARGIN_TOP;
+      p = page;
+    }
+    drawText(page, "•", x, yVal, size + 2, { color: PRIMARY });
+    return drawWrapped(page, text, x + 10, yVal, maxWidth - 10, size, lineHeight, { color: DARK_GRAY });
+  };
+
+  // --- Render Header (Centered) ---
+  const nameSize = 20;
+  const nameW = tw(finalName, nameSize, { bold: true });
+  drawText(p, finalName, (PAGE_WIDTH - nameW) / 2, y, nameSize, { bold: true, color: PRIMARY });
+  y -= 18;
+
+  if (finalJobTitle) {
+    const titleSize = 10;
+    const titleW = tw(finalJobTitle, titleSize, { bold: true });
+    drawText(p, finalJobTitle.toUpperCase(), (PAGE_WIDTH - titleW) / 2, y, titleSize, { bold: true, color: GRAY });
+    y -= 14;
+  }
+
+  const contactParts = [];
+  if (finalPhone) contactParts.push(finalPhone);
+  if (finalEmail) contactParts.push(finalEmail);
+  if (finalLinkedIn) contactParts.push(finalLinkedIn);
+  if (finalGitHub) contactParts.push(finalGitHub);
+
+  const contactStr = contactParts.join("  |  ");
+  const contactSize = 8.5;
+  const contactW = tw(contactStr, contactSize);
+  drawText(p, contactStr, (PAGE_WIDTH - contactW) / 2, y, contactSize, { color: DARK_GRAY });
+  y -= 16;
+
+  // --- Render Sections (Full Width) ---
+  const sizeSectionTitle = 10.5;
+  const sizeEntryHeader = 10;
+  const sizeSubtitle = 9.5;
+  const sizeBody = 9;
+  const lhBody = 12.5;
+  const lhEntryHeader = 12;
+  const lhSubtitle = 11.5;
+
+  const drawSectionHeader = (title) => {
+    if (y < MARGIN_BOTTOM + 35) {
+      p = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+      y = PAGE_HEIGHT - MARGIN_TOP;
+    }
+    y -= 10;
+    drawText(p, title.toUpperCase(), MARGIN_X, y, sizeSectionTitle, { bold: true, color: PRIMARY });
+    y -= 4;
+    p.drawLine({
+      start: { x: MARGIN_X, y: y },
+      end: { x: PAGE_WIDTH - MARGIN_X, y: y },
+      thickness: 0.75,
+      color: LIGHT_GRAY,
+    });
+    y -= 8;
+  };
+
+  const sectionsToRender = ['Summary', 'Experience', 'Projects', 'Skills', 'Education', 'Certifications', 'Languages'];
+  for (const canonical of sectionsToRender) {
+    const sec = sections.find(s => s.title.toLowerCase().includes(canonical.toLowerCase()));
+    if (!sec || sec.content.length === 0) continue;
+
+    drawSectionHeader(canonical);
+
+    if (canonical === 'Summary') {
+      for (const line of sec.content) {
+        y = drawWrapped(p, line, MARGIN_X, y, FULL_W, sizeBody, lhBody, { color: DARK_GRAY });
+        y -= 2;
+      }
+    } 
+    else if (canonical === 'Experience') {
+      for (const rawLine of sec.content) {
+        const trimmed = safeText(rawLine).trim();
+        if (!trimmed) continue;
+
+        const isBullet = trimmed.startsWith('•');
+        const bulletTxt = isBullet ? trimmed.replace(/^•\s*/, '') : '';
+
+        if (!isBullet && /\d{4}/.test(trimmed)) {
+          const { label, date } = splitLabelAndDate(trimmed);
+          y -= 4;
+          const dateW = tw(date, sizeSubtitle, { italic: true });
+          drawText(p, safeText(label), MARGIN_X, y, sizeEntryHeader, { bold: true, color: BLACK });
+          if (date) {
+            drawText(p, date, PAGE_WIDTH - MARGIN_X - dateW, y, sizeSubtitle, { italic: true, color: GRAY });
+          }
+          y -= lhEntryHeader;
+          continue;
+        }
+        if (!isBullet && /\b(developer|engineer|intern|analyst|consultant|lead|architect|manager|designer|specialist|devops|sde)\b/i.test(trimmed)) {
+          y = drawWrapped(p, trimmed, MARGIN_X, y, FULL_W, sizeSubtitle, lhSubtitle, { bold: true, color: DARK_GRAY });
+          y -= 2;
+          continue;
+        }
+        if (isBullet) {
+          y = drawBullet(p, bulletTxt, MARGIN_X + 2, y, FULL_W - 2, sizeBody, lhBody);
+          y -= 1;
+          continue;
+        }
+        y = drawWrapped(p, trimmed, MARGIN_X, y, FULL_W, sizeBody, lhBody, { color: DARK_GRAY });
+        y -= 2;
+      }
+    }
+    else if (canonical === 'Projects') {
+      for (const rawLine of sec.content) {
+        const trimmed = safeText(rawLine).trim();
+        if (!trimmed) continue;
+
+        const isBullet = trimmed.startsWith('•');
+        const bulletTxt = isBullet ? trimmed.replace(/^•\s*/, '') : '';
+
+        if (!isBullet && trimmed.includes('|')) {
+          const parts = trimmed.split('|').map(pt => safeText(pt).trim());
+          const name  = parts[0];
+          const rest  = parts.slice(1).join(' | ');
+          const { label: tech, date } = splitLabelAndDate(rest);
+          const display = tech ? `${name}  |  ${tech}` : name;
+          y -= 4;
+          const dateW = tw(date, sizeSubtitle, { italic: true });
+          drawText(p, display, MARGIN_X, y, sizeEntryHeader, { bold: true, color: BLACK });
+          if (date) {
+            drawText(p, date, PAGE_WIDTH - MARGIN_X - dateW, y, sizeSubtitle, { italic: true, color: GRAY });
+          }
+          y -= lhEntryHeader;
+          continue;
+        }
+        if (!isBullet && /\d{4}/.test(trimmed)) {
+          const { label, date } = splitLabelAndDate(trimmed);
+          y -= 4;
+          const dateW = tw(date, sizeSubtitle, { italic: true });
+          drawText(p, safeText(label), MARGIN_X, y, sizeEntryHeader, { bold: true, color: BLACK });
+          if (date) {
+            drawText(p, date, PAGE_WIDTH - MARGIN_X - dateW, y, sizeSubtitle, { italic: true, color: GRAY });
+          }
+          y -= lhEntryHeader;
+          continue;
+        }
+        if (isBullet) {
+          y = drawBullet(p, bulletTxt, MARGIN_X + 2, y, FULL_W - 2, sizeBody, lhBody);
+          y -= 1;
+          continue;
+        }
+        y = drawWrapped(p, trimmed, MARGIN_X, y, FULL_W, sizeBody, lhBody, { color: DARK_GRAY });
+        y -= 2;
+      }
+    }
+    else if (canonical === 'Skills') {
+      for (const rawLine of sec.content) {
+        const trimmed = safeText(rawLine).trim();
+        if (!trimmed) continue;
+        
+        if (trimmed.includes(':')) {
+          const parts = trimmed.split(':');
+          const category = parts[0].trim();
+          const skillsList = parts[1].split(',').map(s => s.trim()).join(', ');
+          const display = `${category}: ${skillsList}`;
+          y = drawWrapped(p, display, MARGIN_X, y, FULL_W, sizeBody, lhBody, { color: DARK_GRAY });
+          y -= 3;
+        } else {
+          y = drawWrapped(p, trimmed, MARGIN_X, y, FULL_W, sizeBody, lhBody, { color: DARK_GRAY });
+          y -= 2;
+        }
+      }
+    }
+    else if (canonical === 'Education') {
+      for (const rawLine of sec.content) {
+        const trimmed = safeText(rawLine).trim();
+        if (!trimmed) continue;
+
+        const isInst = /\b(university|college|school|institute|academy)\b/i.test(trimmed);
+        const hasYear = /\d{4}/.test(trimmed);
+
+        if (isInst) {
+          y -= 4;
+          drawText(p, trimmed, MARGIN_X, y, sizeSubtitle, { bold: true, color: BLACK });
+          y -= lhSubtitle;
+          continue;
+        }
+        if (hasYear && !/(gpa|cgpa|grade|score)/i.test(trimmed)) {
+          const { label, date } = splitLabelAndDate(trimmed);
+          y -= 3;
+          drawText(p, safeText(label), MARGIN_X, y, sizeBody + 0.2, { color: DARK_GRAY });
+          if (date) {
+            y -= lhBody;
+            drawText(p, date, MARGIN_X, y, sizeBody, { italic: true, color: GRAY });
+          }
+          y -= 4;
+          continue;
+        }
+        if (trimmed.startsWith('•')) {
+          const bulletTxt = trimmed.replace(/^•\s*/, '');
+          y = drawWrapped(p, bulletTxt, MARGIN_X, y, FULL_W, sizeBody, lhBody, { color: DARK_GRAY });
+          y -= 2;
+          continue;
+        }
+        y = drawWrapped(p, trimmed, MARGIN_X, y, FULL_W, sizeBody, lhBody, { color: DARK_GRAY });
+        y -= 2;
+      }
+    }
+    else {
+      for (const line of sec.content) {
+        y = drawWrapped(p, line, MARGIN_X, y, FULL_W, sizeBody, lhBody, { color: DARK_GRAY });
+        y -= 2;
+      }
+    }
+    y -= 5;
+  }
+
+  const pdfBytes = await pdf.save();
+  const blob     = new Blob([pdfBytes], { type: 'application/pdf' });
+  saveAs(blob, `${cleanFile}_optimized.pdf`);
+}
+
+// =====================================================================
 // MAIN TWO-COLUMN PDF GENERATION
 // =====================================================================
 export async function generateResumePDF({
@@ -236,7 +543,20 @@ export async function generateResumePDF({
   phone    = null,
   linkedin = null,
   userName = null,
+  templateType = 'two-column',
 }) {
+  if (templateType === 'single-column') {
+    return await generateSingleColumnPDF({
+      resumeText,
+      fileName,
+      score,
+      jobTitle,
+      email,
+      phone,
+      linkedin,
+      userName,
+    });
+  }
   // --- Extract contact info ---
   const finalName     = userName || extractName(resumeText) || 'Palash Mishra';
   const finalJobTitle = jobTitle  || extractJobTitle(resumeText)  || 'Full Stack Developer';

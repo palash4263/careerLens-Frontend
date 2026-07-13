@@ -5,7 +5,6 @@ import {
   Navigate,
   useLocation,
 } from "react-router-dom";
-import { useEffect, useState } from "react";
 import Navbar from "./components/Navbar";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -21,28 +20,19 @@ import ResetPassword from "./pages/ResetPassword";
 import TemplatesPage from "./pages/TemplatesPage";
 import SummaryGeneratorPage from "./pages/SummaryGeneratorPage";
 
-// ✅ Protected Route wrapper
 function ProtectedRoute({ children }) {
-  const token = localStorage.getItem('token');
-  
+  const token = localStorage.getItem("token");
+
   if (!token) {
     return <Navigate to="/login" replace />;
   }
-  
+
   return children;
 }
 
 function Layout() {
   const location = useLocation();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // ✅ Check if token exists
-    const token = localStorage.getItem('token');
-    setIsAuthenticated(!!token);
-    setLoading(false);
-  }, [location]);
+  const isAuthenticated = !!localStorage.getItem("token");
 
   const hideNavbar =
     location.pathname === "/" ||
@@ -51,132 +41,116 @@ function Layout() {
     location.pathname === "/forgot-password" ||
     location.pathname === "/reset-password";
 
-  // ✅ Show nothing while checking authentication
-  if (loading) {
-    return <div style={{ 
-      display: 'flex', 
-      justifyContent: 'center', 
-      alignItems: 'center', 
-      height: '100vh',
-      background: '#0A0A0F',
-      color: '#F1F5F9',
-      fontSize: '1.2rem'
-    }}>Loading...</div>;
-  }
-
   return (
     <>
       {!hideNavbar && <Navbar />}
       <div className="page-container">
         <Routes>
-          {/* Authentication - No Navbar */}
           <Route path="/" element={<Login />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
 
-          {/* ✅ Protected Routes - With Navbar */}
-          <Route 
-            path="/dashboard" 
+          <Route
+            path="/dashboard"
             element={
               <ProtectedRoute>
                 <Dashboard />
               </ProtectedRoute>
-            } 
+            }
           />
 
-          <Route 
-            path="/resumes" 
+          <Route
+            path="/resumes"
             element={
               <ProtectedRoute>
                 <ResumePage />
               </ProtectedRoute>
-            } 
+            }
           />
 
-          <Route 
-            path="/templates" 
+          <Route
+            path="/templates"
             element={
               <ProtectedRoute>
                 <TemplatesPage />
               </ProtectedRoute>
-            } 
+            }
           />
 
-          <Route 
-            path="/summary-generator" 
+          <Route
+            path="/summary-generator"
             element={
               <ProtectedRoute>
                 <SummaryGeneratorPage />
               </ProtectedRoute>
-            } 
+            }
           />
 
-          <Route 
-            path="/jobs" 
+          <Route
+            path="/jobs"
             element={
               <ProtectedRoute>
                 <JobDescriptionPage />
               </ProtectedRoute>
-            } 
+            }
           />
 
-          <Route 
-            path="/interview" 
+          <Route
+            path="/interview"
             element={
               <ProtectedRoute>
                 <InterviewPage />
               </ProtectedRoute>
-            } 
+            }
           />
 
-          <Route 
-            path="/resume-optimizer" 
+          <Route
+            path="/resume-optimizer"
             element={
               <ProtectedRoute>
                 <ResumeOptimizationPage />
               </ProtectedRoute>
-            } 
+            }
           />
 
-          <Route 
-            path="/optimizer" 
+          <Route
+            path="/optimizer"
             element={
               <ProtectedRoute>
                 <ResumeOptimizationPage />
               </ProtectedRoute>
-            } 
+            }
           />
 
-          <Route 
-            path="/ats" 
+          <Route
+            path="/ats"
             element={
               <ProtectedRoute>
                 <AtsPage />
               </ProtectedRoute>
-            } 
+            }
           />
 
-          <Route 
-            path="/profile" 
+          <Route
+            path="/profile"
             element={
               <ProtectedRoute>
                 <ProfilePage />
               </ProtectedRoute>
-            } 
+            }
           />
 
-          {/* ✅ If authenticated, redirect to dashboard; otherwise to login */}
-          <Route 
-            path="*" 
+          <Route
+            path="*"
             element={
               isAuthenticated ? (
                 <Navigate to="/dashboard" />
               ) : (
                 <Navigate to="/login" />
               )
-            } 
+            }
           />
         </Routes>
       </div>

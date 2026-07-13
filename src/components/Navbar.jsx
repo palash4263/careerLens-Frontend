@@ -41,8 +41,13 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 16);
-    window.addEventListener("scroll", onScroll);
+    const onScroll = () => {
+      const next = window.scrollY > 16;
+      setScrolled((prev) => (prev === next ? prev : next));
+    };
+
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
@@ -102,6 +107,7 @@ export default function Navbar() {
             className={`nb-mobile-toggle${sidebarOpen ? ' active' : ''}`}
             onClick={() => setSidebarOpen(!sidebarOpen)}
             aria-label="Toggle navigation menu"
+            aria-expanded={sidebarOpen}
           >
             <span className="nb-toggle-line line-1"></span>
             <span className="nb-toggle-line line-2"></span>
@@ -147,6 +153,9 @@ export default function Navbar() {
                 className={`nb-icon-btn${notifOpen ? " active" : ""}`}
                 onClick={() => setNotifOpen(!notifOpen)}
                 title="Notifications"
+                aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ""}`}
+                aria-expanded={notifOpen}
+                aria-haspopup="menu"
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                      stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -189,6 +198,7 @@ export default function Navbar() {
                           <button 
                             className="nb-notif-item-close"
                             onClick={(e) => removeNotif(n.id, e)}
+                            aria-label={`Dismiss notification: ${n.text}`}
                           >
                             ×
                           </button>

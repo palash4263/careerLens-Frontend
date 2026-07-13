@@ -56,7 +56,7 @@ export default function SummaryGeneratorPage() {
       try {
         const [resumesRes, jobsRes] = await Promise.all([
           api.get("/resumes"),
-          api.get("/job-descriptions")
+          api.get("/jobs/")
         ]);
         
         setResumes(resumesRes.data);
@@ -182,14 +182,14 @@ export default function SummaryGeneratorPage() {
       
       if (selectedJobId === "custom" || !selectedJobId) {
         // Create custom job description record so backend optimization has a reference
-        const createJobRes = await api.post("/job-descriptions", {
+        const createJobRes = await api.post("/jobs/", {
           title: "Target Role",
           company: "Target Company",
           description: customJobDescription
         });
         jobIdToUse = createJobRes.data.id;
         // Sync lists
-        const jobsRes = await api.get("/job-descriptions");
+        const jobsRes = await api.get("/jobs/");
         setJobDescriptions(jobsRes.data);
         setSelectedJobId(jobIdToUse);
       }

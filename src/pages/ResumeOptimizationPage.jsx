@@ -26,6 +26,32 @@ import PremiumDropdown from "../components/resume/PremiumDropdown";
 import ScoreRing from "../components/resume/ScoreRing";
 
 // ====== UTILITY FUNCTIONS ======
+const TECH_KEYWORDS = [
+  'React', 'Angular', 'Vue', 'Node.js', 'Express', 'Python', 'Django', 'Flask', 'Java', 'Spring Boot', 'Spring MVC', 
+  'Spring Data JPA', 'Oracle APEX', 'Oracle', 'PL/SQL', 'BI Publisher', 'PostgreSQL', 'SQL', 'Postgres', 'C++', 'C#', 
+  'MySQL', 'MongoDB', 'Redis', 'AWS', 'Docker', 'Kubernetes', 'CI/CD', 'Git', 'TypeScript', 'GraphQL', 'REST API', 
+  'Pandas', 'NumPy', 'Matplotlib', 'Machine Learning', 'Data Science', 'Azure', 'GCP', 'DevOps', 'Jira', 'Agile', 
+  'Scrum', 'Microservices', 'HTML', 'CSS', 'JavaScript'
+];
+
+const calculateMissingKeywords = (originalText, jdText) => {
+  if (!originalText || !jdText) return [];
+  
+  const foundInJd = TECH_KEYWORDS.filter(skill => {
+    const escaped = skill.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    const regex = new RegExp(`\\b${escaped}\\b`, 'i');
+    return regex.test(jdText);
+  });
+  
+  const foundInOriginal = TECH_KEYWORDS.filter(skill => {
+    const escaped = skill.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    const regex = new RegExp(`\\b${escaped}\\b`, 'i');
+    return regex.test(originalText);
+  });
+  
+  return foundInJd.filter(skill => !foundInOriginal.includes(skill));
+};
+
 const copyToClipboard = async (text, setCopySuccess) => {
   try {
     await navigator.clipboard.writeText(text);
@@ -711,12 +737,15 @@ export default function ResumeOptimizationPage() {
       optText = enhanceOracleAndProjectPoints(optText);
       origText = enhanceOracleAndProjectPoints(origText);
 
+      const selectedJdText = jobDescriptions.find(j => j.id === Number(selectedJobDescription))?.description || "";
+      const missingKws = calculateMissingKeywords(origText, selectedJdText);
+
       const normalized = {
         originalScore: response.current_score || 71,
         optimizedScore: response.estimated_new_score || 88,
         originalText: origText,
         optimizedText: optText,
-        keywords: response.improvements?.missing_skills || response.improvements?.added_skills || response.improvements?.missing_job_skills || ['Docker', 'Kubernetes', 'GraphQL', 'TypeScript'],
+        keywords: missingKws.length > 0 ? missingKws : (response.improvements?.added_skills || response.improvements?.missing_skills || []),
         changes: response.improvements?.added_skills?.map(skill => ({
           title: "Added Skill",
           description: `Added "${skill}" to your resume`
@@ -1382,7 +1411,7 @@ export default function ResumeOptimizationPage() {
                   onClick={() => setViewMode('side-by-side')}
                 >
                   <FileText size={16} />
-                  Side by Side
+                  Live Editor
                 </button>
                 <button
                   className={viewMode === 'design-playground' ? 'active' : ''}
@@ -1412,44 +1441,16 @@ export default function ResumeOptimizationPage() {
                     transition={{ duration: 0.3 }}
                   >
                     <div className="compare-header-modern">
-                      <h3>📝 Before & After</h3>
-                      <div className="mobile-compare-tabs-selector">
-                        <button 
-                          className={`mobile-tab-btn ${mobileCompareTab === 'original' ? 'active' : ''}`}
-                          onClick={() => setMobileCompareTab('original')}
-                        >
-                          📄 Original
-                        </button>
-                        <button 
-                          className={`mobile-tab-btn ${mobileCompareTab === 'optimized' ? 'active' : ''}`}
-                          onClick={() => setMobileCompareTab('optimized')}
-                        >
-                          ✨ Optimized
-                        </button>
-                      </div>
-                      <span className="compare-hint">✏️ Edit the optimized column directly below</span>
+                      <h3>📝 Live Editor</h3>
+                      <span className="compare-hint">✏️ Edit the optimized sections directly below</span>
                     </div>
  
-                    <div className="compare-grid-modern">
+                    <div className="compare-grid-modern" style={{ gridTemplateColumns: '1fr' }}>
                       <motion.div
-                        className={`compare-col-modern before ${mobileCompareTab === 'original' ? 'mobile-visible' : 'mobile-hidden'}`}
-                        initial={{ x: -30, opacity: 0 }}
-                        animate={{ x: 0, opacity: 1 }}
+                        className="compare-col-modern after"
+                        initial={{ y: 20, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
                         transition={{ delay: 0.1 }}
-                      >
-                        <div className="compare-tag-modern before">
-                          <span>📄</span> Original
-                        </div>
-                        <div className="compare-content-modern">
-                          <pre>{formatResumeForDisplay(result.originalText)}</pre>
-                        </div>
-                      </motion.div>
- 
-                      <motion.div
-                        className={`compare-col-modern after ${mobileCompareTab === 'optimized' ? 'mobile-visible' : 'mobile-hidden'}`}
-                        initial={{ x: 30, opacity: 0 }}
-                        animate={{ x: 0, opacity: 1 }}
-                        transition={{ delay: 0.2 }}
                       >
                         <div className="compare-tag-modern after">
                           <span>✨</span> Optimized (Live Editor)

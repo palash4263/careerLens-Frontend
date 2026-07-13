@@ -487,34 +487,19 @@ async function generateSingleColumnPDF({
         const trimmed = safeText(rawLine).trim();
         if (!trimmed) continue;
 
-        const isInst = /\b(university|college|school|institute|academy)\b/i.test(trimmed);
-        const hasYear = /\d{4}/.test(trimmed);
+        const isInst = /\b(university|college|school|institute|academy|vellore)\b/i.test(trimmed);
 
         if (isInst) {
           y -= 4;
-          drawText(p, trimmed, MARGIN_X, y, sizeSubtitle, { bold: true, color: BLACK });
-          y -= lhSubtitle;
+          y = drawWrapped(p, trimmed, MARGIN_X, y, FULL_W, sizeSubtitle, lhSubtitle, { bold: true, color: BLACK });
           continue;
         }
-        if (hasYear && !/(gpa|cgpa|grade|score)/i.test(trimmed)) {
-          const { label, date } = splitLabelAndDate(trimmed);
-          y -= 3;
-          drawText(p, safeText(label), MARGIN_X, y, sizeBody + 0.2, { color: DARK_GRAY });
-          if (date) {
-            y -= lhBody;
-            drawText(p, date, MARGIN_X, y, sizeBody, { italic: true, color: GRAY });
-          }
-          y -= 4;
-          continue;
-        }
-        if (trimmed.startsWith('•')) {
-          const bulletTxt = trimmed.replace(/^•\s*/, '');
-          y = drawWrapped(p, bulletTxt, MARGIN_X, y, FULL_W, sizeBody, lhBody, { color: DARK_GRAY });
-          y -= 2;
+        if (trimmed.startsWith('•') || trimmed.startsWith('+') || trimmed.startsWith('-')) {
+          const bulletTxt = trimmed.replace(/^[•+\-]\s*/, '');
+          y = drawWrapped(p, `•  ${bulletTxt}`, MARGIN_X, y, FULL_W, sizeBody, lhBody, { color: DARK_GRAY });
           continue;
         }
         y = drawWrapped(p, trimmed, MARGIN_X, y, FULL_W, sizeBody, lhBody, { color: DARK_GRAY });
-        y -= 2;
       }
     }
     else {
@@ -583,10 +568,10 @@ export async function generateResumePDF({
   const cleanFile = safeText(fileName).replace(/\.pdf$/i, '');
 
   // --- Dimension Parameters (Two Column Layout) ---
-  const COL_GAP        = 24;
+  const COL_GAP        = 20;
   const FULL_W         = PAGE_WIDTH - MARGIN_X * 2;
-  const LEFT_COL_W     = Math.floor(FULL_W * 0.61); // Left column gets ~61% width (Summary, Experience, Projects)
-  const RIGHT_COL_W    = FULL_W - LEFT_COL_W - COL_GAP; // Right column gets ~35% width (Skills, Education)
+  const LEFT_COL_W     = Math.floor(FULL_W * 0.58); // Left column gets ~58% width (Summary, Experience, Projects)
+  const RIGHT_COL_W    = FULL_W - LEFT_COL_W - COL_GAP; // Right column gets ~39% width (Skills, Education)
   const LEFT_COL_X     = MARGIN_X;
   const RIGHT_COL_X    = MARGIN_X + LEFT_COL_W + COL_GAP;
 
@@ -929,38 +914,22 @@ export async function generateResumePDF({
       const trimmed = safeText(rawLine).trim();
       if (!trimmed) continue;
 
-      const isInst = /\b(university|college|school|institute|academy)\b/i.test(trimmed);
-      const hasYear = /\d{4}/.test(trimmed);
+      const isInst = /\b(university|college|school|institute|academy|vellore)\b/i.test(trimmed);
 
       if (isInst) {
         rightY -= 4;
-        drawText(p, trimmed, RIGHT_COL_X, rightY, sizeSubtitle, { bold: true, color: BLACK });
-        rightY -= lhSubtitle;
+        rightY = drawWrapped(p, trimmed, RIGHT_COL_X, rightY, RIGHT_COL_W, sizeSubtitle, lhSubtitle, { bold: true, color: BLACK });
         continue;
       }
 
-      if (hasYear && !/(gpa|cgpa|grade|score)/i.test(trimmed)) {
-        const { label, date } = splitLabelAndDate(trimmed);
-        rightY -= 3;
-        drawText(p, safeText(label), RIGHT_COL_X, rightY, sizeBody + 0.2, { color: DARK_GRAY });
-        
-        if (date) {
-          rightY -= lhBody;
-          drawText(p, date, RIGHT_COL_X, rightY, sizeBody, { italic: true, color: GRAY });
-        }
-        rightY -= 4;
+      if (trimmed.startsWith('•') || trimmed.startsWith('+') || trimmed.startsWith('-')) {
+        const bulletTxt = trimmed.replace(/^[•+\-]\s*/, '');
+        rightY = drawWrapped(p, `•  ${bulletTxt}`, RIGHT_COL_X, rightY, RIGHT_COL_W, sizeBody, lhBody, { color: DARK_GRAY });
         continue;
       }
 
-      if (trimmed.startsWith('•')) {
-        const bulletTxt = trimmed.replace(/^•\s*/, '');
-        rightY = drawWrapped(p, bulletTxt, RIGHT_COL_X, rightY, RIGHT_COL_W, sizeBody, lhBody, { color: DARK_GRAY });
-        rightY -= 2;
-        continue;
-      }
-
+      // Default draw wrapped
       rightY = drawWrapped(p, trimmed, RIGHT_COL_X, rightY, RIGHT_COL_W, sizeBody, lhBody, { color: DARK_GRAY });
-      rightY -= 2;
     }
   }
 

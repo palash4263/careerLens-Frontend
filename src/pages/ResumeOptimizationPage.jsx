@@ -1150,66 +1150,80 @@ export default function ResumeOptimizationPage() {
                 <div className="template-grid" style={{
                   display: 'grid',
                   gridTemplateColumns: '1fr 1fr',
-                  gap: '1rem',
-                  marginTop: '0.25rem'
+                  gap: '1.25rem',
+                  marginTop: '0.5rem'
                 }}>
                   {/* Option 1: Two Column */}
                   <div 
                     onClick={() => setSelectedTemplate('two-column')}
                     style={{
-                      background: selectedTemplate === 'two-column' ? 'rgba(124, 58, 237, 0.12)' : 'rgba(255, 255, 255, 0.02)',
-                      border: selectedTemplate === 'two-column' ? '1.5px solid #7c3aed' : '1px solid rgba(255, 255, 255, 0.06)',
-                      borderRadius: '12px',
-                      padding: '1rem',
+                      background: selectedTemplate === 'two-column' ? 'rgba(124, 58, 237, 0.08)' : 'rgba(255, 255, 255, 0.01)',
+                      border: selectedTemplate === 'two-column' ? '2px solid #7c3aed' : '1px solid rgba(255, 255, 255, 0.06)',
+                      borderRadius: '16px',
                       cursor: 'pointer',
                       transition: 'all 0.25s ease',
-                      boxShadow: selectedTemplate === 'two-column' ? '0 0 16px rgba(124, 58, 237, 0.2)' : 'none'
+                      overflow: 'hidden',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      boxShadow: selectedTemplate === 'two-column' ? '0 0 20px rgba(124, 58, 237, 0.2)' : 'none'
                     }}
                   >
-                    <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
-                      {/* Mini Two-Column Visual Mockup */}
-                      <div style={{
-                        width: '44px',
-                        height: '58px',
-                        background: 'rgba(15, 23, 42, 0.6)',
-                        border: selectedTemplate === 'two-column' ? '1px solid rgba(124, 58, 237, 0.4)' : '1px solid rgba(255, 255, 255, 0.08)',
-                        borderRadius: '6px',
-                        padding: '4px',
-                        display: 'flex',
-                        gap: '3px',
-                        flexShrink: 0,
-                        boxShadow: 'inset 0 1px 4px rgba(0,0,0,0.5)'
-                      }}>
-                        {/* Sidebar */}
-                        <div style={{ width: '35%', background: 'rgba(124, 58, 237, 0.3)', borderRadius: '2px', display: 'flex', flexDirection: 'column', gap: '3px', padding: '2px 1px' }}>
-                          <div style={{ height: '3px', background: 'rgba(255,255,255,0.4)', borderRadius: '1px' }}></div>
-                          <div style={{ height: '3px', background: 'rgba(255,255,255,0.2)', borderRadius: '1px' }}></div>
-                          <div style={{ height: '3px', background: 'rgba(255,255,255,0.2)', borderRadius: '1px' }}></div>
-                        </div>
-                        {/* Main Body */}
-                        <div style={{ width: '60%', display: 'flex', flexDirection: 'column', gap: '3px', padding: '2px 1px' }}>
-                          <div style={{ height: '4px', background: 'rgba(255,255,255,0.5)', borderRadius: '1px', width: '80%' }}></div>
-                          <div style={{ height: '2px', background: 'rgba(255,255,255,0.2)', borderRadius: '1px' }}></div>
-                          <div style={{ height: '2px', background: 'rgba(255,255,255,0.2)', borderRadius: '1px' }}></div>
-                        </div>
+                    {/* Visual Preview Graphic */}
+                    <div style={{
+                      height: '130px',
+                      background: 'rgba(15, 23, 42, 0.7)',
+                      borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+                      padding: '12px',
+                      display: 'flex',
+                      gap: '8px',
+                      boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.4)',
+                      position: 'relative'
+                    }}>
+                      {/* Left Column (Main content) */}
+                      <div style={{ flex: '1 1 60%', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                        {/* Name/Title placeholder */}
+                        <div style={{ height: '7px', background: '#e2e8f0', borderRadius: '2px', width: '70%', marginBottom: '4px' }}></div>
+                        <div style={{ height: '4px', background: '#7c3aed', borderRadius: '1px', width: '45%', marginBottom: '8px' }}></div>
+                        {/* Experience Section mock */}
+                        <div style={{ height: '3px', background: 'rgba(255,255,255,0.15)', width: '90%' }}></div>
+                        <div style={{ height: '2px', background: 'rgba(255,255,255,0.08)', width: '100%' }}></div>
+                        <div style={{ height: '2px', background: 'rgba(255,255,255,0.08)', width: '100%' }}></div>
+                        <div style={{ height: '2px', background: 'rgba(255,255,255,0.08)', width: '95%' }}></div>
                       </div>
+                      {/* Right Column (Sidebar) */}
+                      <div style={{ flex: '1 1 40%', display: 'flex', flexDirection: 'column', gap: '5px', borderLeft: '1px solid rgba(255,255,255,0.08)', paddingLeft: '8px' }}>
+                        <div style={{ height: '6px', background: 'rgba(255,255,255,0.3)', borderRadius: '2px', width: '80%', marginBottom: '4px' }}></div>
+                        {/* Badge Mocks */}
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px' }}>
+                          <div style={{ height: '7px', width: '20px', background: 'rgba(124, 58, 237, 0.4)', borderRadius: '2px' }}></div>
+                          <div style={{ height: '7px', width: '24px', background: 'rgba(124, 58, 237, 0.4)', borderRadius: '2px' }}></div>
+                          <div style={{ height: '7px', width: '18px', background: 'rgba(124, 58, 237, 0.4)', borderRadius: '2px' }}></div>
+                        </div>
+                        <div style={{ height: '6px', background: 'rgba(255,255,255,0.3)', borderRadius: '2px', width: '90%', marginTop: '6px' }}></div>
+                        <div style={{ height: '3px', background: 'rgba(255,255,255,0.1)', width: '100%' }}></div>
+                        <div style={{ height: '3px', background: 'rgba(255,255,255,0.1)', width: '80%' }}></div>
+                      </div>
+                      {/* Active Ring Badge */}
+                      {selectedTemplate === 'two-column' && (
+                        <span style={{ position: 'absolute', top: '10px', right: '10px', background: '#7c3aed', color: '#fff', fontSize: '9px', padding: '3px 8px', borderRadius: '20px', fontWeight: 'bold' }}>ACTIVE</span>
+                      )}
+                    </div>
 
-                      {/* Text Details */}
-                      <div style={{ flexGrow: 1 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-                          <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff', fontFamily: 'Outfit, sans-serif' }}>Modern Split (Two-Column)</span>
-                          <input 
-                            type="radio" 
-                            name="resumeTemplate"
-                            checked={selectedTemplate === 'two-column'} 
-                            onChange={() => setSelectedTemplate('two-column')}
-                            style={{ accentColor: '#7c3aed', cursor: 'pointer' }}
-                          />
-                        </div>
-                        <p style={{ margin: 0, fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', lineHeight: '1.4' }}>
-                          Modern split sidebar layout with rounded skill badges. Great for engineering, designs, and tech roles.
-                        </p>
+                    {/* Text Details */}
+                    <div style={{ padding: '1rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                        <span style={{ fontSize: '0.9rem', fontWeight: 'bold', color: '#fff', fontFamily: 'Outfit, sans-serif' }}>Modern Split (Two-Column)</span>
+                        <input 
+                          type="radio" 
+                          name="resumeTemplate"
+                          checked={selectedTemplate === 'two-column'} 
+                          onChange={() => setSelectedTemplate('two-column')}
+                          style={{ accentColor: '#7c3aed', cursor: 'pointer' }}
+                        />
                       </div>
+                      <p style={{ margin: 0, fontSize: '0.74rem', color: 'rgba(255,255,255,0.45)', lineHeight: '1.4' }}>
+                        Carolyn Potter style: Left column for Experience & Projects, right sidebar for colorful badge skills.
+                      </p>
                     </div>
                   </div>
 
@@ -1217,62 +1231,64 @@ export default function ResumeOptimizationPage() {
                   <div 
                     onClick={() => setSelectedTemplate('single-column')}
                     style={{
-                      background: selectedTemplate === 'single-column' ? 'rgba(124, 58, 237, 0.12)' : 'rgba(255, 255, 255, 0.02)',
-                      border: selectedTemplate === 'single-column' ? '1.5px solid #7c3aed' : '1px solid rgba(255, 255, 255, 0.06)',
-                      borderRadius: '12px',
-                      padding: '1rem',
+                      background: selectedTemplate === 'single-column' ? 'rgba(124, 58, 237, 0.08)' : 'rgba(255, 255, 255, 0.01)',
+                      border: selectedTemplate === 'single-column' ? '2px solid #7c3aed' : '1px solid rgba(255, 255, 255, 0.06)',
+                      borderRadius: '16px',
                       cursor: 'pointer',
                       transition: 'all 0.25s ease',
-                      boxShadow: selectedTemplate === 'single-column' ? '0 0 16px rgba(124, 58, 237, 0.2)' : 'none'
+                      overflow: 'hidden',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      boxShadow: selectedTemplate === 'single-column' ? '0 0 20px rgba(124, 58, 237, 0.2)' : 'none'
                     }}
                   >
-                    <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
-                      {/* Mini Single-Column Visual Mockup */}
-                      <div style={{
-                        width: '44px',
-                        height: '58px',
-                        background: 'rgba(15, 23, 42, 0.6)',
-                        border: selectedTemplate === 'single-column' ? '1px solid rgba(124, 58, 237, 0.4)' : '1px solid rgba(255, 255, 255, 0.08)',
-                        borderRadius: '6px',
-                        padding: '4px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '3px',
-                        flexShrink: 0,
-                        boxShadow: 'inset 0 1px 4px rgba(0,0,0,0.5)'
-                      }}>
-                        {/* Centered header */}
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', paddingBottom: '3px', borderBottom: '0.5px solid rgba(255,255,255,0.08)' }}>
-                          <div style={{ height: '3px', background: 'rgba(124, 58, 237, 0.5)', borderRadius: '1px', width: '50%' }}></div>
-                          <div style={{ height: '1.5px', background: 'rgba(255,255,255,0.3)', borderRadius: '1px', width: '70%' }}></div>
-                        </div>
-                        {/* Body content */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', padding: '2px 0' }}>
-                          <div style={{ height: '3px', background: 'rgba(255,255,255,0.4)', borderRadius: '1px', width: '80%' }}></div>
-                          <div style={{ height: '2px', background: 'rgba(255,255,255,0.2)', borderRadius: '1px' }}></div>
-                          <div style={{ height: '2px', background: 'rgba(255,255,255,0.2)', borderRadius: '1px' }}></div>
-                        </div>
+                    {/* Visual Preview Graphic */}
+                    <div style={{
+                      height: '130px',
+                      background: 'rgba(15, 23, 42, 0.7)',
+                      borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+                      padding: '12px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '6px',
+                      boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.4)',
+                      position: 'relative'
+                    }}>
+                      {/* Centered Header Block */}
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', paddingBottom: '6px', borderBottom: '1px solid rgba(255,255,255,0.06)', marginBottom: '4px' }}>
+                        <div style={{ height: '8px', background: '#e2e8f0', borderRadius: '2px', width: '40%' }}></div>
+                        <div style={{ height: '4px', background: 'rgba(255,255,255,0.3)', borderRadius: '1px', width: '60%' }}></div>
                       </div>
+                      {/* Full Width Body Blocks */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <div style={{ height: '5px', background: '#7c3aed', borderRadius: '1px', width: '25%', marginBottom: '2px' }}></div>
+                        <div style={{ height: '3px', background: 'rgba(255,255,255,0.15)', width: '100%' }}></div>
+                        <div style={{ height: '2px', background: 'rgba(255,255,255,0.08)', width: '100%' }}></div>
+                        <div style={{ height: '2px', background: 'rgba(255,255,255,0.08)', width: '90%' }}></div>
+                      </div>
+                      {/* Active Ring Badge */}
+                      {selectedTemplate === 'single-column' && (
+                        <span style={{ position: 'absolute', top: '10px', right: '10px', background: '#7c3aed', color: '#fff', fontSize: '9px', padding: '3px 8px', borderRadius: '20px', fontWeight: 'bold' }}>ACTIVE</span>
+                      )}
+                    </div>
 
-                      {/* Text Details */}
-                      <div style={{ flexGrow: 1 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-                          <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff', fontFamily: 'Outfit, sans-serif' }}>Classic Navy (Single-Column)</span>
-                          <input 
-                            type="radio" 
-                            name="resumeTemplate"
-                            checked={selectedTemplate === 'single-column'} 
-                            onChange={() => setSelectedTemplate('single-column')}
-                            style={{ accentColor: '#7c3aed', cursor: 'pointer' }}
-                          />
-                        </div>
-                        <p style={{ margin: 0, fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', lineHeight: '1.4' }}>
-                          Elegant full-width single column design. Highly readable, corporate-friendly, and optimized for ATS parsers.
-                        </p>
+                    {/* Text Details */}
+                    <div style={{ padding: '1rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                        <span style={{ fontSize: '0.9rem', fontWeight: 'bold', color: '#fff', fontFamily: 'Outfit, sans-serif' }}>Classic Navy (Single-Column)</span>
+                        <input 
+                          type="radio" 
+                          name="resumeTemplate"
+                          checked={selectedTemplate === 'single-column'} 
+                          onChange={() => setSelectedTemplate('single-column')}
+                          style={{ accentColor: '#7c3aed', cursor: 'pointer' }}
+                        />
                       </div>
+                      <p style={{ margin: 0, fontSize: '0.74rem', color: 'rgba(255,255,255,0.45)', lineHeight: '1.4' }}>
+                        Chris Flims style: Full-width sections with centered header names, horizontal rules, and high ATS parsing compliance.
+                      </p>
                     </div>
                   </div>
-                </div>
               </div>
 
               {/* View Toggle */}

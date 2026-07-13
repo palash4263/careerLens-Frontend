@@ -648,6 +648,10 @@ export async function generateResumePDF({
   const p = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
   let cursorY = PAGE_HEIGHT - MARGIN_TOP;
 
+  // Active page trackers for left/right column page break rollovers
+  let activeLeftPage = p;
+  let activeRightPage = p;
+
   // Draw Helpers
   const drawText = (page, text, x, y, size, opts = {}) => {
     const s = safeText(text);
@@ -655,27 +659,68 @@ export async function generateResumePDF({
     page.drawText(s, { x, y, size, font: pickFont(opts), color: opts.color || BLACK });
   };
 
-  const drawWrapped = (page, text, x, y, maxWidth, size, lineHeight, opts = {}) => {
+  const drawLeftWrapped = (text, x, yVal, maxWidth, size, lineHeight, opts = {}) => {
     const lines = wrapText(text, maxWidth, size, opts);
-    let cy = y;
+    let cy = yVal;
     for (const ln of lines) {
-      drawText(page, ln, x, cy, size, opts);
+      if (cy < MARGIN_BOTTOM + 12) {
+        let pageList = pdf.getPages();
+        let page2;
+        if (pageList.length < 2) {
+          page2 = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+          page2.drawRectangle({ x: 0, y: PAGE_HEIGHT - 6, width: PAGE_WIDTH, height: 6, fill: PRIMARY });
+        } else {
+          page2 = pageList[1];
+        }
+        activeLeftPage = page2;
+        cy = PAGE_HEIGHT - MARGIN_TOP;
+      }
+      drawText(activeLeftPage, ln, x, cy, size, opts);
       cy -= lineHeight;
     }
     return cy;
   };
 
-  const drawBullet = (page, text, x, y, maxWidth, size, lineHeight) => {
-    const s = safeText(text);
-    if (!s) return y;
-    const indent = 10;
-    drawText(page, '•', x, y, size, { color: PRIMARY });
-    return drawWrapped(page, s, x + indent, y, maxWidth - indent, size, lineHeight, { color: DARK_GRAY });
+  const drawLeftBullet = (text, yVal, size, lineHeight) => {
+    if (yVal < MARGIN_BOTTOM + 12) {
+      let pageList = pdf.getPages();
+      let page2;
+      if (pageList.length < 2) {
+        page2 = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+        page2.drawRectangle({ x: 0, y: PAGE_HEIGHT - 6, width: PAGE_WIDTH, height: 6, fill: PRIMARY });
+      } else {
+        page2 = pageList[1];
+      }
+      activeLeftPage = page2;
+      yVal = PAGE_HEIGHT - MARGIN_TOP;
+    }
+    drawText(activeLeftPage, '•', LEFT_COL_X + 2, yVal, size, { color: PRIMARY });
+    return drawLeftWrapped(text, LEFT_COL_X + 12, yVal, LEFT_COL_W - 12, size, lineHeight, { color: DARK_GRAY });
   };
 
-  // ====================================================================
-  // DRAW HEADER (NovoResume Carolyn Potter Style)
-  // ====================================================================
+  const drawRightWrapped = (text, x, yVal, maxWidth, size, lineHeight, opts = {}) => {
+    const lines = wrapText(text, maxWidth, size, opts);
+    let cy = yVal;
+    for (const ln of lines) {
+      if (cy < MARGIN_BOTTOM + 12) {
+        let pageList = pdf.getPages();
+        let page2;
+        if (pageList.length < 2) {
+          page2 = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+          page2.drawRectangle({ x: 0, y: PAGE_HEIGHT - 6, width: PAGE_WIDTH, height: 6, fill: PRIMARY });
+        } else {
+          page2 = pageList[1];
+        }
+        activeRightPage = page2;
+        cy = PAGE_HEIGHT - MARGIN_TOP;
+      }
+      drawText(activeRightPage, ln, x, cy, size, opts);
+      cy -= lineHeight;
+    }
+    return cy;
+  };
+
+  // --- Render Header (Centered) ---
   // Top page accent bar
   p.drawRectangle({
     x: 0,
@@ -730,9 +775,21 @@ export async function generateResumePDF({
 
   const drawLeftSectionHeader = (title) => {
     leftY -= (isLong ? 3 : 5);
-    drawText(p, title.toUpperCase(), LEFT_COL_X, leftY, sizeSection, { bold: true, color: PRIMARY });
+    if (leftY < MARGIN_BOTTOM + 25) {
+      let pageList = pdf.getPages();
+      let page2;
+      if (pageList.length < 2) {
+        page2 = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+        page2.drawRectangle({ x: 0, y: PAGE_HEIGHT - 6, width: PAGE_WIDTH, height: 6, fill: PRIMARY });
+      } else {
+        page2 = pageList[1];
+      }
+      activeLeftPage = page2;
+      leftY = PAGE_HEIGHT - MARGIN_TOP;
+    }
+    drawText(activeLeftPage, title.toUpperCase(), LEFT_COL_X, leftY, sizeSection, { bold: true, color: PRIMARY });
     leftY -= 2;
-    p.drawLine({
+    activeLeftPage.drawLine({
       start: { x: LEFT_COL_X, y: leftY },
       end: { x: LEFT_COL_X + LEFT_COL_W, y: leftY },
       thickness: 1.0,
@@ -748,7 +805,7 @@ export async function generateResumePDF({
     for (const rawLine of summarySec.content) {
       const trimmed = safeText(rawLine).trim();
       if (!trimmed) continue;
-      leftY = drawWrapped(p, trimmed, LEFT_COL_X, leftY, LEFT_COL_W, sizeBody, lhBody, { color: DARK_GRAY });
+      leftY = drawLeftWrapped(trimmed, LEFT_COL_X, leftY, LEFT_COL_W, sizeBody, lhBody, { color: DARK_GRAY });
       leftY -= (isLong ? 1 : 2);
     }
     leftY -= secSpace;
@@ -769,26 +826,38 @@ export async function generateResumePDF({
         const { label, date } = splitLabelAndDate(trimmed);
         leftY -= entrySpace;
         
-        // Split company name on the left and Date on the right
+        if (leftY < MARGIN_BOTTOM + 20) {
+          let pageList = pdf.getPages();
+          let page2;
+          if (pageList.length < 2) {
+            page2 = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+            page2.drawRectangle({ x: 0, y: PAGE_HEIGHT - 6, width: PAGE_WIDTH, height: 6, fill: PRIMARY });
+          } else {
+            page2 = pageList[1];
+          }
+          activeLeftPage = page2;
+          leftY = PAGE_HEIGHT - MARGIN_TOP;
+        }
+
         const dateW = tw(date, sizeSubtitle, { italic: true });
-        drawText(p, safeText(label), LEFT_COL_X, leftY, sizeEntryHeader, { bold: true, color: BLACK });
+        drawText(activeLeftPage, safeText(label), LEFT_COL_X, leftY, sizeEntryHeader, { bold: true, color: BLACK });
         if (date) {
-          drawText(p, date, LEFT_COL_X + LEFT_COL_W - dateW, leftY, sizeSubtitle, { italic: true, color: GRAY });
+          drawText(activeLeftPage, date, LEFT_COL_X + LEFT_COL_W - dateW, leftY, sizeSubtitle, { italic: true, color: GRAY });
         }
         leftY -= lhEntryHeader;
         continue;
       }
       if (!isBullet && /\b(developer|engineer|intern|analyst|consultant|lead|architect|manager|designer|specialist|devops|sde)\b/i.test(trimmed)) {
-        leftY = drawWrapped(p, trimmed, LEFT_COL_X, leftY, LEFT_COL_W, sizeSubtitle, lhSubtitle, { bold: true, color: DARK_GRAY });
+        leftY = drawLeftWrapped(trimmed, LEFT_COL_X, leftY, LEFT_COL_W, sizeSubtitle, lhSubtitle, { bold: true, color: DARK_GRAY });
         leftY -= (isLong ? 0.5 : 2);
         continue;
       }
       if (isBullet) {
-        leftY = drawBullet(p, bulletTxt, LEFT_COL_X + 2, leftY, LEFT_COL_W - 2, sizeBody, lhBody);
+        leftY = drawLeftBullet(bulletTxt, leftY, sizeBody, lhBody);
         leftY -= (isLong ? 0.5 : 1);
         continue;
       }
-      leftY = drawWrapped(p, trimmed, LEFT_COL_X, leftY, LEFT_COL_W, sizeBody, lhBody, { color: DARK_GRAY });
+      leftY = drawLeftWrapped(trimmed, LEFT_COL_X, leftY, LEFT_COL_W, sizeBody, lhBody, { color: DARK_GRAY });
       leftY -= (isLong ? 1 : 2);
     }
     leftY -= secSpace;
@@ -813,10 +882,23 @@ export async function generateResumePDF({
         const display = tech ? `${name}  |  ${tech}` : name;
         leftY -= entrySpace;
 
+        if (leftY < MARGIN_BOTTOM + 20) {
+          let pageList = pdf.getPages();
+          let page2;
+          if (pageList.length < 2) {
+            page2 = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+            page2.drawRectangle({ x: 0, y: PAGE_HEIGHT - 6, width: PAGE_WIDTH, height: 6, fill: PRIMARY });
+          } else {
+            page2 = pageList[1];
+          }
+          activeLeftPage = page2;
+          leftY = PAGE_HEIGHT - MARGIN_TOP;
+        }
+
         const dateW = tw(date, sizeSubtitle, { italic: true });
-        drawText(p, display, LEFT_COL_X, leftY, sizeEntryHeader, { bold: true, color: BLACK });
+        drawText(activeLeftPage, display, LEFT_COL_X, leftY, sizeEntryHeader, { bold: true, color: BLACK });
         if (date) {
-          drawText(p, date, LEFT_COL_X + LEFT_COL_W - dateW, leftY, sizeSubtitle, { italic: true, color: GRAY });
+          drawText(activeLeftPage, date, LEFT_COL_X + LEFT_COL_W - dateW, leftY, sizeSubtitle, { italic: true, color: GRAY });
         }
         leftY -= lhEntryHeader;
         continue;
@@ -825,20 +907,33 @@ export async function generateResumePDF({
         const { label, date } = splitLabelAndDate(trimmed);
         leftY -= entrySpace;
 
+        if (leftY < MARGIN_BOTTOM + 20) {
+          let pageList = pdf.getPages();
+          let page2;
+          if (pageList.length < 2) {
+            page2 = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+            page2.drawRectangle({ x: 0, y: PAGE_HEIGHT - 6, width: PAGE_WIDTH, height: 6, fill: PRIMARY });
+          } else {
+            page2 = pageList[1];
+          }
+          activeLeftPage = page2;
+          leftY = PAGE_HEIGHT - MARGIN_TOP;
+        }
+
         const dateW = tw(date, sizeSubtitle, { italic: true });
-        drawText(p, safeText(label), LEFT_COL_X, leftY, sizeEntryHeader, { bold: true, color: BLACK });
+        drawText(activeLeftPage, safeText(label), LEFT_COL_X, leftY, sizeEntryHeader, { bold: true, color: BLACK });
         if (date) {
-          drawText(p, date, LEFT_COL_X + LEFT_COL_W - dateW, leftY, sizeSubtitle, { italic: true, color: GRAY });
+          drawText(activeLeftPage, date, LEFT_COL_X + LEFT_COL_W - dateW, leftY, sizeSubtitle, { italic: true, color: GRAY });
         }
         leftY -= lhEntryHeader;
         continue;
       }
       if (isBullet) {
-        leftY = drawBullet(p, bulletTxt, LEFT_COL_X + 2, leftY, LEFT_COL_W - 2, sizeBody, lhBody);
+        leftY = drawLeftBullet(bulletTxt, leftY, sizeBody, lhBody);
         leftY -= (isLong ? 0.5 : 1);
         continue;
       }
-      leftY = drawWrapped(p, trimmed, LEFT_COL_X, leftY, LEFT_COL_W, sizeBody, lhBody, { color: DARK_GRAY });
+      leftY = drawLeftWrapped(trimmed, LEFT_COL_X, leftY, LEFT_COL_W, sizeBody, lhBody, { color: DARK_GRAY });
       leftY -= (isLong ? 1 : 2);
     }
   }
@@ -850,9 +945,21 @@ export async function generateResumePDF({
 
   const drawRightSectionHeader = (title) => {
     rightY -= (isLong ? 3 : 5);
-    drawText(p, title.toUpperCase(), RIGHT_COL_X, rightY, sizeSection, { bold: true, color: PRIMARY });
+    if (rightY < MARGIN_BOTTOM + 25) {
+      let pageList = pdf.getPages();
+      let page2;
+      if (pageList.length < 2) {
+        page2 = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+        page2.drawRectangle({ x: 0, y: PAGE_HEIGHT - 6, width: PAGE_WIDTH, height: 6, fill: PRIMARY });
+      } else {
+        page2 = pageList[1];
+      }
+      activeRightPage = page2;
+      rightY = PAGE_HEIGHT - MARGIN_TOP;
+    }
+    drawText(activeRightPage, title.toUpperCase(), RIGHT_COL_X, rightY, sizeSection, { bold: true, color: PRIMARY });
     rightY -= 2;
-    p.drawLine({
+    activeRightPage.drawLine({
       start: { x: RIGHT_COL_X, y: rightY },
       end: { x: RIGHT_COL_X + RIGHT_COL_W, y: rightY },
       thickness: 1.0,
@@ -876,7 +983,19 @@ export async function generateResumePDF({
 
         // Draw Category Subheading
         rightY -= 4;
-        drawText(p, category, RIGHT_COL_X, rightY, sizeSubtitle, { bold: true, color: BLACK });
+        if (rightY < MARGIN_BOTTOM + 20) {
+          let pageList = pdf.getPages();
+          let page2;
+          if (pageList.length < 2) {
+            page2 = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+            page2.drawRectangle({ x: 0, y: PAGE_HEIGHT - 6, width: PAGE_WIDTH, height: 6, fill: PRIMARY });
+          } else {
+            page2 = pageList[1];
+          }
+          activeRightPage = page2;
+          rightY = PAGE_HEIGHT - MARGIN_TOP;
+        }
+        drawText(activeRightPage, category, RIGHT_COL_X, rightY, sizeSubtitle, { bold: true, color: BLACK });
         rightY -= lhSubtitle;
 
         // Parse individual comma-separated skills and draw them as premium badges
@@ -894,8 +1013,22 @@ export async function generateResumePDF({
             rightY -= (badgeHeight + 4);
           }
 
+          if (rightY < MARGIN_BOTTOM + 15) {
+            let pageList = pdf.getPages();
+            let page2;
+            if (pageList.length < 2) {
+              page2 = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+              page2.drawRectangle({ x: 0, y: PAGE_HEIGHT - 6, width: PAGE_WIDTH, height: 6, fill: PRIMARY });
+            } else {
+              page2 = pageList[1];
+            }
+            activeRightPage = page2;
+            rightY = PAGE_HEIGHT - MARGIN_TOP;
+            badgeX = RIGHT_COL_X;
+          }
+
           // Draw Badge Background
-          p.drawRectangle({
+          activeRightPage.drawRectangle({
             x: badgeX,
             y: rightY - 2,
             width: badgeWidth,
@@ -904,7 +1037,7 @@ export async function generateResumePDF({
           });
 
           // Draw Skill Text
-          drawText(p, skill, badgeX + 5, rightY + 1, sizeBody, { color: rgb(1, 1, 1) });
+          drawText(activeRightPage, skill, badgeX + 5, rightY + 1, sizeBody, { color: rgb(1, 1, 1) });
           badgeX += badgeWidth + 4; // space between badges
         }
         rightY -= (badgeHeight + 8);
@@ -923,7 +1056,21 @@ export async function generateResumePDF({
             rightY -= (badgeHeight + 4);
           }
 
-          p.drawRectangle({
+          if (rightY < MARGIN_BOTTOM + 15) {
+            let pageList = pdf.getPages();
+            let page2;
+            if (pageList.length < 2) {
+              page2 = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+              page2.drawRectangle({ x: 0, y: PAGE_HEIGHT - 6, width: PAGE_WIDTH, height: 6, fill: PRIMARY });
+            } else {
+              page2 = pageList[1];
+            }
+            activeRightPage = page2;
+            rightY = PAGE_HEIGHT - MARGIN_TOP;
+            badgeX = RIGHT_COL_X;
+          }
+
+          activeRightPage.drawRectangle({
             x: badgeX,
             y: rightY - 2,
             width: badgeWidth,
@@ -931,7 +1078,7 @@ export async function generateResumePDF({
             color: PRIMARY,
           });
 
-          drawText(p, skill, badgeX + 5, rightY + 1, sizeBody, { color: rgb(1, 1, 1) });
+          drawText(activeRightPage, skill, badgeX + 5, rightY + 1, sizeBody, { color: rgb(1, 1, 1) });
           badgeX += badgeWidth + 4;
         }
         rightY -= (badgeHeight + 8);
@@ -952,18 +1099,18 @@ export async function generateResumePDF({
 
       if (isInst) {
         rightY -= 4;
-        rightY = drawWrapped(p, trimmed, RIGHT_COL_X, rightY, RIGHT_COL_W, sizeSubtitle, lhSubtitle, { bold: true, color: BLACK });
+        rightY = drawRightWrapped(trimmed, RIGHT_COL_X, rightY, RIGHT_COL_W, sizeSubtitle, lhSubtitle, { bold: true, color: BLACK });
         continue;
       }
 
       if (trimmed.startsWith('•') || trimmed.startsWith('+') || trimmed.startsWith('-')) {
         const bulletTxt = trimmed.replace(/^[•+\-]\s*/, '');
-        rightY = drawWrapped(p, `•  ${bulletTxt}`, RIGHT_COL_X, rightY, RIGHT_COL_W, sizeBody, lhBody, { color: DARK_GRAY });
+        rightY = drawRightWrapped(`•  ${bulletTxt}`, RIGHT_COL_X, rightY, RIGHT_COL_W, sizeBody, lhBody, { color: DARK_GRAY });
         continue;
       }
 
       // Default draw wrapped
-      rightY = drawWrapped(p, trimmed, RIGHT_COL_X, rightY, RIGHT_COL_W, sizeBody, lhBody, { color: DARK_GRAY });
+      rightY = drawRightWrapped(trimmed, RIGHT_COL_X, rightY, RIGHT_COL_W, sizeBody, lhBody, { color: DARK_GRAY });
     }
   }
 

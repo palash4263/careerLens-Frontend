@@ -8,6 +8,7 @@ import {
   fetchJobFromUrl,
 } from "../services/jobDescriptionService";
 import { useScrollReveal } from "../hooks/useScrollReveal";
+import { motion } from "framer-motion";
 import "../assets/jobDescription.css";
 
 function JobDescriptionPage() {
@@ -267,7 +268,12 @@ function JobDescriptionPage() {
   };
 
   return (
-    <div className="jobs-wrapper">
+    <motion.div 
+      className="jobs-wrapper"
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+    >
       <div className="jobs-page-content">
         {/* Hero Section */}
         <section className="jobs-hero-premium">
@@ -852,7 +858,7 @@ function JobDescriptionPage() {
           <p className="toast-message">{toast.message}</p>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }
 

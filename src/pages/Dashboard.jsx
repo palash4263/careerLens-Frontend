@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import FeatureCard from "../components/FeatureCard";
 import CtaFooter from "../components/CtaFooter";
+import { motion } from "framer-motion";
 import "../assets/Dashboard.css";
 
 function Dashboard() {
@@ -114,7 +115,12 @@ function Dashboard() {
   ];
 
   return (
-    <div className="db-page-wrapper">
+    <motion.div 
+      className="db-page-wrapper"
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+    >
       <div className="db-root">
         {/* ── Ambient background orbs ── */}
         <div className="db-orb db-orb-1" />
@@ -558,7 +564,7 @@ function Dashboard() {
       </div>
       </div>
       <CtaFooter />
-    </div>
+    </motion.div>
   );
 }
 

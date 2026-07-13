@@ -9,6 +9,7 @@ import {
 } from "../services/resumeService";
 import { useScrollReveal } from "../hooks/useScrollReveal";
 
+import { motion } from "framer-motion";
 import "../assets/resume.css";
 
 function ResumePage() {
@@ -168,7 +169,12 @@ function ResumePage() {
   const bestAtsScore = resumes.length > 0 ? Math.max(...resumes.map(r => r.atsScore || 0)) : 0;
 
   return (
-    <div className="resume-wrapper">
+    <motion.div 
+      className="resume-wrapper"
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+    >
       <div className="resume-page-content">
         {/* Page Header */}
         <div className="resume-page-header">
@@ -634,7 +640,7 @@ function ResumePage() {
           <p className="toast-message">{toast.message}</p>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }
 

@@ -177,7 +177,12 @@ const InterviewPage = () => {
   };
 
   return (
-    <div className="interview-wrapper">
+    <motion.div 
+      className="interview-wrapper"
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+    >
       <div className="interview-page-content">
         {/* Header */}
         <motion.div 
@@ -553,7 +558,7 @@ const InterviewPage = () => {
           <p className="toast-message">{toast.message}</p>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 };
 

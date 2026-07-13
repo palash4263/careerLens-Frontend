@@ -327,7 +327,12 @@ export default function AtsPage() {
   }, [audit]);
 
   return (
-    <div className={`ats-page-premium ${audit ? 'dashboard-active' : ''}`}>
+    <motion.div 
+      className={`ats-page-premium ${audit ? 'dashboard-active' : ''}`}
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+    >
       {loading && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(10,10,15,0.9)', zIndex: 1000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1rem' }}>
           <div className="spinner" style={{ width: '40px', height: '40px', borderWidth: '4px' }}></div>
@@ -622,6 +627,6 @@ export default function AtsPage() {
           <p className="toast-message">{toast.message}</p>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }

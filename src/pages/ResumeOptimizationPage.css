@@ -2029,8 +2029,6 @@
 
 .compare-content-modern {
   padding: 1.25rem;
-  max-height: 500px;
-  overflow-y: auto;
 }
 
 .compare-content-modern::-webkit-scrollbar {
@@ -2196,8 +2194,6 @@
   border: 1px solid rgba(255, 255, 255, 0.02);
   border-radius: 16px;
   padding: 1.5rem;
-  max-height: 500px;
-  overflow-y: auto;
 }
 
 .resume-text-container::-webkit-scrollbar {

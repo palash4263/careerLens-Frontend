@@ -407,6 +407,38 @@ function ScanningTerminal({ resumeName, jobTitle }) {
   );
 }
 
+// Auto-growing textarea to prevent vertical scrollbars on inputs
+function AutoGrowingTextarea({ value, onChange, placeholder, style }) {
+  const textareaRef = useRef(null);
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  }, [value]);
+
+  return (
+    <textarea
+      ref={textareaRef}
+      value={value}
+      onChange={(e) => {
+        if (textareaRef.current) {
+          textareaRef.current.style.height = 'auto';
+          textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+        }
+        onChange(e);
+      }}
+      placeholder={placeholder}
+      style={{
+        ...style,
+        overflowY: 'hidden',
+        resize: 'none'
+      }}
+    />
+  );
+}
+
 // ====== MAIN COMPONENT ======
 const MAGNET_PHRASES = [
   "an Interview Magnet",
@@ -1538,7 +1570,7 @@ export default function ResumeOptimizationPage() {
                             EDITABLE
                           </motion.span>
                         </div>
-                        <div className="compare-content-modern" style={{ padding: '1rem', overflowY: 'auto', maxHeight: '420px', display: 'flex', flexDirection: 'column', gap: '1rem', background: 'rgba(15, 23, 42, 0.4)' }}>
+                         <div className="compare-content-modern" style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem', background: 'rgba(15, 23, 42, 0.4)' }}>
                           {Object.keys(editedSections).map(sectionKey => {
                             const sectionContent = editedSections[sectionKey];
                             const isPrimary = ['Summary', 'Experience', 'Projects', 'Skills', 'Education'].includes(sectionKey);
@@ -1559,7 +1591,7 @@ export default function ResumeOptimizationPage() {
                                   <span>{getSectionIcon(sectionKey)}</span>
                                   <span>{sectionKey}</span>
                                 </div>
-                                <textarea
+                                <AutoGrowingTextarea
                                   value={sectionContent}
                                   onChange={(e) => {
                                     setEditedSections(prev => ({
@@ -1569,17 +1601,17 @@ export default function ResumeOptimizationPage() {
                                   }}
                                   style={{
                                     width: '100%',
-                                    minHeight: '80px',
-                                    background: 'rgba(15, 23, 42, 0.3)',
-                                    border: '1px solid rgba(255,255,255,0.04)',
+                                    background: '#ffffff',
+                                    border: '1px solid #cbd5e1',
                                     borderRadius: '8px',
-                                    color: '#e2e8f0',
+                                    color: '#0f172a',
                                     fontFamily: 'monospace, Courier New, monospace',
-                                    fontSize: '0.8rem',
-                                    lineHeight: '1.4',
-                                    padding: '8px 10px',
-                                    resize: 'vertical',
+                                    fontSize: '0.85rem',
+                                    lineHeight: '1.5',
+                                    padding: '10px 12px',
                                     outline: 'none',
+                                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                                    transition: 'border-color 0.2s ease',
                                   }}
                                   placeholder={`Add information for ${sectionKey}...`}
                                 />
@@ -1895,7 +1927,7 @@ export default function ResumeOptimizationPage() {
                         </div>
                       </div>
 
-                      <div className="resume-text-container" style={{ padding: '1.5rem', overflowY: 'auto', maxHeight: '600px', display: 'flex', flexDirection: 'column', gap: '1.25rem', background: 'rgba(15, 23, 42, 0.25)' }}>
+                      <div className="resume-text-container" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', background: 'rgba(15, 23, 42, 0.25)' }}>
                         {Object.keys(editedSections).map(sectionKey => {
                           const sectionContent = editedSections[sectionKey];
                           const isPrimary = ['Summary', 'Experience', 'Projects', 'Skills', 'Education'].includes(sectionKey);
@@ -1916,7 +1948,7 @@ export default function ResumeOptimizationPage() {
                                 <span>{getSectionIcon(sectionKey)}</span>
                                 <span>{sectionKey} Section</span>
                               </div>
-                              <textarea
+                              <AutoGrowingTextarea
                                 value={sectionContent}
                                 onChange={(e) => {
                                   setEditedSections(prev => ({
@@ -1926,17 +1958,17 @@ export default function ResumeOptimizationPage() {
                                 }}
                                 style={{
                                   width: '100%',
-                                  minHeight: '120px',
-                                  background: 'rgba(15, 23, 42, 0.3)',
-                                  border: '1px solid rgba(255,255,255,0.04)',
+                                  background: '#ffffff',
+                                  border: '1px solid #cbd5e1',
                                   borderRadius: '8px',
-                                  color: '#f8fafc',
+                                  color: '#0f172a',
                                   fontFamily: 'monospace, Courier New, monospace',
                                   fontSize: '0.85rem',
-                                  lineHeight: '1.5',
-                                  padding: '12px 14px',
-                                  resize: 'vertical',
+                                  lineHeight: '1.6',
+                                  padding: '14px 16px',
                                   outline: 'none',
+                                  boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                                  transition: 'border-color 0.2s ease',
                                 }}
                                 placeholder={`Enter your ${sectionKey} details...`}
                               />

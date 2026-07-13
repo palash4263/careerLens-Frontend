@@ -83,6 +83,7 @@ export default function Navbar() {
   const navLinks = [
     { path: "/dashboard",       label: "Dashboard", icon: "⊞" },
     { path: "/resumes",         label: "Resumes",   icon: "◧" },
+    { path: "/templates",       label: "Templates", icon: "🎨" },
     { path: "/jobs",            label: "Jobs",      icon: "◈" },
     { path: "/resume-optimizer",label: "Optimizer", icon: "⚡" },
     { path: "/interview",       label: "Interview", icon: "◎" },

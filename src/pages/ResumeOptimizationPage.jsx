@@ -1,5 +1,5 @@
-// src/pages/ResumeOptimizationPage.jsx - Complete with PDF Download + Enhanced Motion
 import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence, useInView, useMotionValue, useSpring, useReducedMotion, animate } from "framer-motion";
 import {
   Copy,
@@ -462,6 +462,18 @@ export default function ResumeOptimizationPage() {
   const [selectedTemplate, setSelectedTemplate] = useState('two-column');
   const [selectedColor, setSelectedColor] = useState('#1761c7');
   const [selectedFont, setSelectedFont] = useState('Rubik');
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const templateParam = searchParams.get("template");
+    const colorParam = searchParams.get("color");
+    const fontParam = searchParams.get("font");
+    
+    if (templateParam) setSelectedTemplate(templateParam);
+    if (colorParam) setSelectedColor(colorParam);
+    if (fontParam) setSelectedFont(fontParam);
+  }, [searchParams]);
+
   const [editedSections, setEditedSections] = useState({
     Summary: '',
     Experience: '',

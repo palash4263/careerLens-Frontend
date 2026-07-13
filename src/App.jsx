@@ -18,6 +18,7 @@ import ResumeOptimizationPage from "./pages/ResumeOptimizationPage";
 import ProfilePage from "./pages/ProfilePage";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import TemplatesPage from "./pages/TemplatesPage";
 
 // ✅ Protected Route wrapper
 function ProtectedRoute({ children }) {
@@ -89,6 +90,15 @@ function Layout() {
             element={
               <ProtectedRoute>
                 <ResumePage />
+              </ProtectedRoute>
+            } 
+          />
+
+          <Route 
+            path="/templates" 
+            element={
+              <ProtectedRoute>
+                <TemplatesPage />
               </ProtectedRoute>
             } 
           />

@@ -604,18 +604,23 @@ export async function generateResumePDF({
     return lines;
   };
 
-  // --- Font sizes & leading ---
-  const sizeName        = 24; // Big bold left-aligned name
-  const sizeTitle       = 11.5;
-  const sizeContact     = 8.2;
-  const sizeSection     = 9.5;
-  const sizeEntryHeader = 9.0;
-  const sizeSubtitle    = 8.2;
-  const sizeBody        = 8.0;
+  // --- Font sizes & leading (with dynamic auto-fit for long resumes) ---
+  const isLong = resumeText.length > 2500;
+  
+  const sizeName        = isLong ? 20 : 24;
+  const sizeTitle       = isLong ? 10 : 11.5;
+  const sizeContact     = isLong ? 7.8 : 8.2;
+  const sizeSection     = isLong ? 8.8 : 9.5;
+  const sizeEntryHeader = isLong ? 8.2 : 9.0;
+  const sizeSubtitle    = isLong ? 7.5 : 8.2;
+  const sizeBody        = isLong ? 7.2 : 8.0;
 
-  const lhBody         = 11.0;
-  const lhEntryHeader = 12.0;
-  const lhSubtitle     = 11.0;
+  const lhBody         = isLong ? 9.8 : 11.0;
+  const lhEntryHeader = isLong ? 11.0 : 12.0;
+  const lhSubtitle     = isLong ? 9.8 : 11.0;
+  
+  const secSpace       = isLong ? 8 : 14;
+  const entrySpace     = isLong ? 3 : 6;
 
   // Create page
   const p = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
@@ -691,16 +696,16 @@ export async function generateResumePDF({
   let leftY = topColumnsY;
 
   const drawLeftSectionHeader = (title) => {
-    leftY -= 5;
+    leftY -= (isLong ? 3 : 5);
     drawText(p, title.toUpperCase(), LEFT_COL_X, leftY, sizeSection, { bold: true, color: PRIMARY });
-    leftY -= 3;
+    leftY -= 2;
     p.drawLine({
       start: { x: LEFT_COL_X, y: leftY },
       end: { x: LEFT_COL_X + LEFT_COL_W, y: leftY },
       thickness: 1.0,
       color: PRIMARY
     });
-    leftY -= 8;
+    leftY -= (isLong ? 4 : 8);
   };
 
   // Summary
@@ -711,9 +716,9 @@ export async function generateResumePDF({
       const trimmed = safeText(rawLine).trim();
       if (!trimmed) continue;
       leftY = drawWrapped(p, trimmed, LEFT_COL_X, leftY, LEFT_COL_W, sizeBody, lhBody, { color: DARK_GRAY });
-      leftY -= 2;
+      leftY -= (isLong ? 1 : 2);
     }
-    leftY -= 5;
+    leftY -= secSpace;
   }
 
   // Experience
@@ -729,7 +734,7 @@ export async function generateResumePDF({
 
       if (!isBullet && /\d{4}/.test(trimmed)) {
         const { label, date } = splitLabelAndDate(trimmed);
-        leftY -= 4;
+        leftY -= entrySpace;
         
         // Split company name on the left and Date on the right
         const dateW = tw(date, sizeSubtitle, { italic: true });
@@ -742,18 +747,18 @@ export async function generateResumePDF({
       }
       if (!isBullet && /\b(developer|engineer|intern|analyst|consultant|lead|architect|manager|designer|specialist|devops|sde)\b/i.test(trimmed)) {
         leftY = drawWrapped(p, trimmed, LEFT_COL_X, leftY, LEFT_COL_W, sizeSubtitle, lhSubtitle, { bold: true, color: DARK_GRAY });
-        leftY -= 2;
+        leftY -= (isLong ? 0.5 : 2);
         continue;
       }
       if (isBullet) {
         leftY = drawBullet(p, bulletTxt, LEFT_COL_X + 2, leftY, LEFT_COL_W - 2, sizeBody, lhBody);
-        leftY -= 1;
+        leftY -= (isLong ? 0.5 : 1);
         continue;
       }
       leftY = drawWrapped(p, trimmed, LEFT_COL_X, leftY, LEFT_COL_W, sizeBody, lhBody, { color: DARK_GRAY });
-      leftY -= 2;
+      leftY -= (isLong ? 1 : 2);
     }
-    leftY -= 5;
+    leftY -= secSpace;
   }
 
   // Projects
@@ -773,7 +778,7 @@ export async function generateResumePDF({
         const rest  = parts.slice(1).join(' | ');
         const { label: tech, date } = splitLabelAndDate(rest);
         const display = tech ? `${name}  |  ${tech}` : name;
-        leftY -= 4;
+        leftY -= entrySpace;
 
         const dateW = tw(date, sizeSubtitle, { italic: true });
         drawText(p, display, LEFT_COL_X, leftY, sizeEntryHeader, { bold: true, color: BLACK });
@@ -785,7 +790,7 @@ export async function generateResumePDF({
       }
       if (!isBullet && /\d{4}/.test(trimmed)) {
         const { label, date } = splitLabelAndDate(trimmed);
-        leftY -= 4;
+        leftY -= entrySpace;
 
         const dateW = tw(date, sizeSubtitle, { italic: true });
         drawText(p, safeText(label), LEFT_COL_X, leftY, sizeEntryHeader, { bold: true, color: BLACK });
@@ -797,11 +802,11 @@ export async function generateResumePDF({
       }
       if (isBullet) {
         leftY = drawBullet(p, bulletTxt, LEFT_COL_X + 2, leftY, LEFT_COL_W - 2, sizeBody, lhBody);
-        leftY -= 1;
+        leftY -= (isLong ? 0.5 : 1);
         continue;
       }
       leftY = drawWrapped(p, trimmed, LEFT_COL_X, leftY, LEFT_COL_W, sizeBody, lhBody, { color: DARK_GRAY });
-      leftY -= 2;
+      leftY -= (isLong ? 1 : 2);
     }
   }
 
@@ -811,16 +816,16 @@ export async function generateResumePDF({
   let rightY = topColumnsY;
 
   const drawRightSectionHeader = (title) => {
-    rightY -= 5;
+    rightY -= (isLong ? 3 : 5);
     drawText(p, title.toUpperCase(), RIGHT_COL_X, rightY, sizeSection, { bold: true, color: PRIMARY });
-    rightY -= 3;
+    rightY -= 2;
     p.drawLine({
       start: { x: RIGHT_COL_X, y: rightY },
       end: { x: RIGHT_COL_X + RIGHT_COL_W, y: rightY },
       thickness: 1.0,
       color: PRIMARY
     });
-    rightY -= 8;
+    rightY -= (isLong ? 4 : 8);
   };
 
   // Skills Section

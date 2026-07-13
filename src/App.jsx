@@ -12,7 +12,6 @@ import Dashboard from "./pages/Dashboard";
 import ResumePage from "./pages/ResumePage";
 import JobDescriptionPage from "./pages/JobDescriptionPage";
 import AtsPage from "./pages/AtsPage";
-import InterviewPage from "./pages/InterviewPage";
 import ResumeOptimizationPage from "./pages/ResumeOptimizationPage";
 import ProfilePage from "./pages/ProfilePage";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -93,15 +92,6 @@ function Layout() {
             element={
               <ProtectedRoute>
                 <JobDescriptionPage />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/interview"
-            element={
-              <ProtectedRoute>
-                <InterviewPage />
               </ProtectedRoute>
             }
           />

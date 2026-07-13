@@ -92,7 +92,6 @@ export default function Navbar() {
     { path: "/summary-generator",label: "Summary",   icon: "📝" },
     { path: "/jobs",            label: "Jobs",      icon: "◈" },
     { path: "/resume-optimizer",label: "Optimizer", icon: "⚡" },
-    { path: "/interview",       label: "Interview", icon: "◎" },
   ];
 
   const [sidebarOpen, setSidebarOpen] = useState(false);

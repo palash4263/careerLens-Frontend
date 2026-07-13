@@ -1,4 +1,3 @@
-import React from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import "./CtaFooter.css";
@@ -61,7 +60,6 @@ const CtaFooter = () => {
               <Link to="/resumes">Resumes</Link>
               <Link to="/resume-optimizer">Resume Optimizer</Link>
               <Link to="/jobs">Job Matches</Link>
-              <Link to="/interview">Mock Interview</Link>
             </div>
           </motion.div>
 

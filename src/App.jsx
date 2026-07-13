@@ -10,6 +10,7 @@ import Navbar from "./components/Navbar";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
+import DashboardPremium from "./pages/DashboardPremium";
 import ResumePage from "./pages/ResumePage";
 import JobDescriptionPage from "./pages/JobDescriptionPage";
 import AtsPage from "./pages/AtsPage";
@@ -82,6 +83,15 @@ function Layout() {
             element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            } 
+          />
+
+          <Route 
+            path="/dashboard-premium" 
+            element={
+              <ProtectedRoute>
+                <DashboardPremium />
               </ProtectedRoute>
             } 
           />

@@ -1,8 +1,10 @@
 import React, { useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import './FeatureCard.css';
 
-const FeatureCard = ({ title, description, icon, gradient, delay, index = 0 }) => {
+const FeatureCard = ({ title, description, icon, gradient, delay, path, index = 0 }) => {
+  const navigate = useNavigate();
   const cardRef = useRef(null);
   const [mouse, setMouse] = useState({ x: 0.5, y: 0.5 });
   const [hovered, setHovered] = useState(false);
@@ -58,11 +60,11 @@ const FeatureCard = ({ title, description, icon, gradient, delay, index = 0 }) =
       {/* Footer CTA */}
       <div className="fc-footer">
         <div className="fc-cta-line" style={{ background: gradient }} />
-        <button className="fc-cta">
+        <button className="fc-cta" onClick={() => path && navigate(path)}>
           <span>Get Started</span>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
                stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-            <path d="M5 12h14M12 5l7 7-7 7"/>
+             <path d="M5 12h14M12 5l7 7-7 7"/>
           </svg>
         </button>
       </div>

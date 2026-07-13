@@ -91,14 +91,16 @@ function Dashboard() {
       icon: "📄",
       gradient: "linear-gradient(137deg, #7C3AED 0%, #A78BFA 45%, #6D28D9 100%)",
       delay: 0.1,
+      path: "/resumes",
     },
     {
       id: 2,
       title: "Smart Keyword Optimization",
       description: "Automatically detect missing keywords from job descriptions and seamlessly integrate them into your resume.",
       icon: "✨",
-      gradient: "linear-gradient(137deg, #3B82F6 0%, #60A5FA 45%, #2563EB 100%)",
+      gradient: "linear-gradient(137deg, #EC4899 0%, #F472B6 45%, #BE185D 100%)",
       delay: 0.2,
+      path: "/resume-optimizer",
     },
     {
       id: 3,
@@ -107,6 +109,7 @@ function Dashboard() {
       icon: "🎯",
       gradient: "linear-gradient(137deg, #10B981 0%, #34D399 45%, #059669 100%)",
       delay: 0.3,
+      path: "/ats",
     },
   ];
 

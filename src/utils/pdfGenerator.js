@@ -254,11 +254,11 @@ async function generateSingleColumnPDF({
   fontFamily = 'Rubik',
 }) {
   const PRIMARY = primaryColor ? hexToRgbColor(primaryColor) : rgb(0.09, 0.38, 0.78);
-  const finalName     = userName || extractName(resumeText) || 'Palash Mishra';
-  const finalJobTitle = jobTitle  || extractJobTitle(resumeText)  || 'Full Stack Developer';
-  const finalEmail    = email     || extractEmail(resumeText)     || 'palashmishra47@gmail.com';
-  const finalPhone    = phone     || extractPhoneNumber(resumeText) || '+91-7428477219';
-  const finalLinkedIn = linkedin  || extractLinkedIn(resumeText)  || 'linkedin.com/in/palash-mishra-6a68a71aa';
+  const finalName     = extractName(resumeText) || userName || 'Palash Mishra';
+  const finalJobTitle = extractJobTitle(resumeText) || jobTitle || 'Full Stack Developer';
+  const finalEmail    = extractEmail(resumeText) || email || 'palashmishra47@gmail.com';
+  const finalPhone    = extractPhoneNumber(resumeText) || phone || '+91-7428477219';
+  const finalLinkedIn = extractLinkedIn(resumeText) || linkedin || 'linkedin.com/in/palash-mishra-6a68a71aa';
   const finalGitHub   = extractGitHub(resumeText)    || '';
 
   // Initialize Document
@@ -565,11 +565,11 @@ export async function generateResumePDF({
   }
   const PRIMARY = primaryColor ? hexToRgbColor(primaryColor) : rgb(0.09, 0.38, 0.78);
   // --- Extract contact info ---
-  const finalName     = userName || extractName(resumeText) || 'Palash Mishra';
-  const finalJobTitle = jobTitle  || extractJobTitle(resumeText)  || 'Full Stack Developer';
-  const finalEmail    = email     || extractEmail(resumeText)     || 'palashmishra47@gmail.com';
-  const finalPhone    = phone     || extractPhoneNumber(resumeText) || '+91-7428477219';
-  const finalLinkedIn = linkedin  || extractLinkedIn(resumeText)  || 'linkedin.com/in/palash-mishra-6a68a71aa';
+  const finalName     = extractName(resumeText) || userName || 'Palash Mishra';
+  const finalJobTitle = extractJobTitle(resumeText) || jobTitle || 'Full Stack Developer';
+  const finalEmail    = extractEmail(resumeText) || email || 'palashmishra47@gmail.com';
+  const finalPhone    = extractPhoneNumber(resumeText) || phone || '+91-7428477219';
+  const finalLinkedIn = extractLinkedIn(resumeText) || linkedin || 'linkedin.com/in/palash-mishra-6a68a71aa';
   const finalGitHub   = extractGitHub(resumeText)    || '';
 
   // --- Initialize Document ---

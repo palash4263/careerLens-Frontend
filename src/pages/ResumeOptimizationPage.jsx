@@ -20,7 +20,7 @@ import {
 import "./ResumeOptimizationPage.css";
 import { getResumes } from "../services/resumeService";
 import { getJobDescriptions } from "../services/jobDescriptionService";
-import { optimizeResume } from "../services/resumeOptimizationService";
+import { optimizeResume, optimizeSection } from "../services/resumeOptimizationService";
 import { generateResumePDF } from "../utils/pdfGenerator";
 import PremiumDropdown from "../components/resume/PremiumDropdown";
 import ScoreRing from "../components/resume/ScoreRing";
@@ -483,6 +483,10 @@ export default function ResumeOptimizationPage() {
     Certifications: '',
     Languages: '',
   });
+
+  const [optimizingSections, setOptimizingSections] = useState({});
+  const [sectionPrompts, setSectionPrompts] = useState({});
+  const [showPromptInput, setShowPromptInput] = useState({});
   const [celebrationKey, setCelebrationKey] = useState(0);
   const [mobileCompareTab, setMobileCompareTab] = useState('optimized');
   
@@ -575,6 +579,45 @@ export default function ResumeOptimizationPage() {
     } catch (err) {
       console.error(err);
       setError("Unable to load resumes or job descriptions.");
+    }
+  };
+
+  const handleOptimizeSection = async (sectionName) => {
+    if (!selectedResume || !selectedJobDescription) {
+      alert("Please select a resume and a job description first.");
+      return;
+    }
+    
+    setOptimizingSections(prev => ({ ...prev, [sectionName]: true }));
+    try {
+      const customPrompt = sectionPrompts[sectionName] || "";
+      const response = await optimizeSection(
+        Number(selectedResume),
+        sectionName,
+        Number(selectedJobDescription),
+        customPrompt
+      );
+      
+      let optimizedText = "";
+      if (typeof response === "string") {
+        optimizedText = response;
+      } else if (response) {
+        optimizedText = response.optimized_text || response.text || response.content || response.optimizedSection || response.optimized_content || "";
+      }
+      
+      if (optimizedText) {
+        setEditedSections(prev => ({
+          ...prev,
+          [sectionName]: optimizedText
+        }));
+        setSectionPrompts(prev => ({ ...prev, [sectionName]: "" }));
+        setShowPromptInput(prev => ({ ...prev, [sectionName]: false }));
+      }
+    } catch (error) {
+      console.error(`Error optimizing section ${sectionName}:`, error);
+      alert(`Failed to personalize ${sectionName} section. Please try again.`);
+    } finally {
+      setOptimizingSections(prev => ({ ...prev, [sectionName]: false }));
     }
   };
 
@@ -1590,19 +1633,65 @@ export default function ResumeOptimizationPage() {
 
                             return (
                               <div key={sectionKey} className="section-editor-card" style={{
-                                background: 'rgba(30, 41, 59, 0.45)',
-                                border: '1px solid rgba(255, 255, 255, 0.08)',
-                                borderRadius: '12px',
-                                padding: '12px 14px',
+                                background: '#ffffff',
+                                border: '1px solid #e2e8f0',
+                                borderRadius: '16px',
+                                padding: '16px',
                                 display: 'flex',
                                 flexDirection: 'column',
-                                gap: '8px',
+                                gap: '12px',
+                                position: 'relative',
+                                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -1px rgba(0,0,0,0.01)',
                                 transition: 'all 0.25s ease'
                               }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', fontWeight: 'bold', color: '#a78bfa', fontFamily: 'Outfit, sans-serif' }}>
-                                  <span>{getSectionIcon(sectionKey)}</span>
-                                  <span>{sectionKey}</span>
+                                {/* Loading Overlay */}
+                                {optimizingSections[sectionKey] && (
+                                  <div style={{
+                                    position: 'absolute',
+                                    top: 0, left: 0, right: 0, bottom: 0,
+                                    background: 'rgba(255, 255, 255, 0.85)',
+                                    backdropFilter: 'blur(2px)',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    zIndex: 10,
+                                    borderRadius: '16px',
+                                    gap: '10px'
+                                  }}>
+                                    <div className="spinner-modern" style={{ borderColor: '#7c3aed', borderTopColor: 'transparent' }} />
+                                    <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#7c3aed', fontFamily: "'Outfit', sans-serif" }}>AI Personalizing...</span>
+                                  </div>
+                                )}
+
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.95rem', fontWeight: '700', color: '#0f172a', fontFamily: 'Outfit, sans-serif' }}>
+                                    <span>{getSectionIcon(sectionKey)}</span>
+                                    <span>{sectionKey} Section</span>
+                                  </div>
+
+                                  <button
+                                    onClick={() => setShowPromptInput(prev => ({ ...prev, [sectionKey]: !prev[sectionKey] }))}
+                                    style={{
+                                      background: 'rgba(124, 58, 237, 0.08)',
+                                      color: '#7c3aed',
+                                      border: '1px solid rgba(124, 58, 237, 0.15)',
+                                      borderRadius: '99px',
+                                      padding: '4px 10px',
+                                      fontSize: '0.75rem',
+                                      fontWeight: '600',
+                                      cursor: 'pointer',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '4px',
+                                      transition: 'all 0.2s ease',
+                                    }}
+                                  >
+                                    <Sparkles size={12} />
+                                    <span>AI Optimize</span>
+                                  </button>
                                 </div>
+
                                 <AutoGrowingTextarea
                                   value={sectionContent}
                                   onChange={(e) => {
@@ -1613,20 +1702,78 @@ export default function ResumeOptimizationPage() {
                                   }}
                                   style={{
                                     width: '100%',
-                                    background: '#ffffff',
-                                    border: '1px solid #cbd5e1',
-                                    borderRadius: '8px',
-                                    color: '#0f172a',
-                                    fontFamily: 'monospace, Courier New, monospace',
-                                    fontSize: '0.85rem',
-                                    lineHeight: '1.5',
-                                    padding: '10px 12px',
+                                    background: 'transparent',
+                                    border: 'none',
+                                    color: '#334155',
+                                    fontFamily: "'Inter', sans-serif",
+                                    fontSize: '0.88rem',
+                                    lineHeight: '1.6',
+                                    padding: '0',
                                     outline: 'none',
-                                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                                    transition: 'border-color 0.2s ease',
                                   }}
                                   placeholder={`Add information for ${sectionKey}...`}
                                 />
+
+                                {/* AI Prompt Input */}
+                                <AnimatePresence>
+                                  {showPromptInput[sectionKey] && (
+                                    <motion.div
+                                      initial={{ opacity: 0, height: 0 }}
+                                      animate={{ opacity: 1, height: 'auto' }}
+                                      exit={{ opacity: 0, height: 0 }}
+                                      style={{
+                                        borderTop: '1px solid #f1f5f9',
+                                        paddingTop: '10px',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '8px',
+                                        overflow: 'hidden'
+                                      }}
+                                    >
+                                      <input
+                                        type="text"
+                                        value={sectionPrompts[sectionKey] || ""}
+                                        onChange={(e) => setSectionPrompts(prev => ({ ...prev, [sectionKey]: e.target.value }))}
+                                        placeholder="Customize prompt: E.g., make it sound more senior, add metrics..."
+                                        style={{
+                                          width: '100%',
+                                          background: '#f8fafc',
+                                          border: '1px solid #e2e8f0',
+                                          borderRadius: '8px',
+                                          padding: '8px 12px',
+                                          fontSize: '0.8rem',
+                                          color: '#334155',
+                                          fontFamily: "'Inter', sans-serif",
+                                          outline: 'none',
+                                        }}
+                                        onKeyDown={(e) => {
+                                          if (e.key === 'Enter') handleOptimizeSection(sectionKey);
+                                        }}
+                                      />
+                                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                                        <button
+                                          onClick={() => handleOptimizeSection(sectionKey)}
+                                          disabled={optimizingSections[sectionKey]}
+                                          style={{
+                                            background: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
+                                            color: '#ffffff',
+                                            border: 'none',
+                                            borderRadius: '8px',
+                                            padding: '6px 12px',
+                                            fontSize: '0.75rem',
+                                            fontWeight: '700',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '4px',
+                                          }}
+                                        >
+                                          <Sparkles size={10} /> Apply AI
+                                        </button>
+                                      </div>
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
                               </div>
                             );
                           })}
@@ -1970,20 +2117,78 @@ export default function ResumeOptimizationPage() {
                                 }}
                                 style={{
                                   width: '100%',
-                                  background: '#ffffff',
-                                  border: '1px solid #cbd5e1',
-                                  borderRadius: '8px',
-                                  color: '#0f172a',
-                                  fontFamily: 'monospace, Courier New, monospace',
-                                  fontSize: '0.85rem',
+                                  background: 'transparent',
+                                  border: 'none',
+                                  color: '#334155',
+                                  fontFamily: "'Inter', sans-serif",
+                                  fontSize: '0.88rem',
                                   lineHeight: '1.6',
-                                  padding: '14px 16px',
+                                  padding: '0',
                                   outline: 'none',
-                                  boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-                                  transition: 'border-color 0.2s ease',
                                 }}
                                 placeholder={`Enter your ${sectionKey} details...`}
                               />
+
+                              {/* AI Prompt Input */}
+                              <AnimatePresence>
+                                {showPromptInput[sectionKey] && (
+                                  <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: 'auto' }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    style={{
+                                      borderTop: '1px solid #f1f5f9',
+                                      paddingTop: '10px',
+                                      display: 'flex',
+                                      flexDirection: 'column',
+                                      gap: '8px',
+                                      overflow: 'hidden'
+                                    }}
+                                  >
+                                    <input
+                                      type="text"
+                                      value={sectionPrompts[sectionKey] || ""}
+                                      onChange={(e) => setSectionPrompts(prev => ({ ...prev, [sectionKey]: e.target.value }))}
+                                      placeholder="Customize prompt: E.g., make it sound more senior, add metrics..."
+                                      style={{
+                                        width: '100%',
+                                        background: '#f8fafc',
+                                        border: '1px solid #e2e8f0',
+                                        borderRadius: '8px',
+                                        padding: '8px 12px',
+                                        fontSize: '0.8rem',
+                                        color: '#334155',
+                                        fontFamily: "'Inter', sans-serif",
+                                        outline: 'none',
+                                      }}
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Enter') handleOptimizeSection(sectionKey);
+                                      }}
+                                    />
+                                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                                      <button
+                                        onClick={() => handleOptimizeSection(sectionKey)}
+                                        disabled={optimizingSections[sectionKey]}
+                                        style={{
+                                          background: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
+                                          color: '#ffffff',
+                                          border: 'none',
+                                          borderRadius: '8px',
+                                          padding: '6px 12px',
+                                          fontSize: '0.75rem',
+                                          fontWeight: '700',
+                                          cursor: 'pointer',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          gap: '4px',
+                                        }}
+                                      >
+                                        <Sparkles size={10} /> Apply AI
+                                      </button>
+                                    </div>
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
                             </div>
                           );
                         })}

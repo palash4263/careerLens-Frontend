@@ -3,7 +3,6 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import FeatureCard from "../components/FeatureCard";
 import CtaFooter from "../components/CtaFooter";
-import PricingSection from "../components/PricingSection";
 import "../assets/Dashboard.css";
 
 function Dashboard() {
@@ -546,10 +545,8 @@ function Dashboard() {
             </div>
           </section>
 
-        </div>
       </div>
       </div>
-      <PricingSection />
       <CtaFooter />
     </div>
   );

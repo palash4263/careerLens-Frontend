@@ -605,22 +605,16 @@ export default function ResumeSectionEditorPage() {
                 />
               </div>
 
-              <div className="ese-actions-row">
-                <button
-                  className="ese-btn primary"
-                  type="button"
-                  onClick={optimizeAllSections}
-                  disabled={bulkOptimizing || !selectedResumeId}
-                >
-                  {bulkOptimizing ? <LoadingChip label="Optimizing all" /> : <><Sparkles size={15} /> Optimize all sections</>}
-                </button>
-                <button className="ese-btn ghost" type="button" onClick={handleCopy} disabled={!liveResumeText.trim()}>
-                  {copySuccess ? <><Check size={15} /> Copied</> : <><Copy size={15} /> Copy resume</>}
-                </button>
-                <button className="ese-btn ghost" type="button" onClick={handleDownload} disabled={downloading || !liveResumeText.trim()}>
-                  {downloading ? <LoadingChip label="Downloading" /> : <><Download size={15} /> Download PDF</>}
-                </button>
-              </div>
+ <div className="ese-actions-row">
+  <button
+    className="ese-btn primary"
+    type="button"
+    onClick={optimizeAllSections}
+    disabled={bulkOptimizing || !selectedResumeId}
+  >
+    {bulkOptimizing ? <LoadingChip label="Optimizing all" /> : <><Sparkles size={15} /> Optimize all sections</>}
+  </button>
+</div>
             </section>
 
             {loading ? (
@@ -648,72 +642,93 @@ export default function ResumeSectionEditorPage() {
             )}
           </main>
 
-          <aside className="ese-side">
-            <section className="ese-panel ese-sticky">
-              <div className="ese-panel-head compact">
-                <div>
-                  <span className="ese-panel-label">Live Preview</span>
-                  <h2>{activeResume?.file_name || "No resume selected"}</h2>
-                </div>
-                <span className="ese-preview-badge">
-                  {targetLabel === DEFAULT_TARGET ? "General" : "Targeted"}
-                </span>
-              </div>
+        <aside className="ese-side">
+  <section className="ese-panel ese-sticky">
+    <div className="ese-panel-head compact">
+      <div>
+        <span className="ese-panel-label">Live Preview</span>
+        <h2>{activeResume?.file_name || "No resume selected"}</h2>
+      </div>
+      <span className="ese-preview-badge">
+        {targetLabel === DEFAULT_TARGET ? "General" : "Targeted"}
+      </span>
+    </div>
 
-              <div className="ese-preview-meta">
-                <div>
-                  <span>Resume</span>
-                  <strong>{activeResume?.file_name || "Select a resume"}</strong>
-                </div>
-                <div>
-                  <span>Target</span>
-                  <strong>{targetLabel}</strong>
-                </div>
-              </div>
+    <div className="ese-preview-meta">
+      <div>
+        <span>Resume</span>
+        <strong>{activeResume?.file_name || "Select a resume"}</strong>
+      </div>
+      <div>
+        <span>Target</span>
+        <strong>{targetLabel}</strong>
+      </div>
+    </div>
 
-              <div className="ese-preview-box">
-                {liveResumeText ? (
-                  liveResumeText.split("\n").map((line, index) => {
-                    const trimmed = line.trim();
-                    if (!trimmed) return <div key={index} className="ese-preview-gap" />;
-                    if (/^[A-Za-z\s]+:$/.test(trimmed)) {
-                      return (
-                        <h4 key={index} className="ese-preview-section">
-                          {trimmed}
-                        </h4>
-                      );
-                    }
-                    if (/^[•-]/.test(trimmed)) {
-                      return <p key={index} className="ese-preview-bullet">{trimmed.replace(/^[•-]\s*/, "")}</p>;
-                    }
-                    return <p key={index} className="ese-preview-line">{trimmed}</p>;
-                  })
-                ) : (
-                  <div className="ese-empty">
-                    <FileText size={24} />
-                    <p>Upload a resume to see the live editor here.</p>
-                  </div>
-                )}
-              </div>
-            </section>
+    <div className="ese-preview-box">
+      {liveResumeText ? (
+        liveResumeText.split("\n").map((line, index) => {
+          const trimmed = line.trim();
+          if (!trimmed) return <div key={index} className="ese-preview-gap" />;
+          if (/^[A-Za-z\s]+:$/.test(trimmed)) {
+            return (
+              <h4 key={index} className="ese-preview-section">
+                {trimmed}
+              </h4>
+            );
+          }
+          if (/^[•-]/.test(trimmed)) {
+            return <p key={index} className="ese-preview-bullet">{trimmed.replace(/^[•-]\s*/, "")}</p>;
+          }
+          return <p key={index} className="ese-preview-line">{trimmed}</p>;
+        })
+      ) : (
+        <div className="ese-empty">
+          <FileText size={24} />
+          <p>Upload a resume to see the live editor here.</p>
+        </div>
+      )}
+    </div>
 
-            <section className="ese-panel ese-tip-panel">
-              <div className="ese-panel-head compact">
-                <div>
-                  <span className="ese-panel-label">Workflow</span>
-                  <h2>How this page works</h2>
-                </div>
-              </div>
+    {/* Integrated Action Buttons */}
+    <div className="ese-actions-row" style={{ marginTop: "18px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+      <button 
+        className="ese-btn primary" 
+        type="button" 
+        onClick={handleDownload} 
+        disabled={downloading || !liveResumeText.trim()}
+      >
+        {downloading ? <LoadingChip label="Downloading" /> : <><Download size={15} /> Download PDF</>}
+      </button>
+      
+      <button 
+        className="ese-btn ghost" 
+        type="button" 
+        onClick={handleCopy} 
+        disabled={!liveResumeText.trim()}
+      >
+        {copySuccess ? <><Check size={15} /> Copied</> : <><Copy size={15} /> Copy resume</>}
+      </button>
+    </div>
+  </section>
 
-              <ul className="ese-tip-list">
-                <li>Upload a PDF resume.</li>
-                <li>Select or describe a target role.</li>
-                <li>Edit section text directly in each card.</li>
-                <li>Use AI Optimize on one section or all sections.</li>
-                <li>Copy or download the final version from the preview panel.</li>
-              </ul>
-            </section>
-          </aside>
+  <section className="ese-panel ese-tip-panel">
+    <div className="ese-panel-head compact">
+      <div>
+        <span className="ese-panel-label">Workflow</span>
+        <h2>How this page works</h2>
+      </div>
+    </div>
+
+    <ul className="ese-tip-list">
+      <li>Upload a PDF resume.</li>
+      <li>Select or describe a target role.</li>
+      <li>Edit section text directly in each card.</li>
+      <li>Use AI Optimize on one section or all sections.</li>
+      <li>Copy or download the final version from the preview panel.</li>
+    </ul>
+  </section>
+</aside>
         </div>
       </div>
     </div>

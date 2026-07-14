@@ -1,7 +1,7 @@
 .ese-page {
   position: relative;
   min-height: 100vh;
-  padding: 32px 24px 56px;
+  padding: 80px 24px 56px;
   color: #eef2ff;
 }
 
@@ -36,7 +36,7 @@
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 28px;
   z-index: 1;
 }
 
@@ -132,7 +132,7 @@
 .ese-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.78fr);
-  gap: 18px;
+  gap: 28px;
   align-items: start;
 }
 
@@ -140,7 +140,7 @@
 .ese-side {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 24px;
   min-width: 0;
 }
 
@@ -153,7 +153,7 @@
 
 .ese-sticky {
   position: sticky;
-  top: 92px;
+  top: 115px;
 }
 
 .ese-panel-head {
@@ -302,7 +302,7 @@
 .ese-sections-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  gap: 20px;
 }
 
 .ese-section-card {

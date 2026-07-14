@@ -361,13 +361,14 @@ export default function ResumeSectionEditorPage() {
       setOptimizingSections((prev) => ({ ...prev, [sectionKey]: true }));
       setError("");
 
-      const jobId = await ensureTargetJob();
       const prompt = buildSectionPrompt(sectionKey, targetLabel, globalInstruction);
+      const jdText = customTarget.trim() || selectedJob?.description || "";
       const response = await optimizeSection(
-        Number(selectedResumeId),
+        selectedResumeId,
         sectionKey,
-        Number(jobId),
-        prompt
+        jdText,
+        prompt,
+        editedSections[sectionKey],
       );
 
       const optimizedText = extractOptimizedText(response);
@@ -394,16 +395,17 @@ export default function ResumeSectionEditorPage() {
     try {
       setBulkOptimizing(true);
       setError("");
-      const jobId = await ensureTargetJob();
+      const jdText = customTarget.trim() || selectedJob?.description || "";
 
       for (const sectionKey of SECTION_ORDER) {
         setOptimizingSections((prev) => ({ ...prev, [sectionKey]: true }));
         const prompt = buildSectionPrompt(sectionKey, targetLabel, globalInstruction);
         const response = await optimizeSection(
-          Number(selectedResumeId),
+          selectedResumeId,
           sectionKey,
-          Number(jobId),
-          prompt
+          jdText,
+          prompt,
+          editedSections[sectionKey],
         );
         const optimizedText = extractOptimizedText(response);
         if (optimizedText) {

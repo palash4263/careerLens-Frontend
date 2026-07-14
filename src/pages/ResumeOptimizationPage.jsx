@@ -534,6 +534,7 @@ export default function ResumeOptimizationPage() {
   const [showPromptInput, setShowPromptInput] = useState({});
   const [celebrationKey, setCelebrationKey] = useState(0);
   const [mobileCompareTab, setMobileCompareTab] = useState('optimized');
+  const liveEditorText = reconstructResumeText(editedSections);
   
   // Custom cursor & playground states
   const [mouseOverPlayground, setMouseOverPlayground] = useState(false);
@@ -645,10 +646,19 @@ export default function ResumeOptimizationPage() {
       const optimizedText = extractOptimizedText(response);
       
       if (optimizedText) {
+        const nextSections = {
+          ...editedSections,
+          [sectionName]: optimizedText
+        };
+
         setEditedSections(prev => ({
           ...prev,
           [sectionName]: optimizedText
         }));
+        setResult(prev => prev ? {
+          ...prev,
+          optimizedText: reconstructResumeText(nextSections)
+        } : prev);
         setSectionPrompts(prev => ({ ...prev, [sectionName]: "" }));
         setShowPromptInput(prev => ({ ...prev, [sectionName]: false }));
       }
@@ -805,7 +815,7 @@ export default function ResumeOptimizationPage() {
       const userData = getUserData();
 
       await generateResumePDF({
-        resumeText: reconstructResumeText(editedSections) || result.optimizedText,
+        resumeText: liveEditorText || result.optimizedText,
         fileName: fileName,
         score: result.optimizedScore || 0,
         jobTitle: jobTitle,
@@ -830,11 +840,13 @@ export default function ResumeOptimizationPage() {
     : null;
 
   const renderResumeContent = () => {
-    if (!result?.optimizedText) {
+    const displayText = liveEditorText || result?.optimizedText;
+
+    if (!displayText) {
       return <p className="resume-empty-text">No optimized content available</p>;
     }
 
-    const lines = result.optimizedText.split('\n');
+    const lines = displayText.split('\n');
     return lines.map((line, index) => {
       const trimmed = line.trim();
       if (trimmed.match(/^[A-Za-z\s]+:$/)) {
@@ -1402,7 +1414,7 @@ export default function ResumeOptimizationPage() {
 
                   <motion.button
                     className={`copy-btn-modern ${copySuccess ? 'copied' : ''}`}
-                    onClick={() => copyToClipboard(result.optimizedText, setCopySuccess)}
+                    onClick={() => copyToClipboard(liveEditorText || result.optimizedText, setCopySuccess)}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >

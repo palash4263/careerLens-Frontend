@@ -130,7 +130,6 @@ export default function Navbar() {
 <div className="nb-logo-text-col">
   <span className="nb-logo-text-custom">
     <span className="nb-logo-text-highlight">Career Lens</span>
-    <span className="nb-logo-badge-custom">AI</span>
   </span>
 </div>
           </Link>

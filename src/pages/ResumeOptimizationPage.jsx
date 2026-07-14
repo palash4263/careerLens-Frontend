@@ -156,6 +156,21 @@ const reconstructResumeText = (sectionsObj) => {
     .join('\n\n');
 };
 
+const extractOptimizedText = (response) => {
+  if (!response) return "";
+  if (typeof response === "string") return response;
+
+  return (
+    response.optimizedText ||
+    response.optimized_text ||
+    response.text ||
+    response.content ||
+    response.optimizedSection ||
+    response.optimized_content ||
+    ""
+  );
+};
+
 // Premium customizer themes & fonts (mimicking Enhancv aesthetics)
 const PREMIUM_THEMES = [
   { name: 'Royal Blue', hex: '#1761c7', label: 'Indigo' },
@@ -627,13 +642,7 @@ export default function ResumeOptimizationPage() {
         Number(selectedJobDescription),
         customPrompt
       );
-      
-      let optimizedText = "";
-      if (typeof response === "string") {
-        optimizedText = response;
-      } else if (response) {
-        optimizedText = response.optimized_text || response.text || response.content || response.optimizedSection || response.optimized_content || "";
-      }
+      const optimizedText = extractOptimizedText(response);
       
       if (optimizedText) {
         setEditedSections(prev => ({
@@ -666,7 +675,7 @@ export default function ResumeOptimizationPage() {
         Number(selectedJobDescription)
       );
 
-      let optText = response.optimized_text || "Results-driven Full Stack Developer with 5+ years of expertise in JavaScript, React, Node.js.";
+      let optText = extractOptimizedText(response) || "Results-driven Full Stack Developer with 5+ years of expertise in JavaScript, React, Node.js.";
       let origText = response.original_text || "Experienced developer with 5+ years in web technologies.";
 
       const enhanceOracleAndProjectPoints = (text) => {

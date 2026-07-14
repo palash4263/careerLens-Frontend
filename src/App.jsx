@@ -13,6 +13,7 @@ import ResumePage from "./pages/ResumePage";
 import JobDescriptionPage from "./pages/JobDescriptionPage";
 import AtsPage from "./pages/AtsPage";
 import ResumeOptimizationPage from "./pages/ResumeOptimizationPage";
+import ResumeSectionEditorPage from "./pages/ResumeSectionEditorPage";
 import ProfilePage from "./pages/ProfilePage";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
@@ -111,6 +112,24 @@ function Layout() {
             element={
               <ProtectedRoute>
                 <ResumeOptimizationPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/resume-editor"
+            element={
+              <ProtectedRoute>
+                <ResumeSectionEditorPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/resume-section-editor"
+            element={
+              <ProtectedRoute>
+                <ResumeSectionEditorPage />
               </ProtectedRoute>
             }
           />

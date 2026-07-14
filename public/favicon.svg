@@ -1,46 +1,25 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
-  <defs>
-    <!-- Background Gradient -->
-    <radialGradient id="bgGrad" cx="50%" cy="50%" r="50%" fx="30%" fy="30%">
-      <stop offset="0%" stop-color="#1e1b4b" />
-      <stop offset="100%" stop-color="#09090b" />
-    </radialGradient>
-    
-    <!-- Sparkle/Lens Gradient -->
-    <linearGradient id="primaryGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#a855f7" />
-      <stop offset="50%" stop-color="#6366f1" />
-      <stop offset="100%" stop-color="#3b82f6" />
-    </linearGradient>
+  <!-- Background Circle (Dark Navy/Indigo) -->
+  <circle cx="256" cy="256" r="240" fill="#0c0b16" stroke="#1f1e38" stroke-width="8" />
 
-    <!-- Ring/Glass Glow -->
-    <linearGradient id="ringGrad" x1="0%" y1="100%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.8" />
-      <stop offset="30%" stop-color="#6366f1" stop-opacity="0.2" />
-      <stop offset="70%" stop-color="#a855f7" stop-opacity="0.2" />
-      <stop offset="100%" stop-color="#a855f7" stop-opacity="0.8" />
-    </linearGradient>
+  <!-- Radar Crosshair Markings -->
+  <!-- Outer Target Ring -->
+  <circle cx="256" cy="256" r="215" fill="none" stroke="#FBBF24" stroke-width="20" />
+  
+  <!-- Middle Target Ring -->
+  <circle cx="256" cy="256" r="123" fill="none" stroke="#FBBF24" stroke-width="20" />
+  
+  <!-- Center Bullseye Dot -->
+  <circle cx="256" cy="256" r="41" fill="#FBBF24" />
 
-    <!-- Drop Shadow Filter -->
-    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="16" result="blur" />
-      <feComposite in="SourceGraphic" in2="blur" operator="over" />
-    </filter>
-  </defs>
+  <!-- Axes Lines -->
+  <!-- Vertical Crosshair Line -->
+  <line x1="256" y1="10" x2="256" y2="502" stroke="#FBBF24" stroke-width="20" />
+  
+  <!-- Horizontal Crosshair Line -->
+  <line x1="10" y1="256" x2="502" y2="256" stroke="#FBBF24" stroke-width="20" />
 
-  <!-- Outer Circle Frame -->
-  <circle cx="256" cy="256" r="240" fill="url(#bgGrad)" stroke="rgba(255, 255, 255, 0.05)" stroke-width="8" />
-
-  <!-- Outer Glassmorphic Lens Ring -->
-  <circle cx="256" cy="256" r="180" fill="none" stroke="url(#ringGrad)" stroke-width="14" filter="url(#glow)" />
-  <circle cx="256" cy="256" r="160" fill="none" stroke="rgba(255, 255, 255, 0.03)" stroke-width="2" />
-
-  <!-- Orbiting Lens Ring Dot -->
-  <circle cx="383" cy="183" r="10" fill="#a855f7" filter="url(#glow)" />
-
-  <!-- Central Sparkle Lens (✦ Motif) -->
-  <path d="M256 96 C256 180, 180 256, 96 256 C180 256, 256 332, 256 416 C256 332, 332 256, 416 256 C332 256, 256 180, 256 96 Z" fill="url(#primaryGrad)" filter="url(#glow)" />
-
-  <!-- Core Light Sparkle Center -->
-  <circle cx="256" cy="256" r="16" fill="#ffffff" filter="url(#glow)" />
+  <!-- Diagonal Sub-Axes -->
+  <line x1="82" y1="82" x2="430" y2="430" stroke="#FBBF24" stroke-width="20" />
+  <line x1="82" y1="430" x2="430" y2="82" stroke="#FBBF24" stroke-width="20" />
 </svg>

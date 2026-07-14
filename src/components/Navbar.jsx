@@ -127,10 +127,12 @@ export default function Navbar() {
                 <line x1="16" y1="84" x2="84" y2="16" stroke="#FBBF24" strokeWidth="4" />
               </svg>
             </div>
-            <div className="nb-logo-text-col">
-              <span className="nb-logo-text-custom">CareerLens</span>
-              <span className="nb-logo-badge-custom">AI</span>
-            </div>
+<div className="nb-logo-text-col">
+  <span className="nb-logo-text-custom">
+    <span className="nb-logo-text-highlight">Career</span>Lens
+  </span>
+  <span className="nb-logo-badge-custom">AI</span>
+</div>
           </Link>
 
           {/* ── Nav links (Desktop) ── */}

@@ -107,6 +107,10 @@ const extractOptimizedText = (response) => {
   if (!response) return "";
   if (typeof response === "string") return response;
 
+  // 1. Extract the actual data payload if it's wrapped by Axios
+  const data = response.data ? response.data : response;
+
+  // 2. Fallback check against potential key formats
   return (
     response.optimizedText ||
     response.optimized_text ||

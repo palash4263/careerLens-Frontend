@@ -49,11 +49,98 @@ const formatResumeDate = (value) => {
   return date.toLocaleDateString();
 };
 
+const STOP_WORDS = new Set([
+  'i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves', 'you', 'your', 'yours', 
+  'yourself', 'yourselves', 'he', 'him', 'his', 'himself', 'she', 'her', 'hers', 
+  'herself', 'it', 'its', 'itself', 'they', 'them', 'their', 'theirs', 'themselves', 
+  'what', 'which', 'who', 'whom', 'this', 'that', 'these', 'those', 'am', 'is', 'are', 
+  'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'having', 'do', 'does', 
+  'did', 'doing', 'a', 'an', 'the', 'and', 'but', 'if', 'or', 'because', 'as', 'until', 
+  'while', 'of', 'at', 'by', 'for', 'with', 'about', 'against', 'between', 'into', 
+  'through', 'during', 'before', 'after', 'above', 'below', 'to', 'from', 'up', 'down', 
+  'in', 'out', 'on', 'off', 'over', 'under', 'again', 'further', 'then', 'once', 'here', 
+  'there', 'when', 'where', 'why', 'how', 'all', 'any', 'both', 'each', 'few', 'more', 
+  'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 
+  'than', 'too', 'very', 's', 't', 'can', 'will', 'just', 'don', 'should', 'now', 'd', 
+  'll', 'm', 'o', 're', 've', 'y', 'ain', 'aren', 'couldn', 'didn', 'doesn', 'hadn', 
+  'hasn', 'haven', 'isn', 'ma', 'mightn', 'mustn', 'needn', 'shan', 'shouldn', 'wasn', 
+  'weren', 'won', 'wouldn'
+]);
+
+const tokenize = (text) => {
+  if (!text) return [];
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '')
+    .split(/[\s_]+/)
+    .filter(word => word.length > 1 && !STOP_WORDS.has(word));
+};
+
 // Local fallback utility.
 const calculateScoreDetails = (resumeText, jdText) => {
   if (!resumeText || !jdText) return null;
   const resumeLower = resumeText.toLowerCase();
-  // 1. Keyword extraction & matching
+
+  // 1. Tokenize & Cosine Similarity with TF-IDF weighting
+  const resumeTokens = tokenize(resumeText);
+  const jdTokens = tokenize(jdText);
+
+  let similarityScore = 0;
+  if (resumeTokens.length > 0 && jdTokens.length > 0) {
+    const resumeFreqs = {};
+    const jdFreqs = {};
+    const vocab = new Set();
+
+    resumeTokens.forEach(word => {
+      resumeFreqs[word] = (resumeFreqs[word] || 0) + 1;
+      vocab.add(word);
+    });
+
+    jdTokens.forEach(word => {
+      jdFreqs[word] = (jdFreqs[word] || 0) + 1;
+      vocab.add(word);
+    });
+
+    let dotProduct = 0;
+    let resumeMagnitudeSq = 0;
+    let jdMagnitudeSq = 0;
+
+    const TECH_SET = new Set(TECH_KEYWORDS);
+
+    vocab.forEach(word => {
+      const tfResume = resumeFreqs[word] || 0;
+      const tfJd = jdFreqs[word] || 0;
+      
+      // Document Frequency: count docs containing this word
+      let df = 0;
+      if (tfResume > 0) df++;
+      if (tfJd > 0) df++;
+      
+      // Inverse Document Frequency
+      const idf = Math.log(1 + 2 / (1 + df));
+      
+      // Boost factor if it is a technical keyword
+      const boost = TECH_SET.has(word) ? 2.0 : 1.0;
+      
+      const weightResume = tfResume * idf * boost;
+      const weightJd = tfJd * idf * boost;
+      
+      dotProduct += weightResume * weightJd;
+      resumeMagnitudeSq += weightResume * weightResume;
+      jdMagnitudeSq += weightJd * weightJd;
+    });
+
+    const resumeMagnitude = Math.sqrt(resumeMagnitudeSq);
+    const jdMagnitude = Math.sqrt(jdMagnitudeSq);
+
+    if (resumeMagnitude > 0 && jdMagnitude > 0) {
+      const rawCosine = dotProduct / (resumeMagnitude * jdMagnitude);
+      // Map standard cosine range (0.0 - 0.6) to (0 - 100)
+      similarityScore = Math.min(100, Math.round(10 + Math.sqrt(rawCosine) * 115));
+    }
+  }
+
+  // Tech keyword overlap check
   const jdKeywords = TECH_KEYWORDS.filter(tech => {
     const regex = new RegExp(`\\b${tech}\\b`, 'i');
     return regex.test(jdText);
@@ -66,9 +153,9 @@ const calculateScoreDetails = (resumeText, jdText) => {
 
   const missingKeywords = jdKeywords.filter(k => !foundKeywords.includes(k));
   
-  const keywordScore = jdKeywords.length > 0 
+  const keywordScore = similarityScore > 0 ? similarityScore : (jdKeywords.length > 0 
     ? Math.round((foundKeywords.length / jdKeywords.length) * 100)
-    : 75; // Baseline if no keywords present
+    : 75);
 
   // 2. Formatting Check
   const hasTables = resumeLower.includes("table") || resumeLower.includes("grid");
@@ -96,7 +183,7 @@ const calculateScoreDetails = (resumeText, jdText) => {
   if (hasProjects) structureScore += 15;
 
   // 4. Overall Weighted Score
-  const finalScore = Math.round((keywordScore * 0.5) + (formattingScore * 0.25) + (structureScore * 0.25));
+  const finalScore = Math.round((keywordScore * 0.6) + (formattingScore * 0.2) + (structureScore * 0.2));
 
   // Determine Badge/Grade
   const { grade, gradeClass } = getGradeFromScore(finalScore);

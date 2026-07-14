@@ -78,6 +78,10 @@
   margin-bottom: 4px;
 }
 
+.nb-logo-text-highlight {
+  color: #FBBF24;
+}
+
 .nb-logo-badge-custom {
   font-size: 14px;
   font-weight: 500;

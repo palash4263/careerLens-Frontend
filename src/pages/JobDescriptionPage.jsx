@@ -5,7 +5,6 @@ import {
   createJobDescription,
   deleteJobDescription,
   getJobDescriptions,
-  fetchJobFromUrl,
 } from "../services/jobDescriptionService";
 import { useScrollReveal } from "../hooks/useScrollReveal";
 import { motion } from "framer-motion";
@@ -29,8 +28,6 @@ function JobDescriptionPage() {
     description: "",
   });
   const [loading, setLoading] = useState(false);
-  const [urlInput, setUrlInput] = useState("");
-  const [isImporting, setIsImporting] = useState(false);
 
   // Extract tech keywords dynamically for live analyzer panel
   const getExtractedKeywords = (text) => {
@@ -68,31 +65,7 @@ function JobDescriptionPage() {
     });
   };
 
-  // Real AI Fetch — calls backend which scrapes the URL and uses Groq to extract job data
-  const handleUrlImport = async () => {
-    if (!urlInput.trim()) return;
-    setIsImporting(true);
-    try {
-      const data = await fetchJobFromUrl(urlInput.trim());
-      console.log("AI Fetch result:", data);
-      setFormData({
-        title: data.title || "",
-        company: data.company || "",
-        description: data.description || "",
-      });
-      setUrlInput("");
-      showToast("✅ Job details auto-filled using AI!", "success");
-    } catch (err) {
-      console.error("AI Fetch error:", err);
-      const msg =
-        err?.response?.data?.detail ||
-        err?.message ||
-        "AI Fetch failed. Some job sites block scraping — try pasting the description manually.";
-      showToast(msg, "error");
-    } finally {
-      setIsImporting(false);
-    }
-  };
+
 
   const showToast = (message, type = "success") => {
     setToast({ message, type });
@@ -361,46 +334,7 @@ function JobDescriptionPage() {
               </div>
 
                <form onSubmit={handleSubmit} className="jobs-form">
-                <div className="jobs-field url-import-field" style={{ borderBottom: '1px dashed rgba(255,255,255,0.06)', paddingBottom: '1.25rem', marginBottom: '1.25rem' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#a855f7', fontWeight: '600' }}>
-                    <span>✨</span> AI URL Auto-Fill (Optional)
-                  </label>
-                  <div className="url-input-wrapper" style={{ display: 'flex', gap: '0.75rem', marginTop: '6px' }}>
-                     <input
-                      type="text"
-                      placeholder="Paste any job URL (LinkedIn, Naukri, Indeed...)"
-                      value={urlInput}
-                      onChange={(e) => setUrlInput(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleUrlImport())}
-                      className="jobs-input"
-                      style={{ flex: 1, border: '1px solid rgba(168, 85, 247, 0.2)', background: 'rgba(168, 85, 247, 0.02)' }}
-                    />
-                    <button 
-                      type="button" 
-                      onClick={handleUrlImport}
-                      disabled={isImporting || !urlInput}
-                      className="jobs-import-btn"
-                      style={{
-                        padding: '8px 20px',
-                        background: 'linear-gradient(135deg, #7C3AED, #2563EB)',
-                        border: 'none',
-                        borderRadius: '12px',
-                        color: '#fff',
-                        fontWeight: '700',
-                        fontSize: '12.5px',
-                        cursor: urlInput ? 'pointer' : 'not-allowed',
-                        opacity: urlInput ? 1 : 0.6,
-                        whiteSpace: 'nowrap',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        transition: 'all 0.3s ease'
-                      }}
-                    >
-                      {isImporting ? <span className="spinner"></span> : "✨ AI Fetch"}
-                    </button>
-                  </div>
-                </div>
+
 
                 <div className="jobs-field">
                   <label>

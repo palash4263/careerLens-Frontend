@@ -1,0 +1,510 @@
+/* src/assets/AtsScoreCalculator.css */
+
+.ats-calc-container {
+  padding: 100px 24px 60px;
+  max-width: 1360px;
+  margin: 0 auto;
+  min-height: 100vh;
+  color: var(--text-primary, #f3f4f6);
+}
+
+.ats-calc-header {
+  margin-bottom: 40px;
+  text-align: center;
+}
+
+.ats-calc-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: clamp(2.5rem, 5vw, 3.5rem);
+  font-weight: 800;
+  line-height: 1.1;
+  background: linear-gradient(135deg, #ffffff 30%, #fbbf24 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 12px;
+}
+
+.ats-calc-subtitle {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.1rem;
+  color: var(--text-secondary, #9ca3af);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Split Grid */
+.ats-calc-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 32px;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .ats-calc-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Glassmorphic Cards */
+.ats-calc-card {
+  background: rgba(18, 17, 30, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.ats-calc-card:hover {
+  border-color: rgba(251, 191, 36, 0.2);
+  box-shadow: 0 20px 40px rgba(251, 191, 36, 0.05);
+}
+
+.ats-calc-card-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ats-calc-card-title span.icon {
+  color: #fbbf24;
+}
+
+/* Form Styles */
+.ats-calc-form-group {
+  margin-bottom: 24px;
+}
+
+.ats-calc-label {
+  display: block;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #d1d5db;
+  margin-bottom: 10px;
+}
+
+.ats-calc-select, 
+.ats-calc-textarea {
+  width: 100%;
+  padding: 14px 18px;
+  background: rgba(31, 30, 56, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  color: #fff;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.ats-calc-select:focus, 
+.ats-calc-textarea:focus {
+  outline: none;
+  border-color: #fbbf24;
+  background: rgba(31, 30, 56, 0.8);
+  box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.15);
+}
+
+.ats-calc-select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23fbbf24'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 18px center;
+  background-size: 16px;
+  padding-right: 48px;
+}
+
+.ats-calc-textarea {
+  resize: vertical;
+  min-height: 180px;
+}
+
+/* Dropzone Styles */
+.ats-calc-dropzone {
+  border: 2px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  padding: 30px;
+  text-align: center;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.02);
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.ats-calc-dropzone:hover, 
+.ats-calc-dropzone.dragging {
+  border-color: #fbbf24;
+  background: rgba(251, 191, 36, 0.03);
+}
+
+.ats-calc-dropzone-icon {
+  font-size: 2.2rem;
+  margin-bottom: 12px;
+  color: #fbbf24;
+}
+
+.ats-calc-dropzone-text {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.95rem;
+  color: #9ca3af;
+}
+
+.ats-calc-dropzone-sub {
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin-top: 6px;
+}
+
+.ats-calc-btn-primary {
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
+  color: #0c0b16;
+  border: none;
+  border-radius: 12px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease;
+  box-shadow: 0 4px 20px rgba(251, 191, 36, 0.2);
+}
+
+.ats-calc-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(251, 191, 36, 0.35);
+}
+
+.ats-calc-btn-primary:active {
+  transform: translateY(1px);
+}
+
+.ats-calc-btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Results Card Layout */
+.ats-calc-results-top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 20px 0;
+}
+
+.ats-calc-score-wrapper {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  margin-bottom: 24px;
+}
+
+.ats-calc-score-circle {
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+  width: 100%;
+  height: 100%;
+}
+
+.ats-calc-score-bg {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.05);
+  stroke-width: 10;
+}
+
+.ats-calc-score-bar {
+  fill: none;
+  stroke-width: 12;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ats-calc-score-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.ats-calc-score-number {
+  font-family: 'Outfit', sans-serif;
+  font-size: 3.5rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.ats-calc-score-percent {
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: #9ca3af;
+}
+
+.ats-calc-score-label {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #9ca3af;
+  margin-top: 4px;
+}
+
+.ats-calc-badge {
+  padding: 8px 16px;
+  border-radius: 99px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+
+.ats-calc-badge.excellent { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+.ats-calc-badge.good { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
+.ats-calc-badge.poor { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+
+/* Quick Metrics Row */
+.ats-calc-metrics-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  width: 100%;
+  margin-top: 30px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 24px;
+}
+
+.ats-calc-metric-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.ats-calc-metric-label {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  margin-bottom: 6px;
+}
+
+.ats-calc-metric-val {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  font-size: 1.2rem;
+}
+
+/* Detailed Reports Grid (underneath) */
+.ats-calc-details-grid {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 32px;
+  margin-top: 32px;
+}
+
+@media (max-width: 768px) {
+  .ats-calc-details-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Keyword Section */
+.ats-calc-keyword-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.ats-calc-keyword-chip {
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 500;
+}
+
+.ats-calc-keyword-chip.found {
+  background: rgba(16, 185, 129, 0.08);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.15);
+}
+
+.ats-calc-keyword-chip.missing {
+  background: rgba(239, 68, 68, 0.08);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.15);
+}
+
+/* Checklist Items */
+.ats-calc-checklist-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  background: rgba(255, 255, 255, 0.01);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.ats-calc-checklist-item.pass {
+  border-left: 3px solid #10b981;
+}
+
+.ats-calc-checklist-item.fail {
+  border-left: 3px solid #ef4444;
+}
+
+.ats-calc-check-icon {
+  font-size: 1.1rem;
+}
+
+.ats-calc-checklist-text {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.ats-calc-checklist-label {
+  font-weight: 600;
+  display: block;
+  margin-bottom: 2px;
+}
+
+/* Recommendations Card */
+.ats-calc-recs-card {
+  grid-column: 1 / -1;
+}
+
+.ats-calc-recs-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.ats-calc-recs-item {
+  position: relative;
+  padding-left: 28px;
+  margin-bottom: 16px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.ats-calc-recs-item::before {
+  content: "✦";
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: #fbbf24;
+  font-size: 1.1rem;
+}
+
+/* Lottie or SVG Loader overlay inside card */
+.ats-calc-loader-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(12, 11, 22, 0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  border-radius: 20px;
+  backdrop-filter: blur(8px);
+}
+
+.ats-calc-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(251, 191, 36, 0.1);
+  border-left: 4px solid #fbbf24;
+  border-radius: 50%;
+  animation: atsSpin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes atsSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.ats-calc-loader-text {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.2rem;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.ats-calc-loader-subtext {
+  font-size: 0.9rem;
+  color: #9ca3af;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* Empty State Styling */
+.ats-calc-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 350px;
+  text-align: center;
+  padding: 40px;
+}
+
+.ats-calc-empty-icon {
+  font-size: 3.5rem;
+  margin-bottom: 20px;
+  opacity: 0.8;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.ats-calc-empty-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.ats-calc-empty-desc {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 0.95rem;
+  color: #9ca3af;
+  max-width: 320px;
+}

@@ -18,6 +18,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import TemplatesPage from "./pages/TemplatesPage";
 import SummaryGeneratorPage from "./pages/SummaryGeneratorPage";
+import AtsScoreCalculatorPage from "./pages/AtsScoreCalculatorPage";
 
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem("token");
@@ -119,6 +120,15 @@ function Layout() {
             element={
               <ProtectedRoute>
                 <AtsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/ats-calculator"
+            element={
+              <ProtectedRoute>
+                <AtsScoreCalculatorPage />
               </ProtectedRoute>
             }
           />

@@ -92,6 +92,7 @@ export default function Navbar() {
     { path: "/summary-generator",label: "Summary",   icon: "📝" },
     { path: "/jobs",            label: "Jobs",      icon: "◈" },
     { path: "/resume-optimizer",label: "Optimizer", icon: "⚡" },
+    { path: "/ats-calculator",  label: "ATS Score",  icon: "📊" },
   ];
 
   const [sidebarOpen, setSidebarOpen] = useState(false);

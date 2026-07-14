@@ -110,7 +110,7 @@ function Dashboard() {
       icon: "🎯",
       gradient: "linear-gradient(137deg, #10B981 0%, #34D399 45%, #059669 100%)",
       delay: 0.3,
-      path: "/ats",
+      path: "/ats-calculator",
     },
   ];
 

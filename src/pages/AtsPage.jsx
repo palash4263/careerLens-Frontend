@@ -408,7 +408,7 @@ export default function AtsPage() {
                     { label: "Contact completeness", val: audit.contact.score, color: '#38bdf8' },
                     { label: "Section standard flow", val: audit.sections.score, color: '#c084fc' },
                     { label: "Impact & Actionable metrics", val: audit.impact.score, color: '#34d399' },
-                    { label: "ATS compatibility level", val: audit.ats.score, color: '#fbbf24' }
+                    { label: "Parseability & structure", val: audit.ats.score, color: '#fbbf24' }
                   ].map((dim, i) => (
                     <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: '700', color: '#94a3b8' }}>
@@ -452,7 +452,7 @@ export default function AtsPage() {
                             {audit.grade}
                             <span style={{ fontSize: '1.2rem', color: '#64748b', fontWeight: '600' }}>({audit.score}/100 Health)</span>
                           </span>
-                          <span className="score-desc-label">Overall Standalone Grade</span>
+                          <span className="score-desc-label">Overall Resume Health</span>
                         </div>
                         <div className="score-status-pill-container">
                           <span className={`status-pill ${audit.score >= 85 ? 'excellent' : audit.score >= 70 ? 'good' : 'poor'}`}>
@@ -571,7 +571,7 @@ export default function AtsPage() {
 
                         {/* Section 3: ATS format standards */}
                         <div>
-                          <h4 style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 0.75rem 0', fontWeight: '700' }}>ATS Scan Friendliness</h4>
+                          <h4 style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 0.75rem 0', fontWeight: '700' }}>Parser Friendliness</h4>
                           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                             {[
                               { label: "Text-based file format (PDF)", ok: audit.ats.fileFormat },

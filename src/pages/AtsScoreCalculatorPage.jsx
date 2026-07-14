@@ -1,20 +1,13 @@
 // src/pages/AtsScoreCalculatorPage.jsx
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Sparkles, 
   Upload, 
-  CheckCircle, 
-  AlertCircle, 
-  FileText, 
-  TrendingUp, 
-  Award,
-  BookOpen, 
-  AlertTriangle 
 } from "lucide-react";
-import api from "../api/axiosConfig";
 import { getResumes, uploadResume } from "../services/resumeService";
 import { getJobDescriptions } from "../services/jobDescriptionService";
+import { analyzeResume } from "../services/atsService";
 import "../assets/AtsScoreCalculator.css";
 
 const TECH_KEYWORDS = [
@@ -25,12 +18,41 @@ const TECH_KEYWORDS = [
   "devops", "jira", "agile", "scrum", "microservices", "html", "css", "javascript"
 ];
 
-// Calculation utility
+const getGradeFromScore = (score) => {
+  if (score >= 85) return { grade: "Highly Compatible", gradeClass: "excellent" };
+  if (score >= 70) return { grade: "Good Match", gradeClass: "good" };
+  return { grade: "Needs Optimization", gradeClass: "poor" };
+};
+
+const getNumericScore = (...values) => {
+  for (const value of values) {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return null;
+};
+
+const normalizeKeywordList = (values = []) =>
+  Array.from(
+    new Set(
+      values
+        .map(value => String(value || "").trim())
+        .filter(Boolean)
+        .map(value => value.toUpperCase())
+    )
+  );
+
+const formatResumeDate = (value) => {
+  if (!value) return "Unknown date";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Unknown date";
+  return date.toLocaleDateString();
+};
+
+// Local fallback utility.
 const calculateScoreDetails = (resumeText, jdText) => {
   if (!resumeText || !jdText) return null;
   const resumeLower = resumeText.toLowerCase();
-  const jdLower = jdText.toLowerCase();
-
   // 1. Keyword extraction & matching
   const jdKeywords = TECH_KEYWORDS.filter(tech => {
     const regex = new RegExp(`\\b${tech}\\b`, 'i');
@@ -77,18 +99,7 @@ const calculateScoreDetails = (resumeText, jdText) => {
   const finalScore = Math.round((keywordScore * 0.5) + (formattingScore * 0.25) + (structureScore * 0.25));
 
   // Determine Badge/Grade
-  let grade = "C";
-  let gradeClass = "poor";
-  if (finalScore >= 85) {
-    grade = "Highly Compatible";
-    gradeClass = "excellent";
-  } else if (finalScore >= 70) {
-    grade = "Good Match";
-    gradeClass = "good";
-  } else {
-    grade = "Needs Optimization";
-    gradeClass = "poor";
-  }
+  const { grade, gradeClass } = getGradeFromScore(finalScore);
 
   // Recommendations
   const recs = [];
@@ -133,6 +144,98 @@ const calculateScoreDetails = (resumeText, jdText) => {
   };
 };
 
+const normalizeBackendScore = (backendResponse, heuristicResult) => {
+  if (!backendResponse) return null;
+
+  const currentScore = getNumericScore(
+    backendResponse.current_score,
+    backendResponse.currentScore,
+    backendResponse.score,
+    backendResponse.match_score,
+    backendResponse.ats_score,
+    backendResponse.analysis?.score,
+    backendResponse.resume_analysis?.score
+  );
+
+  if (currentScore == null) return null;
+
+  const optimizedScore = getNumericScore(
+    backendResponse.estimated_new_score,
+    backendResponse.estimatedNewScore,
+    backendResponse.optimized_score,
+    backendResponse.optimizedScore
+  );
+
+  const improvements = backendResponse.improvements || backendResponse.analysis?.improvements || {};
+  const foundKeywords = normalizeKeywordList(
+    improvements.matched_job_skills ||
+      backendResponse.matched_job_skills ||
+      backendResponse.matchedKeywords ||
+      heuristicResult?.foundKeywords ||
+      []
+  );
+  const missingKeywords = normalizeKeywordList(
+    improvements.missing_skills ||
+      backendResponse.missing_skills ||
+      backendResponse.missingKeywords ||
+      heuristicResult?.missingKeywords ||
+      []
+  );
+  const recommendations = Array.isArray(backendResponse.recommendations)
+    ? backendResponse.recommendations
+    : Array.isArray(improvements.recommendations)
+      ? improvements.recommendations
+      : heuristicResult?.recs || [];
+
+  const checklist = Array.isArray(backendResponse.checklist)
+    ? backendResponse.checklist
+    : heuristicResult?.checklist || [];
+
+  const formattingScore = getNumericScore(
+    backendResponse.formatting_score,
+    backendResponse.formattingScore,
+    backendResponse.parser_score,
+    heuristicResult?.formattingScore
+  ) ?? 0;
+
+  const structureScore = getNumericScore(
+    backendResponse.structure_score,
+    backendResponse.structureScore,
+    backendResponse.structure_score_percent,
+    heuristicResult?.structureScore
+  ) ?? 0;
+
+  const keywordMatchRate = getNumericScore(
+    backendResponse.keyword_match_rate,
+    backendResponse.keywordMatchRate
+  ) ?? (foundKeywords.length + missingKeywords.length > 0
+      ? Math.round((foundKeywords.length / (foundKeywords.length + missingKeywords.length)) * 100)
+      : heuristicResult?.keywordMatchRate ?? 0);
+
+  const sourceLabel = backendResponse.source
+    ? `Backend analysis (${backendResponse.source})`
+    : "Backend analysis";
+
+  const { grade, gradeClass } = getGradeFromScore(currentScore);
+
+  return {
+    ...(heuristicResult || {}),
+    score: Math.round(currentScore),
+    grade,
+    gradeClass,
+    keywordMatchRate,
+    formattingScore,
+    structureScore,
+    foundKeywords,
+    missingKeywords,
+    recs: recommendations,
+    checklist,
+    source: "backend",
+    sourceLabel,
+    optimizedScore: optimizedScore != null ? Math.round(optimizedScore) : undefined,
+  };
+};
+
 export default function AtsScoreCalculatorPage() {
   const [resumes, setResumes] = useState([]);
   const [selectedResumeId, setSelectedResumeId] = useState("");
@@ -172,26 +275,55 @@ export default function AtsScoreCalculatorPage() {
     loadInitialData();
   }, []);
 
-  const handleCalculateScore = () => {
+  const handleCalculateScore = async () => {
     const selectedResume = resumes.find(r => String(r.id) === String(selectedResumeId));
-    let jdText = "";
-
-    if (selectedJobId === "custom") {
-      jdText = customJobDescription;
-    } else {
-      const selectedJob = jobDescriptions.find(j => String(j.id) === String(selectedJobId));
-      jdText = selectedJob ? selectedJob.description : "";
-    }
+    const selectedJob = jobDescriptions.find(j => String(j.id) === String(selectedJobId));
+    const jdText = selectedJobId === "custom"
+      ? customJobDescription
+      : selectedJob?.description || "";
 
     if (!selectedResume || !jdText) return;
 
     setLoading(true);
-    // Mimic processing/loading duration
-    setTimeout(() => {
-      const details = calculateScoreDetails(selectedResume.extracted_text, jdText);
-      setScoreResult(details);
+
+    try {
+      const heuristicDetails = calculateScoreDetails(selectedResume.extracted_text, jdText);
+
+      if (selectedJobId !== "custom") {
+        const backendResponse = await analyzeResume(
+          Number(selectedResumeId),
+          Number(selectedJobId)
+        );
+        const normalized = normalizeBackendScore(backendResponse, heuristicDetails);
+
+        if (normalized) {
+          setScoreResult(normalized);
+          return;
+        }
+      }
+
+      setScoreResult({
+        ...heuristicDetails,
+        source: "heuristic",
+        sourceLabel:
+          selectedJobId === "custom"
+            ? "Heuristic estimate for pasted job text"
+            : "Heuristic fallback estimate",
+      });
+    } catch (err) {
+      console.error("ATS scoring failed, falling back to local estimate", err);
+      const heuristicDetails = calculateScoreDetails(selectedResume.extracted_text, jdText);
+      setScoreResult({
+        ...heuristicDetails,
+        source: "heuristic",
+        sourceLabel:
+          selectedJobId === "custom"
+            ? "Heuristic estimate for pasted job text"
+            : "Heuristic fallback estimate",
+      });
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
 
   const handleFileUpload = async (e) => {
@@ -289,7 +421,7 @@ export default function AtsScoreCalculatorPage() {
               >
                 {resumes.map(r => (
                   <option key={r.id} value={r.id}>
-                    {r.file_name} ({new Date(r.uploaded_at || Date.now()).toLocaleDateString()})
+                    {r.file_name} ({formatResumeDate(r.uploaded_at)})
                   </option>
                 ))}
               </select>
@@ -421,13 +553,18 @@ export default function AtsScoreCalculatorPage() {
                   </svg>
                   <div className="ats-calc-score-center">
                     <span className="ats-calc-score-number">{scoreResult.score}</span>
-                    <span className="ats-calc-score-label">Match Score</span>
+                    <span className="ats-calc-score-label">ATS Match Score</span>
                   </div>
                 </div>
 
                 <span className={`ats-calc-badge ${scoreResult.gradeClass}`}>
                   {scoreResult.grade}
                 </span>
+
+                <div style={{ marginTop: "10px", fontSize: "0.78rem", color: "#94a3b8", textAlign: "center" }}>
+                  {scoreResult.sourceLabel || "Heuristic estimate"}
+                  {Number.isFinite(scoreResult.optimizedScore) ? ` • projected optimized score ${scoreResult.optimizedScore}` : ""}
+                </div>
 
                 <div className="ats-calc-metrics-row">
                   <div className="ats-calc-metric-item">
@@ -461,7 +598,7 @@ export default function AtsScoreCalculatorPage() {
                 <div className="ats-calc-empty-icon">📊</div>
                 <h3 className="ats-calc-empty-title">Ready for scoring</h3>
                 <p className="ats-calc-empty-desc">
-                  Select a resume and job description, then click "Calculate ATS Compatibility" to see scores.
+                  Select a resume and job description, then click "Calculate ATS Compatibility" to see the backend score when available.
                 </p>
               </motion.div>
             )}

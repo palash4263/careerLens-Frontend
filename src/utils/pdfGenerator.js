@@ -158,6 +158,7 @@ const extractJobTitle = (rawText) => {
 // PARSE RESUME TEXT INTO SECTIONS
 // =====================================================================
 const SECTION_ALIASES = {
+  Header:         ['Header', 'Contact', 'Contact Info', 'Personal Info', 'Personal Information'],
   Summary:        ['Summary', 'Professional Summary', 'Objective', 'Profile', 'About'],
   Education:      ['Education', 'Academic Background'],
   Experience:     ['Experience', 'Work Experience', 'Professional Experience', 'Employment History', 'Career History'],

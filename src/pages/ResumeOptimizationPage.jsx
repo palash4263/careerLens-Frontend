@@ -71,6 +71,7 @@ const copyToClipboard = async (text, setCopySuccess) => {
 
 const getSectionIcon = (sectionKey) => {
   switch (sectionKey) {
+    case 'Header': return '👤';
     case 'Summary': return '📄';
     case 'Experience': return '💼';
     case 'Projects': return '🛠️';
@@ -84,6 +85,7 @@ const getSectionIcon = (sectionKey) => {
 
 const parseSectionsFromText = (text) => {
   const sections = {
+    Header: '',
     Summary: '',
     Experience: '',
     Projects: '',
@@ -96,10 +98,11 @@ const parseSectionsFromText = (text) => {
   if (!text) return sections;
   
   const rawLines = text.split('\n');
-  let currentSection = 'Summary';
+  let currentSection = 'Header';
   let currentLines = [];
 
   const SECTION_ALIASES = {
+    Header:         ['Header', 'Contact', 'Contact Info', 'Personal Info', 'Personal Information'],
     Summary:        ['Summary', 'Professional Summary', 'Objective', 'Profile', 'About'],
     Education:      ['Education', 'Academic Background'],
     Experience:     ['Experience', 'Work Experience', 'Professional Experience', 'Employment History', 'Career History'],
@@ -501,6 +504,7 @@ export default function ResumeOptimizationPage() {
   }, [searchParams]);
 
   const [editedSections, setEditedSections] = useState({
+    Header: '',
     Summary: '',
     Experience: '',
     Projects: '',
@@ -1459,7 +1463,7 @@ export default function ResumeOptimizationPage() {
                          <div className="compare-content-modern" style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem', background: 'rgba(15, 23, 42, 0.4)' }}>
                           {Object.keys(editedSections).map(sectionKey => {
                             const sectionContent = editedSections[sectionKey];
-                            const isPrimary = ['Summary', 'Experience', 'Projects', 'Skills', 'Education'].includes(sectionKey);
+                            const isPrimary = ['Header', 'Summary', 'Experience', 'Projects', 'Skills', 'Education'].includes(sectionKey);
                             if (!isPrimary && (!sectionContent || !sectionContent.trim())) return null;
 
                             return (

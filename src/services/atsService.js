@@ -1,22 +1,31 @@
-import axios from "axios";
-
-const API_URL = "http://localhost:8080/api/ats";
+import api from "../api/axiosConfig";
+import { optimizeResume } from "./resumeOptimizationService";
 
 export const analyzeResume = async (resumeId, jobDescriptionId) => {
-  const token = localStorage.getItem("token"); // adjust to however you store it
+  const params = new URLSearchParams({
+    resume_id: String(resumeId),
+    job_description_id: String(jobDescriptionId),
+  });
 
-  const response = await axios.post(
-    `${API_URL}/analyze`,
-    {
-      resumeId,
-      jobDescriptionId,
-    },
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+  try {
+    const response = await api.post(
+      `/ats/analyze?${params.toString()}`,
+      {
+        resumeId,
+        jobDescriptionId,
+        resume_id: resumeId,
+        job_description_id: jobDescriptionId,
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    const status = error.response?.status;
+
+    if (status === 404 || status === 405) {
+      return optimizeResume(resumeId, jobDescriptionId);
     }
-  );
 
-  return response.data;
+    throw error;
+  }
 };

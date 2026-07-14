@@ -86,14 +86,13 @@ export default function Navbar() {
   };
 
   const navLinks = [
-    { path: "/dashboard",       label: "Dashboard", icon: "⊞" },
-    { path: "/resumes",         label: "Resumes",   icon: "◧" },
-    { path: "/templates",       label: "Templates", icon: "🎨" },
-    { path: "/summary-generator",label: "Summary",   icon: "📝" },
-    { path: "/jobs",            label: "Jobs",      icon: "◈" },
-    { path: "/resume-optimizer",label: "Optimizer", icon: "⚡" },
-    { path: "/resume-editor",   label: "Editor",    icon: "✎" },
-    { path: "/ats-calculator",  label: "ATS Score",  icon: "📊" },
+    { path: "/dashboard",        label: "Dashboard", icon: "⊞" },
+    { path: "/resumes",          label: "Resumes",   icon: "◧" },
+    { path: "/templates",        label: "Templates", icon: "🎨" },
+    { path: "/jobs",             label: "Jobs",      icon: "◈" },
+    { path: "/resume-optimizer", label: "Optimizer", icon: "⚡" },
+    { path: "/resume-editor",    label: "Editor",    icon: "✎" },
+    { path: "/ats-calculator",   label: "ATS Score", icon: "📊" },
   ];
 
   const [sidebarOpen, setSidebarOpen] = useState(false);

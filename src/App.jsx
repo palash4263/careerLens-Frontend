@@ -18,7 +18,6 @@ import ProfilePage from "./pages/ProfilePage";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import TemplatesPage from "./pages/TemplatesPage";
-import SummaryGeneratorPage from "./pages/SummaryGeneratorPage";
 import AtsScoreCalculatorPage from "./pages/AtsScoreCalculatorPage";
 
 function ProtectedRoute({ children }) {
@@ -76,15 +75,6 @@ function Layout() {
             element={
               <ProtectedRoute>
                 <TemplatesPage />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/summary-generator"
-            element={
-              <ProtectedRoute>
-                <SummaryGeneratorPage />
               </ProtectedRoute>
             }
           />

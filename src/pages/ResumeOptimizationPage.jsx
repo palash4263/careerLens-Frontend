@@ -1,22 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence, useInView, useMotionValue, useSpring, useReducedMotion, animate } from "framer-motion";
-import {
-  Copy,
-  Check,
-  Sparkles,
-  TrendingUp,
-  FileText,
-  Eye,
-  Zap,
-  Target,
-  BarChart3,
-  ArrowRight,
-  Star,
-  Clock,
-  Download,
-  Wand2
-} from "lucide-react";
+import { Copy, Check, Sparkles, TrendingUp, FileText, Eye, Zap, Target, ChartBar as BarChart3, ArrowRight, Star, Clock, Download, Wand as Wand2 } from "lucide-react";
 import "./ResumeOptimizationPage.css";
 import { getResumes } from "../services/resumeService";
 import { getJobDescriptions } from "../services/jobDescriptionService";
@@ -637,11 +622,13 @@ export default function ResumeOptimizationPage() {
     setOptimizingSections(prev => ({ ...prev, [sectionName]: true }));
     try {
       const customPrompt = sectionPrompts[sectionName] || "";
+      const jdText = jobDescriptions.find(j => j.id === Number(selectedJobDescription))?.description || "";
       const response = await optimizeSection(
-        Number(selectedResume),
+        selectedResume,
         sectionName,
-        Number(selectedJobDescription),
-        customPrompt
+        jdText,
+        customPrompt,
+        editedSections[sectionName],
       );
       const optimizedText = extractOptimizedText(response);
       

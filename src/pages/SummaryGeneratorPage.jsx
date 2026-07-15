@@ -2,22 +2,10 @@
 // DESIGN_VARIANCE: 8 | MOTION_INTENSITY: 6 | VISUAL_DENSITY: 4
 
 import React, { useState, useEffect, useRef } from "react";
-import { 
-  FileText, 
-  Sparkles, 
-  UploadCloud, 
-  Copy, 
-  ArrowRight, 
-  RefreshCw, 
-  AlertCircle, 
-  CheckCircle, 
-  FileCheck, 
-  ChevronRight,
-  Sparkle
-} from "lucide-react";
+import { FileText, Sparkles, CloudUpload as UploadCloud, Copy, ArrowRight, RefreshCw, CircleAlert as AlertCircle, CircleCheck as CheckCircle, FileCheck, ChevronRight, Sparkle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import api from "../api/axiosConfig";
-import { uploadResume } from "../services/resumeService";
+import { uploadResume, getResumes } from "../services/resumeService";
+import { getJobDescriptions } from "../services/jobDescriptionService";
 import { optimizeSection } from "../services/resumeOptimizationService";
 import "../assets/SummaryGenerator.css";
 
@@ -54,20 +42,20 @@ export default function SummaryGeneratorPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [resumesRes, jobsRes] = await Promise.all([
-          api.get("/resumes"),
-          api.get("/jobs/")
+        const [resumeData, jobData] = await Promise.all([
+          getResumes(),
+          getJobDescriptions(),
         ]);
         
-        setResumes(resumesRes.data);
-        setJobDescriptions(jobsRes.data);
+        setResumes(resumeData);
+        setJobDescriptions(jobData);
         
-        if (resumesRes.data.length > 0) {
-          setSelectedResumeId(resumesRes.data[0].id);
+        if (resumeData.length > 0) {
+          setSelectedResumeId(resumeData[0].id);
         }
-        if (jobsRes.data.length > 0) {
-          setSelectedJobId(jobsRes.data[0].id);
-          setCustomJobDescription(jobsRes.data[0].description || "");
+        if (jobData.length > 0) {
+          setSelectedJobId(jobData[0].id);
+          setCustomJobDescription(jobData[0].description || "");
         }
       } catch (err) {
         console.error("Failed to load initial data", err);
@@ -132,9 +120,9 @@ export default function SummaryGeneratorPage() {
       showToast("Resume parsed and saved!");
       
       // Refresh list and auto-select new resume
-      const resumesRes = await api.get("/resumes");
-      setResumes(resumesRes.data);
-      const newResume = resumesRes.data.find(r => r.file_name === file.name) || resumesRes.data[0];
+      const refreshedResumes = await getResumes();
+      setResumes(refreshedResumes);
+      const newResume = refreshedResumes.find(r => r.file_name === file.name) || refreshedResumes[0];
       if (newResume) {
         setSelectedResumeId(newResume.id);
       }
@@ -177,23 +165,6 @@ export default function SummaryGeneratorPage() {
     }, 1500);
 
     try {
-      // Find or create temporary job description ID to feed to optimizeSection
-      let jobIdToUse = selectedJobId;
-      
-      if (selectedJobId === "custom" || !selectedJobId) {
-        // Create custom job description record so backend optimization has a reference
-        const createJobRes = await api.post("/jobs/", {
-          title: "Target Role",
-          company: "Target Company",
-          description: customJobDescription
-        });
-        jobIdToUse = createJobRes.data.id;
-        // Sync lists
-        const jobsRes = await api.get("/jobs/");
-        setJobDescriptions(jobsRes.data);
-        setSelectedJobId(jobIdToUse);
-      }
-
       const promptText = toneInstruction 
         ? `Write a professional 3-4 sentence resume summary statement. Custom instruction: ${toneInstruction}`
         : "Write a professional 3-4 sentence resume summary statement highlighting key matching skills.";
@@ -201,8 +172,8 @@ export default function SummaryGeneratorPage() {
       const response = await optimizeSection(
         selectedResumeId,
         "Summary",
-        jobIdToUse,
-        promptText
+        customJobDescription,
+        promptText,
       );
 
       setGeneratedSummary(response.optimizedText || response.text || "");

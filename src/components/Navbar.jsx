@@ -91,7 +91,6 @@ export default function Navbar() {
     { path: "/templates",        label: "Templates", icon: "🎨" },
     { path: "/jobs",             label: "Jobs",      icon: "◈" },
     { path: "/resume-optimizer", label: "Optimizer", icon: "⚡" },
-    { path: "/resume-editor",    label: "Editor",    icon: "✎" },
     { path: "/ats-calculator",   label: "ATS Score", icon: "📊" },
   ];
 

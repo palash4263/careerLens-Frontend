@@ -8,6 +8,7 @@ import {
   parseSections,
   reconstructResume,
 } from "../utils/resumeOptimizer";
+import api from "../api/axiosConfig";
 
 /**
  * Optimize an entire resume against a job description.
@@ -45,36 +46,22 @@ export const optimizeResume = async (resumeId, jobDescriptionId) => {
  * @param {string} sectionTextOverride - Optional: pass the current section text directly
  * @returns {Promise<{optimizedText, optimized_content, optimizedSection, text}>}
  */
+
 export const optimizeSection = async (
   resumeId,
   sectionName,
   jobDescriptionId,
   customPrompt = "",
-  sectionTextOverride = null,
+  sectionTextOverride = ""
 ) => {
-  let sectionText = sectionTextOverride;
-  let jobDescriptionText = "";
+  const response = await api.post("/optimization/optimize-section", null, {
+    params: {
+      resume_id: resumeId,
+      section_name: sectionName,
+      job_description_id: jobDescriptionId,
+      prompt: customPrompt,
+    },
+  });
 
-  if (sectionText == null) {
-    let resumeText = "";
-    if (typeof resumeId === "number") {
-      const resumes = await getResumes();
-      const resume = resumes.find((r) => String(r.id) === String(resumeId));
-      resumeText = resume?.extracted_text || resume?.content || "";
-    } else if (typeof resumeId === "string") {
-      resumeText = resumeId;
-    }
-    const sections = parseSections(resumeText);
-    sectionText = sections[sectionName] || "";
-  }
-
-  if (typeof jobDescriptionId === "number") {
-    const jobs = await getJobDescriptions();
-    const job = jobs.find((j) => String(j.id) === String(jobDescriptionId));
-    jobDescriptionText = job?.description || "";
-  } else if (typeof jobDescriptionId === "string") {
-    jobDescriptionText = jobDescriptionId;
-  }
-
-  return optimizeSectionClient(sectionName, sectionText, jobDescriptionText, customPrompt);
+  return response.data;
 };

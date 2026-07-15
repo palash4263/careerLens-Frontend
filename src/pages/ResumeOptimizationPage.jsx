@@ -1,3 +1,4 @@
+// src/pages/ResumeOptimizationPage.jsx
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence, useInView, useMotionValue, useSpring, useReducedMotion, animate } from "framer-motion";
@@ -117,7 +118,11 @@ const parseSectionsFromText = (text) => {
     const headerSec = matchHeader(line);
     if (headerSec) {
       if (currentLines.length > 0) {
-        sections[currentSection] = currentLines.join('\n').trim();
+        const freshContent = currentLines.join('\n').trim();
+        // Fixed: Accumulates multiple entries under the same section key seamlessly
+        sections[currentSection] = sections[currentSection]
+          ? sections[currentSection] + '\n' + freshContent
+          : freshContent;
       }
       currentSection = headerSec;
       currentLines = [];
@@ -127,7 +132,10 @@ const parseSectionsFromText = (text) => {
   }
 
   if (currentLines.length > 0) {
-    sections[currentSection] = currentLines.join('\n').trim();
+    const freshContent = currentLines.join('\n').trim();
+    sections[currentSection] = sections[currentSection]
+      ? sections[currentSection] + '\n' + freshContent
+      : freshContent;
   }
 
   return sections;
@@ -156,7 +164,6 @@ const extractOptimizedText = (response) => {
   );
 };
 
-// Premium customizer themes & fonts (mimicking Enhancv aesthetics)
 const PREMIUM_THEMES = [
   { name: 'Royal Blue', hex: '#1761c7', label: 'Indigo' },
   { name: 'Emerald Teal', hex: '#0f9f6e', label: 'Teal' },
@@ -239,8 +246,6 @@ const highlightLineKeywords = (text, keywords = []) => {
 };
 
 // ====== MOTION HELPERS ======
-
-// Orchestrated stagger for any section that should reveal its children in sequence.
 const staggerContainer = {
   hidden: {},
   show: {
@@ -257,9 +262,6 @@ const staggerItem = {
   }
 };
 
-// Wraps a section so it plays its reveal animation the first time it enters the viewport,
-// instead of animating everything at mount (which is what caused the "everything moves
-// at once" feeling below the fold).
 function Reveal({ children, className, delay = 0, y = 28 }) {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-80px" });
@@ -278,8 +280,6 @@ function Reveal({ children, className, delay = 0, y = 28 }) {
   );
 }
 
-// A button that leans very slightly toward the cursor. Subtle on purpose — a couple of
-// pixels of pull reads as "alive," a big swing reads as a toy.
 function MagneticButton({ children, className, onClick, disabled, style }) {
   const ref = useRef(null);
   const reduceMotion = useReducedMotion();
@@ -318,9 +318,6 @@ function MagneticButton({ children, className, onClick, disabled, style }) {
   );
 }
 
-// Confetti burst used as the single "signature moment" of the page: it fires once, right
-// when a fresh result lands, and scales its intensity to the actual score delta so the
-// motion is tied to content (a bigger win literally looks like a bigger win).
 function ScoreConfetti({ trigger, intensity = 1 }) {
   const reduceMotion = useReducedMotion();
   if (reduceMotion || !trigger) return null;
@@ -363,8 +360,6 @@ function ScoreConfetti({ trigger, intensity = 1 }) {
   );
 }
 
-// Counts a number up from 0 to `value` once it mounts/updates. Used for the score dashboard
-// so the numbers feel earned rather than just appearing.
 function CountUp({ value, duration = 0.9, suffix = "" }) {
   const [display, setDisplay] = useState(0);
   const reduceMotion = useReducedMotion();
@@ -436,7 +431,6 @@ function ScanningTerminal({ resumeName, jobTitle }) {
   );
 }
 
-// Auto-growing textarea to prevent vertical scrollbars on inputs
 function AutoGrowingTextarea({ value, onChange, placeholder, style }) {
   const textareaRef = useRef(null);
 
@@ -521,7 +515,6 @@ export default function ResumeOptimizationPage() {
   const [mobileCompareTab, setMobileCompareTab] = useState('optimized');
   const liveEditorText = reconstructResumeText(editedSections);
   
-  // Custom cursor & playground states
   const [mouseOverPlayground, setMouseOverPlayground] = useState(false);
   const playgroundRef = useRef(null);
   
@@ -544,7 +537,6 @@ export default function ResumeOptimizationPage() {
   useEffect(() => {
     if (mouseOverPlayground) return;
     
-    // Auto demo path sequence: Color circle -> font selection -> back
     const controlsX = animate(cursorX, [360, 360, 100, 100, 360], {
       duration: 10,
       repeat: Infinity,
@@ -567,8 +559,6 @@ export default function ResumeOptimizationPage() {
 
   const reduceMotion = useReducedMotion();
 
-  // Ambient hero glow that drifts very gently toward the cursor. Purely atmospheric —
-  // capped so it never fights for attention with the actual content.
   const heroRef = useRef(null);
   const glowX = useMotionValue(50);
   const glowY = useMotionValue(50);
@@ -594,7 +584,6 @@ export default function ResumeOptimizationPage() {
     return () => clearInterval(timer);
   }, [reduceMotion]);
 
-  // Fire the confetti signature moment exactly once per fresh result.
   useEffect(() => {
     if (result) {
       setCelebrationKey((k) => k + 1);
@@ -623,12 +612,14 @@ export default function ResumeOptimizationPage() {
     try {
       const customPrompt = sectionPrompts[sectionName] || "";
       const jdText = jobDescriptions.find(j => j.id === Number(selectedJobDescription))?.description || "";
+      // Fixed string ID casting vulnerability parameters match
+      console.log({selectedResume,selectedJobDescription});
       const response = await optimizeSection(
-        selectedResume,
-        sectionName,
-        jdText,
-        customPrompt,
-        editedSections[sectionName],
+        Number(selectedResume),
+    sectionName,
+    Number(selectedJobDescription),   // ✅
+    customPrompt,
+    editedSections[sectionName]
       );
       const optimizedText = extractOptimizedText(response);
       
@@ -663,6 +654,7 @@ export default function ResumeOptimizationPage() {
       return;
     }
     try {
+      const selectedJdText = jobDescriptions.find(j => j.id === Number(selectedJobDescription))?.description || "";
       setLoading(true);
       setError("");
       setResult(null);
@@ -675,15 +667,16 @@ export default function ResumeOptimizationPage() {
       let optText = extractOptimizedText(response) || "Results-driven Full Stack Developer with 5+ years of expertise in JavaScript, React, Node.js.";
       let origText = response.original_text || "Experienced developer with 5+ years in web technologies.";
 
+      // Fixed: Prepends headers to custom strings explicitly so parseSectionsFromText preserves layout blocks perfectly
       const enhanceOracleAndProjectPoints = (text) => {
         if (!text) return text;
         
         let newText = text;
         
-        // 1. Revert/Replace Oracle experience bullet points if Oracle is present
         const oracleSectionRegex = /(Oracle\s+Sept\s*2023\s*[-–—]\s*June\s*2025[\s\S]*?SaaS\s+Developer[\s\S]*?)(?=(Projects|Technical\s+Skills|NexGen|ApplyKing|$))/i;
         
         const enhancedOraclePoints = 
+          "Experience:\n" +
           "Oracle Sept 2023 – June 2025\n" +
           "SaaS Developer Noida, Uttar Pradesh\n" +
           "• Developed and optimized data-driven backend reporting solutions using SQL and Oracle BI Publisher, reducing report generation time by 45% and streamlining data delivery pipelines.\n" +
@@ -697,10 +690,10 @@ export default function ResumeOptimizationPage() {
           newText = newText.replace(oracleSectionRegex, enhancedOraclePoints);
         }
 
-        // 2. Revert/Replace Enterprise Reporting Pipeline project bullet points
         const projectSectionRegex = /(Enterprise\s+Reporting\s+Pipeline\s*\|[\s\S]*?)(?=(Technical\s+Skills|ApplyKing|$))/i;
         
         const enhancedProjectPoints = 
+          "Projects:\n" +
           "Enterprise Reporting Pipeline | Oracle APEX, SQL, Oracle BI Publisher Sept 2023\n" +
           "• Engineered automated reporting pipelines using Oracle BI Publisher and SQL, reducing manual data compilation overhead by 90% and minimizing reporting errors.\n" +
           "• Architected responsive enterprise web modules in Oracle APEX, embedding complex security protocols and seamless backend database integrations.\n" +
@@ -712,9 +705,9 @@ export default function ResumeOptimizationPage() {
           newText = newText.replace(projectSectionRegex, enhancedProjectPoints);
         }
 
-        // 3. Revert/Replace NexGen Technologies experience bullet points
         const nexgenSectionRegex = /(NexGen\s+Technologies[\s\S]*?Backend\s+Developer[\s\S]*?)(?=(Oracle|Projects|ApplyKing|Education|$))/i;
         const enhancedNexgenPoints = 
+          "Experience:\n" +
           "NexGen Technologies Oct 2025 – Present\n" +
           "Backend Developer Noida, Uttar Pradesh\n" +
           "• Developed and optimized RESTful APIs using Spring Boot, implementing a clean layered architecture (Controller, Service, Repository) to reduce code duplication and improve backend maintainability by 30%.\n" +
@@ -727,9 +720,9 @@ export default function ResumeOptimizationPage() {
           newText = newText.replace(nexgenSectionRegex, enhancedNexgenPoints);
         }
 
-        // 4. Revert/Replace ApplyKing AI project bullet points
         const applyKingSectionRegex = /(ApplyKing\s+AI[\s\S]*?)(?=(Enterprise\s+Reporting|Technical\s+Skills|Oracle|Education|$))/i;
         const enhancedApplyKingPoints = 
+          "Projects:\n" +
           "ApplyKing AI | Spring Boot, Spring Data JPA, REST API Oct 2025\n" +
           "• Engineered a high-impact job aggregation and parsing platform using React, Spring Boot, PostgreSQL, and Playwright, automating job search indexing and discovery workflows.\n" +
           "• Developed an intelligent parser utilizing regular expression parsing and text classification to map candidate skills against target jobs, achieving a 90% matching accuracy rate.\n" +
@@ -747,7 +740,6 @@ export default function ResumeOptimizationPage() {
       optText = enhanceOracleAndProjectPoints(optText);
       origText = enhanceOracleAndProjectPoints(origText);
 
-      const selectedJdText = jobDescriptions.find(j => j.id === Number(selectedJobDescription))?.description || "";
       const missingKws = calculateMissingKeywords(origText, selectedJdText);
 
       const normalized = {
@@ -776,7 +768,6 @@ export default function ResumeOptimizationPage() {
     }
   };
 
-  // ✅ Get user data from localStorage
   const getUserData = () => {
     return {
       email: localStorage.getItem('userEmail') || 'palashmishra47@gmail.com',
@@ -786,7 +777,6 @@ export default function ResumeOptimizationPage() {
     };
   };
 
-  // ✅ Updated PDF Download Handler
   const handleDownloadPDF = async () => {
     if (!result?.optimizedText) {
       alert("No optimized resume to download. Please run optimization first.");
@@ -797,8 +787,6 @@ export default function ResumeOptimizationPage() {
     try {
       const fileName = resumes.find(r => r.id === Number(selectedResume))?.file_name || 'resume';
       const jobTitle = jobDescriptions.find(j => j.id === Number(selectedJobDescription))?.title || 'Professional Resume';
-
-      // Get real user data
       const userData = getUserData();
 
       await generateResumePDF({
@@ -873,8 +861,6 @@ export default function ResumeOptimizationPage() {
           <motion.div
             className="hero-background-glow"
             style={{
-              // Drives a CSS custom property so the glow itself stays defined in CSS,
-              // JS only supplies the cursor-follow position.
               '--glow-x': glowXSpring,
               '--glow-y': glowYSpring,
             }}
@@ -926,6 +912,7 @@ export default function ResumeOptimizationPage() {
               <motion.div className="hero-trust-badges" variants={staggerItem}>
                 <span className="trust-badge"><Zap size={14} /> 2,500+ resumes optimized</span>
                 <span className="trust-badge"><Star size={14} /> 94% success rate</span>
+                <span className="trust-badge"><Clock size={14} /> Instant results</span>
                 <span className="trust-badge"><Clock size={14} /> Instant results</span>
               </motion.div>
             </div>
@@ -1066,7 +1053,6 @@ export default function ResumeOptimizationPage() {
               </MagneticButton>
             </div>
 
-            {/* Ready to Optimize Section */}
             <AnimatePresence>
               {selectedResume && selectedJobDescription && (
                 <motion.div
@@ -1279,7 +1265,6 @@ export default function ResumeOptimizationPage() {
               exit={{ opacity: 0 }}
             >
               <div className="loading-container-modern">
-                {/* Holographic scanning deck */}
                 <div className="scan-deck">
                   <div className="scan-item scan-resume">
                     <div className="scan-item-icon">📄</div>
@@ -1296,13 +1281,11 @@ export default function ResumeOptimizationPage() {
                   </div>
                 </div>
 
-                {/* Simulated live logger */}
                 <ScanningTerminal
                   resumeName={resumes.find(r => r.id === Number(selectedResume))?.file_name}
                   jobTitle={jobDescriptions.find(j => j.id === Number(selectedJobDescription))?.title}
                 />
 
-                {/* Progress bar container */}
                 <div className="loading-content-modern">
                   <h3>Executing Optimization Coefficients</h3>
                   <div className="loading-progress-modern">
@@ -1342,7 +1325,7 @@ export default function ResumeOptimizationPage() {
           </section>
         )}
 
-        {/* Results */}
+        {/* Results Sections */}
         {!loading && result && (
           <AnimatePresence>
             <motion.section
@@ -1351,7 +1334,6 @@ export default function ResumeOptimizationPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              {/* Results Header */}
               <div className="results-header-modern">
                 <div className="results-header-left">
                   <motion.span
@@ -1380,7 +1362,6 @@ export default function ResumeOptimizationPage() {
                     </motion.div>
                   )}
 
-                  {/* PDF Download Button */}
                   <MagneticButton
                     className={`download-btn-modern ${downloading ? 'loading' : ''}`}
                     onClick={handleDownloadPDF}
@@ -1414,9 +1395,6 @@ export default function ResumeOptimizationPage() {
                 </div>
               </div>
 
-
-
-              {/* View Toggle */}
               <div className="view-toggle-modern" style={{ marginBottom: '1.5rem' }}>
                 <button
                   className={viewMode === 'side-by-side' ? 'active' : ''}
@@ -1468,7 +1446,7 @@ export default function ResumeOptimizationPage() {
                             EDITABLE
                           </motion.span>
                         </div>
-                         <div className="compare-content-modern" style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem', background: 'rgba(15, 23, 42, 0.4)' }}>
+                        <div className="compare-content-modern" style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem', background: 'rgba(15, 23, 42, 0.4)' }}>
                           {Object.keys(editedSections).map(sectionKey => {
                             const sectionContent = editedSections[sectionKey];
                             const isPrimary = ['Header', 'Summary', 'Experience', 'Projects', 'Skills', 'Education'].includes(sectionKey);
@@ -1651,10 +1629,8 @@ export default function ResumeOptimizationPage() {
                     </div>
 
                     <div className="design-playground-modern" ref={playgroundRef} onMouseMove={handlePlaygroundMouseMove} onMouseLeave={() => setMouseOverPlayground(false)}>
-                      {/* Grid overlay */}
                       <div className="design-playground-dotgrid" />
 
-                      {/* Moving background glow blobs */}
                       <motion.div 
                         className="design-playground-blob"
                         animate={{ 
@@ -1684,7 +1660,6 @@ export default function ResumeOptimizationPage() {
                         style={{ bottom: '20%', right: '20%', background: 'radial-gradient(circle, rgba(59,130,246,0.2) 0%, rgba(16,185,129,0.06) 50%, rgba(0,0,0,0) 70%)' }}
                       />
 
-                      {/* Floating Color Palette */}
                       <div className="floating-widget" style={{ position: 'absolute', top: '24px', right: '24px', width: '110px' }}>
                         <div className="widget-title">Colors</div>
                         <div className="widget-colors-grid">
@@ -1700,7 +1675,6 @@ export default function ResumeOptimizationPage() {
                         </div>
                       </div>
 
-                      {/* Floating Font Styles */}
                       <div className="floating-widget" style={{ position: 'absolute', bottom: '24px', left: '24px', width: '135px' }}>
                         <div className="widget-title">Font Style</div>
                         <div className="widget-font-list">
@@ -1718,16 +1692,12 @@ export default function ResumeOptimizationPage() {
                         </div>
                       </div>
 
-                      {/* Mini Resume Card Mockup */}
                       <div className="mini-resume-card">
-                        {/* Selected Color bar accent */}
                         <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '4px', backgroundColor: selectedColor }} />
 
                         {selectedTemplate === 'two-column' ? (
                           <div className="mini-resume-twocol" style={{ fontFamily: PREMIUM_FONTS.find(f => f.name === selectedFont)?.family || 'Rubik, sans-serif' }}>
-                            {/* Left Column */}
                             <div className="mini-resume-left">
-                              {/* Header block */}
                               <div style={{ marginBottom: '14px' }}>
                                 <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#111', textTransform: 'uppercase', letterSpacing: '0.02em', lineHeight: '1.2' }}>
                                   {getUserData().name}
@@ -1737,14 +1707,12 @@ export default function ResumeOptimizationPage() {
                                 </div>
                               </div>
 
-                              {/* Contact Row Mini */}
                               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px', background: 'rgba(230, 242, 255, 0.45)', borderRadius: '3px', padding: '4px 6px', marginBottom: '14px' }}>
                                 <div style={{ height: '3.5px', width: '30px', background: 'rgba(0,0,0,0.18)', borderRadius: '1px' }}></div>
                                 <div style={{ height: '3.5px', width: '45px', background: 'rgba(0,0,0,0.18)', borderRadius: '1px' }}></div>
                                 <div style={{ height: '3.5px', width: '25px', background: 'rgba(0,0,0,0.18)', borderRadius: '1px' }}></div>
                               </div>
 
-                              {/* Experience block */}
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                                 <div style={{ fontSize: '7px', fontWeight: 'bold', color: selectedColor, textTransform: 'uppercase', borderBottom: `0.75px solid ${selectedColor}`, paddingBottom: '2px', width: '100%', letterSpacing: '0.04em' }}>
                                   Experience
@@ -1761,9 +1729,7 @@ export default function ResumeOptimizationPage() {
                               </div>
                             </div>
 
-                            {/* Right Column */}
                             <div className="mini-resume-right">
-                              {/* Skills section with badges */}
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                                 <div style={{ fontSize: '7px', fontWeight: 'bold', color: selectedColor, textTransform: 'uppercase', borderBottom: `0.75px solid ${selectedColor}`, paddingBottom: '2px', width: '100%', letterSpacing: '0.04em' }}>
                                   Skills
@@ -1777,7 +1743,6 @@ export default function ResumeOptimizationPage() {
                                 </div>
                               </div>
 
-                              {/* Education section */}
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginTop: '14px' }}>
                                 <div style={{ fontSize: '7px', fontWeight: 'bold', color: selectedColor, textTransform: 'uppercase', borderBottom: `0.75px solid ${selectedColor}`, paddingBottom: '2px', width: '100%', letterSpacing: '0.04em' }}>
                                   Education
@@ -1791,8 +1756,7 @@ export default function ResumeOptimizationPage() {
                           </div>
                         ) : (
                           <div className="mini-resume-onecol" style={{ fontFamily: PREMIUM_FONTS.find(f => f.name === selectedFont)?.family || 'Rubik, sans-serif' }}>
-                            {/* Centered Header block */}
-                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '14px' }}>
+                            <div style={{ display: 'flex', flexZero: 'column', alignItems: 'center', marginBottom: '14px' }}>
                               <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#111', textTransform: 'uppercase', letterSpacing: '0.02em', textAlign: 'center' }}>
                                 {getUserData().name}
                               </div>
@@ -1806,7 +1770,6 @@ export default function ResumeOptimizationPage() {
                               </div>
                             </div>
 
-                            {/* Summary */}
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginBottom: '12px' }}>
                               <div style={{ fontSize: '7px', fontWeight: 'bold', color: selectedColor, textTransform: 'uppercase', width: '100%', letterSpacing: '0.04em' }}>
                                 Summary
@@ -1816,7 +1779,6 @@ export default function ResumeOptimizationPage() {
                               <div style={{ height: '3px', width: '95%', background: '#ccc' }}></div>
                             </div>
 
-                            {/* Experience block */}
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginBottom: '12px' }}>
                               <div style={{ fontSize: '7px', fontWeight: 'bold', color: selectedColor, textTransform: 'uppercase', width: '100%', letterSpacing: '0.04em' }}>
                                 Experience
@@ -1833,7 +1795,6 @@ export default function ResumeOptimizationPage() {
                               </div>
                             </div>
 
-                            {/* Skills Section */}
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
                               <div style={{ fontSize: '7px', fontWeight: 'bold', color: selectedColor, textTransform: 'uppercase', width: '100%', letterSpacing: '0.04em' }}>
                                 Technical Skills
@@ -1850,7 +1811,6 @@ export default function ResumeOptimizationPage() {
                         )}
                       </div>
 
-                      {/* Labeled custom cursor */}
                       <motion.div 
                         className="custom-demo-cursor" 
                         style={{ 
@@ -1865,8 +1825,6 @@ export default function ResumeOptimizationPage() {
                     </div>
                   </motion.div>
                 )}
-
-
               </AnimatePresence>
 
               {/* Keywords */}

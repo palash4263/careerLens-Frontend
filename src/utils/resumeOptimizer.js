@@ -133,7 +133,7 @@ function calculateScore(resumeText, jobDescriptionText) {
     score += 8;
   }
   if (resumeText.length > 200) score += 4;
-  if (/\b(Summary|Experience|Projects|Skills|Education)\b/i.test(resumeText)) {
+  if (/\b(Summary|Experience|Skills|Education)\b/i.test(resumeText)) {
     score += 3;
   }
   return Math.min(score, 99);

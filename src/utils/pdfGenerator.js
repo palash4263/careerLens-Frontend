@@ -2,1152 +2,334 @@
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { saveAs } from "file-saver";
 
-const PAGE_WIDTH  = 595;
-const PAGE_HEIGHT = 842;
-const MARGIN_X    = 36; // 0.5 inch margins as in professional resumes
-const MARGIN_TOP  = 36;
-const MARGIN_BOTTOM = 36;
+const PAGE_WIDTH = 595, PAGE_HEIGHT = 842, MARGIN_X = 36, MARGIN_TOP = 36, MARGIN_BOTTOM = 36;
+const BLACK = rgb(0.12, 0.14, 0.17), DARK_GRAY = rgb(0.33, 0.37, 0.43), GRAY = rgb(0.50, 0.55, 0.62), LIGHT_GRAY = rgb(0.88, 0.90, 0.94);
 
-// ====== COLOR PALETTE (Marcus Hall Clean Theme) ======
-const PRIMARY      = rgb(0.09, 0.38, 0.78);   // professional blue accent
-const BLACK        = rgb(0.12, 0.14, 0.17);   // deep dark text
-const DARK_GRAY    = rgb(0.33, 0.37, 0.43);   // body text gray
-const GRAY         = rgb(0.50, 0.55, 0.62);
-const LIGHT_GRAY   = rgb(0.88, 0.90, 0.94);   // badge borders
-const BADGE_BG     = rgb(0.96, 0.97, 0.98);   // light gray badge background
-
-// Helper to convert HEX colors to pdf-lib rgb values
 const hexToRgbColor = (hex) => {
   if (!hex || typeof hex !== 'string') return rgb(0.09, 0.38, 0.78);
-  const cleanHex = hex.replace('#', '');
-  const r = parseInt(cleanHex.substring(0, 2), 16) / 255;
-  const g = parseInt(cleanHex.substring(2, 4), 16) / 255;
-  const b = parseInt(cleanHex.substring(4, 6), 16) / 255;
-  return rgb(
-    Number.isNaN(r) ? 0.09 : r,
-    Number.isNaN(g) ? 0.38 : g,
-    Number.isNaN(b) ? 0.78 : b
-  );
+  const clean = hex.replace('#', '');
+  const r = parseInt(clean.substring(0, 2), 16) / 255, g = parseInt(clean.substring(2, 4), 16) / 255, b = parseInt(clean.substring(4, 6), 16) / 255;
+  return rgb(Number.isNaN(r) ? 0.09 : r, Number.isNaN(g) ? 0.38 : g, Number.isNaN(b) ? 0.78 : b);
 };
 
-// =====================================================================
-// MARKDOWN STRIPPING & SAFE TEXT
-// =====================================================================
-const stripMarkdown = (text) => {
-  if (!text) return '';
-  return String(text)
-    .replace(/\*\*\*(.+?)\*\*\*/g, '$1')
-    .replace(/___(.+?)___/g,       '$1')
-    .replace(/\*\*(.+?)\*\*/g,     '$1')
-    .replace(/__(.+?)__/g,         '$1')
-    .replace(/\*(.+?)\*/g,         '$1')
-    .replace(/_(.+?)_/g,           '$1')
-    .replace(/^\*+\s*/gm, '')
-    .replace(/^\#+\s*/gm, '')
-    .replace(/\*+$/gm, '')
-    .trim();
-};
-
-const safeText = (value) => {
-  if (value === null || value === undefined || Number.isNaN(value) || value === 'NaN') return '';
-  return stripMarkdown(String(value));
-};
+const safeText = (v) => !v || Number.isNaN(v) || v === 'NaN' ? '' : String(v).replace(/\*\*\*|\_\_\_|\*\*|\_\_|\*|\_/g, '').replace(/^\*+\s*|^\#+\s*|\*+$/gm, '').trim();
 
 // =====================================================================
-// CONTACT EXTRACTORS
+// EXTRACTORS & PARSERS
 // =====================================================================
-const extractPhoneNumber = (text) => {
+const extractPattern = (text, patterns, cleanFn = (x) => x) => {
   if (!text) return null;
-  const patterns = [
-    /\+91[\s-]?[6-9]\d{9}/,
-    /\+91[\s-]?\d{10}/,
-    /[6-9]\d{9}/,
-    /\d{10}/,
-    /Phone[:\s]*([+\d\s-]{10,15})/i,
-    /Mobile[:\s]*([+\d\s-]{10,15})/i,
-  ];
   for (const pat of patterns) {
     const m = text.match(pat);
-    if (m) {
-      let phone = (m[1] || m[0]).replace(/[^\d+]/g, '');
-      if (phone.length === 10) phone = `+91${phone}`;
-      return phone;
-    }
+    if (m) return cleanFn(m[1] || m[0]);
   }
   return null;
 };
 
-const extractEmail = (text) => {
-  if (!text) return null;
-  const m = text.match(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/);
-  return m ? m[0] : null;
-};
-
-const extractLinkedIn = (text) => {
-  if (!text) return null;
-  const m = text.match(/linkedin\.com\/in\/[a-zA-Z0-9_-]+/i);
-  return m ? m[0] : null;
-};
-
-const extractGitHub = (text) => {
-  if (!text) return null;
-  const m = text.match(/github\.com\/[a-zA-Z0-9_-]+/i);
-  return m ? m[0] : null;
-};
+const extractPhoneNumber = (t) => extractPattern(t, [/\+91[\s-]?[6-9]\d{9}/, /\+91[\s-]?\d{10}/, /[6-9]\d{9}/, /\d{10}/], (p) => p.replace(/[^\d+]/g, '').length === 10 ? `+91${p}` : p);
+const extractEmail = (t) => extractPattern(t, [/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/]);
+const extractLinkedIn = (t) => extractPattern(t, [/linkedin\.com\/in\/[a-zA-Z0-9_-]+/i]);
+const extractGitHub = (t) => extractPattern(t, [/github\.com\/[a-zA-Z0-9_-]+/i]) || '';
 
 const extractName = (rawText) => {
   if (!rawText) return null;
-  const lines = rawText.split('\n');
-  for (const line of lines) {
-    const trimmed = stripMarkdown(line).trim();
-    if (!trimmed || trimmed.length < 3 || trimmed.length > 50) continue;
-    if (trimmed.includes('@')) continue;
-    const lower = trimmed.toLowerCase();
-    if (/(summary|objective|profile|experience|education|skills|projects|certif|language|technolog|contact|phone|email|linkedin|github)/i.test(lower)) continue;
-    if (/^[A-Za-z][A-Za-z\s.'-]{2,}$/.test(trimmed)) return trimmed;
-  }
-  return null;
+  return rawText.split('\n').map(l => safeText(l)).find(l => 
+    l.length >= 3 && l.length <= 50 && !l.includes('@') &&
+    !/(summary|objective|profile|experience|education|skills|projects|certif|language|technolog|contact|phone|email|linkedin|github)/i.test(l) &&
+    /^[A-Za-z][A-Za-z\s.'-]{2,}$/.test(l)
+  ) || null;
 };
 
 const extractNameFromFilename = (fileName) => {
-  if (!fileName || typeof fileName !== 'string' || fileName.toLowerCase() === 'resume') return null;
-  
-  // Strip extension
-  let clean = fileName.replace(/\.pdf$/i, '');
-  
-  // Strip common suffixes
-  clean = clean
-    .replace(/[_.\-]optimized/i, '')
-    .replace(/[_.\-]resume/i, '')
-    .replace(/resume/i, '');
-    
-  // Strip trailing numbers (e.g. 2026, 2025, (2), etc.)
-  clean = clean.replace(/\d+/g, '').replace(/\(\s*\)/g, '');
-  
-  // Replace underscores and hyphens with spaces
-  clean = clean.replace(/[_\-]+/g, ' ').trim();
-  
-  // Insert spaces before capital letters (CamelCase split) if no spaces exist
-  if (!clean.includes(' ')) {
-    clean = clean.replace(/([a-z])([A-Z])/g, '$1 $2');
-  }
-  
-  // Capitalize each word
-  const words = clean.split(/\s+/).filter(Boolean);
-  if (words.length === 0) return null;
-  
-  const formatted = words.map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
-  return formatted || null;
+  if (!fileName || fileName.toLowerCase() === 'resume') return null;
+  let clean = fileName.replace(/\.pdf$/i, '').replace(/([_.\-](optimized|resume))|resume/ig, '').replace(/\d+|\(\s*\)/g, '').replace(/[_\-]+/g, ' ').trim();
+  if (!clean.includes(' ')) clean = clean.replace(/([a-z])([A-Z])/g, '$1 $2');
+  return clean.split(/\s+/).filter(Boolean).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ') || null;
 };
 
 const extractJobTitle = (rawText) => {
   if (!rawText) return null;
-  const lines = rawText.split('\n');
-  for (const line of lines) {
-    const trimmed = stripMarkdown(line).trim();
-    if (!trimmed || trimmed.length > 65) continue;
-    if (/(school|university|college|academy|institute|international)/i.test(trimmed)) continue;
-    if (/\b(developer|engineer|analyst|architect|manager|designer|consultant|specialist|lead|intern|full[- ]?stack|backend|frontend|data\s*scientist|software|devops|cloud|ml\s*engineer|ai\s*engineer)\b/i.test(trimmed)) {
-      return trimmed;
-    }
-  }
-  return null;
+  return rawText.split('\n').map(l => safeText(l)).find(l => 
+    l.length <= 65 && !/(school|university|college|academy|institute|international)/i.test(l) &&
+    /\b(developer|engineer|analyst|architect|manager|designer|consultant|specialist|lead|intern|full[- ]?stack|backend|frontend|data\s*scientist|software|devops|cloud|ml\s*engineer|ai\s*engineer)\b/i.test(l)
+  ) || null;
 };
 
-// =====================================================================
-// PARSE RESUME TEXT INTO SECTIONS
-// =====================================================================
 const SECTION_ALIASES = {
-  Header:         ['Header', 'Contact', 'Contact Info', 'Personal Info', 'Personal Information'],
-  Summary:        ['Summary', 'Professional Summary', 'Objective', 'Profile', 'About'],
-  Education:      ['Education', 'Academic Background'],
-  Experience:     ['Experience', 'Work Experience', 'Professional Experience', 'Employment History', 'Career History'],
-  Projects:       ['Projects', 'Personal Projects', 'Key Projects', 'Academic Projects'],
-  Skills:         ['Skills', 'Technical Skills', 'Core Skills', 'Skills Summary', 'Technologies'],
+  Summary: ['Summary', 'Professional Summary', 'Objective', 'Profile', 'About'],
+  Education: ['Education', 'Academic Background'],
+  Experience: ['Experience', 'Work Experience', 'Professional Experience', 'Employment History', 'Career History'],
+  Projects: ['Projects', 'Personal Projects', 'Key Projects', 'Academic Projects'],
+  Skills: ['Skills', 'Technical Skills', 'Core Skills', 'Skills Summary', 'Technologies'],
   Certifications: ['Certifications', 'Certificates', 'Licenses & Certifications', 'Awards & Certifications'],
-  Languages:      ['Languages', 'Language Proficiency'],
-};
-const CANONICAL_SECTIONS = Object.keys(SECTION_ALIASES);
-
-const matchSectionHeader = (rawLine) => {
-  const cleaned = stripMarkdown(rawLine).replace(/[:#\-_*]/g, '').trim();
-  for (const canonical of CANONICAL_SECTIONS) {
-    for (const alias of SECTION_ALIASES[canonical]) {
-      if (new RegExp(`^${alias}\\s*$`, 'i').test(cleaned)) {
-        return { section: canonical, inlineContent: '' };
-      }
-      const m = cleaned.match(new RegExp(`^${alias}:\\s*(.+)$`, 'i'));
-      if (m) return { section: canonical, inlineContent: m[1].trim() };
-    }
-  }
-  return null;
+  Languages: ['Languages', 'Language Proficiency'],
 };
 
 const parseResumeSections = (text, userData = {}) => {
   if (!text) return [];
-
-  const sections   = [];
-  const rawLines   = text.split('\n');
-  let currentSection = null;
-  let currentContent = [];
-
-  const filters = [
-    userData.userName,
-    userData.email,
-    userData.phone,
-    userData.linkedin,
-  ].filter(Boolean).map(s => s.toLowerCase());
-
-  const isRedundantContactLine = (raw) => {
-    const lower = stripMarkdown(raw).toLowerCase();
-    if (lower.includes('envelope') || lower.includes('phone-alt') || lower.includes('map-marker')) return true;
-    if (/^(email|phone|mobile|linkedin|contact|location|address)\s*:/i.test(lower)) return true;
-    if (lower.includes('@') && lower.includes('|')) return true;
-    if (filters.length > 0 && filters.some(f => lower === f)) return true;
-    return false;
-  };
-
-  const SKIP_SCHOOLS_GLOBAL = ['amity international school'];
+  const sections = [], filters = [userData.userName, userData.email, userData.phone, userData.linkedin].filter(Boolean).map(s => s.toLowerCase());
+  let curSec = null, curContent = [];
 
   const flush = () => {
-    if (currentSection && currentContent.length > 0) {
-      const existing = sections.find(s => s.title === currentSection);
-      if (existing) existing.content.push(...currentContent);
-      else          sections.push({ title: currentSection, content: [...currentContent] });
-    }
+    if (!curSec || curContent.length === 0) return;
+    const match = sections.find(s => s.title === curSec);
+    if (match) match.content.push(...curContent);
+    else sections.push({ title: curSec, content: [...curContent] });
   };
 
-  for (const raw of rawLines) {
-    const trimmed = stripMarkdown(raw).trim();
-    if (!trimmed) continue;
-    if (isRedundantContactLine(raw)) continue;
+  for (const raw of text.split('\n')) {
+    const trimmed = safeText(raw);
+    if (!trimmed || trimmed.toLowerCase().includes('envelope') || trimmed.toLowerCase().includes('phone-alt') || filters.some(f => trimmed.toLowerCase() === f)) continue;
 
-    const headerMatch = matchSectionHeader(trimmed);
+    let headerMatch = null;
+    const cleanLine = trimmed.replace(/[:#\-_*]/g, '').trim();
+    for (const [key, aliases] of Object.entries(SECTION_ALIASES)) {
+      if (aliases.some(a => new RegExp(`^${a}\\s*$`, 'i').test(cleanLine))) { headerMatch = { section: key, inline: '' }; break; }
+      const m = cleanLine.match(new RegExp(`^(${aliases.join('|')}):\\s*(.+)$`, 'i'));
+      if (m) { headerMatch = { section: key, inline: m[2].trim() }; break; }
+    }
+
     if (headerMatch) {
       flush();
-      currentSection = headerMatch.section;
-      currentContent = [];
-      if (headerMatch.inlineContent) currentContent.push(headerMatch.inlineContent);
+      curSec = headerMatch.section;
+      curContent = headerMatch.inline ? [headerMatch.inline] : [];
       continue;
     }
-
-    if (!currentSection || currentSection !== 'Education') {
-      if (SKIP_SCHOOLS_GLOBAL.some(s => trimmed.toLowerCase().includes(s))) continue;
+    if (curSec === 'Education' || !['amity international school'].some(s => trimmed.toLowerCase().includes(s))) {
+      if (!curSec) curSec = 'Summary';
+      curContent.push(trimmed.replace(/^[\*\-]\s*|^•\s*/, '• '));
     }
-
-    if (!currentSection) {
-      currentSection = 'Summary';
-      currentContent = [];
-    }
-
-    const normLine = trimmed.replace(/^[\*\-]\s+/, '• ').replace(/^•\s*/, '• ');
-    currentContent.push(normLine);
   }
-
   flush();
   return sections;
 };
 
-// =====================================================================
-// DATE HELPER
-// =====================================================================
-const DATE_PATTERN = /((?:[A-Za-z]{3,9}\.?\s+)?\d{4})\s*(?:[-–—]\s*((?:[A-Za-z]{3,9}\.?\s+)?\d{4}|Present|Current))?/i;
-
 const splitLabelAndDate = (text) => {
-  const t = safeText(text).trim();
-  const m = t.match(DATE_PATTERN);
-  if (!m) return { label: t, date: '' };
-  const date  = m[0].trim();
-  let label = t.slice(0, m.index).trim();
-  
-  label = label
-    .replace(/[-–—,|]\s*$/, '')
-    .trim()
-    .replace(/\(\s*$/, '')
-    .replace(/\[\s*$/, '')
-    .trim();
-    
-  return { label: label || t, date: label ? date : '' };
+  const t = safeText(text), m = t.match(/((?:[A-Za-z]{3,9}\.?\s+)?\d{4})\s*(?:[-–—]\s*((?:[A-Za-z]{3,9}\.?\s+)?\d{4}|Present|Current))?/i);
+  return m ? { label: t.slice(0, m.index).replace(/[-–—,|(\[]\s*$/, '').trim() || t, date: m[0].trim() } : { label: t, date: '' };
 };
 
 // =====================================================================
-// ELEGANT SINGLE-COLUMN PDF GENERATION
+// CORE PDF RENDER ENGINE (DYNAMIC PAGINATION)
 // =====================================================================
-async function generateSingleColumnPDF({
-  resumeText,
-  fileName = 'resume',
-  score    = 0,
-  jobTitle = null,
-  email    = null,
-  phone    = null,
-  linkedin = null,
-  userName = null,
-  primaryColor = '#1761c7',
-  fontFamily = 'Rubik',
-}) {
-  const PRIMARY = primaryColor ? hexToRgbColor(primaryColor) : rgb(0.09, 0.38, 0.78);
-  const finalName     = extractNameFromFilename(fileName) || extractName(resumeText) || userName || 'Palash Mishra';
-  const finalJobTitle = extractJobTitle(resumeText) || jobTitle || 'Full Stack Developer';
-  const finalEmail    = extractEmail(resumeText) || email || 'palashmishra47@gmail.com';
-  const finalPhone    = extractPhoneNumber(resumeText) || phone || '+91-7428477219';
-  const finalLinkedIn = extractLinkedIn(resumeText) || linkedin || 'linkedin.com/in/palash-mishra-6a68a71aa';
-  const finalGitHub   = extractGitHub(resumeText)    || '';
+const getFont = (opts, fonts) => opts.bold && opts.italic ? fonts.boldItal : opts.bold ? fonts.bold : opts.italic ? fonts.italic : fonts.font;
 
-  // Initialize Document
-  const pdf      = await PDFDocument.create();
-  const font     = await pdf.embedFont(StandardFonts.Helvetica);
-  const bold     = await pdf.embedFont(StandardFonts.HelveticaBold);
-  const italic   = await pdf.embedFont(StandardFonts.HelveticaOblique);
-  const boldItal = await pdf.embedFont(StandardFonts.HelveticaBoldOblique);
-
-  const pickFont = ({ bold: b, italic: i } = {}) => {
-    if (b && i) return boldItal;
-    if (b)      return bold;
-    if (i)      return italic;
-    return font;
-  };
-
-  const sections  = parseResumeSections(resumeText, { userName: finalName, email: finalEmail, phone: finalPhone, linkedin: finalLinkedIn });
-  const cleanFile = safeText(fileName).replace(/\.pdf$/i, '');
-
-  const FULL_W   = PAGE_WIDTH - MARGIN_X * 2;
-  let p = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-  let y = PAGE_HEIGHT - MARGIN_TOP;
-
-  const tw = (text, size, opts = {}) =>
-    pickFont(opts).widthOfTextAtSize(safeText(text), size);
-
-  const drawText = (page, text, x, yVal, size, opts = {}) => {
-    const f = pickFont(opts);
-    const color = opts.color || BLACK;
-    page.drawText(safeText(text), { x, y: yVal, size, font: f, color });
-  };
-
-  const wrapText = (text, maxWidth, size, opts = {}) => {
-    const s = safeText(text);
-    if (!s) return [];
-    const useFont = pickFont(opts);
-    const words   = s.split(' ');
-    const lines   = [];
-    let cur       = '';
-    for (const word of words) {
-      const test = cur ? `${cur} ${word}` : word;
-      if (useFont.widthOfTextAtSize(test, size) <= maxWidth) {
-        cur = test;
-      } else {
-        if (cur) lines.push(cur);
-        if (useFont.widthOfTextAtSize(word, size) > maxWidth) {
-          lines.push(word);
-          cur = '';
-        } else {
-          cur = word;
-        }
-      }
-    }
-    if (cur) lines.push(cur);
-    return lines;
-  };
-
-  const drawWrapped = (page, text, x, yVal, maxWidth, size, lineHeight, opts = {}) => {
-    const lines = wrapText(text, maxWidth, size, opts);
-    let curY = yVal;
-    for (const line of lines) {
-      if (curY < MARGIN_BOTTOM + 15) {
-        page = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-        curY = PAGE_HEIGHT - MARGIN_TOP;
-        p = page; // update current page ref
-      }
-      drawText(page, line, x, curY, size, opts);
-      curY -= lineHeight;
-    }
-    return curY;
-  };
-
-  const drawBullet = (page, text, x, yVal, maxWidth, size, lineHeight) => {
-    if (yVal < MARGIN_BOTTOM + 15) {
-      page = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-      yVal = PAGE_HEIGHT - MARGIN_TOP;
-      p = page;
-    }
-    drawText(page, "•", x, yVal, size + 2, { color: PRIMARY });
-    return drawWrapped(page, text, x + 10, yVal, maxWidth - 10, size, lineHeight, { color: DARK_GRAY });
-  };
-
-  // --- Render Header (Centered) ---
-  const nameSize = 20;
-  const nameW = tw(finalName, nameSize, { bold: true });
-  drawText(p, finalName, (PAGE_WIDTH - nameW) / 2, y, nameSize, { bold: true, color: PRIMARY });
-  y -= 18;
-
-  if (finalJobTitle) {
-    const titleSize = 10;
-    const titleW = tw(finalJobTitle, titleSize, { bold: true });
-    drawText(p, finalJobTitle.toUpperCase(), (PAGE_WIDTH - titleW) / 2, y, titleSize, { bold: true, color: GRAY });
-    y -= 14;
+const wrapText = (text, maxWidth, size, font) => {
+  const s = safeText(text), words = s.split(' '), lines = [];
+  let cur = '';
+  for (const w of words) {
+    const test = cur ? `${cur} ${w}` : w;
+    if (font.widthOfTextAtSize(test, size) <= maxWidth) cur = test;
+    else { if (cur) lines.push(cur); cur = w; }
   }
+  if (cur) lines.push(cur);
+  return lines;
+};
 
-  const contactParts = [];
-  if (finalPhone) contactParts.push(finalPhone);
-  if (finalEmail) contactParts.push(finalEmail);
-  if (finalLinkedIn) contactParts.push(finalLinkedIn);
-  if (finalGitHub) contactParts.push(finalGitHub);
+const getOrAddPage = (pdf, pageIdx, primaryColor) => {
+  const pages = pdf.getPages();
+  if (pages[pageIdx]) return pages[pageIdx];
+  const page = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+  page.drawRectangle({ x: 0, y: PAGE_HEIGHT - 6, width: PAGE_WIDTH, height: 6, fill: primaryColor });
+  return page;
+};
 
-  const contactStr = contactParts.join("  |  ");
-  const contactSize = 8.5;
-  const contactW = tw(contactStr, contactSize);
-  drawText(p, contactStr, (PAGE_WIDTH - contactW) / 2, y, contactSize, { color: DARK_GRAY });
-  y -= 16;
-
-  // --- Render Sections (Full Width) ---
-  const sizeSectionTitle = 10.5;
-  const sizeEntryHeader = 10;
-  const sizeSubtitle = 9.5;
-  const sizeBody = 9;
-  const lhBody = 12.5;
-  const lhEntryHeader = 12;
-  const lhSubtitle = 11.5;
-
-  const drawSectionHeader = (title) => {
-    if (y < MARGIN_BOTTOM + 35) {
-      p = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-      y = PAGE_HEIGHT - MARGIN_TOP;
+const flowText = (ctx, text, x, maxWidth, size, lineHeight, opts = {}) => {
+  const font = getFont(opts, ctx.fonts);
+  const lines = wrapText(text, maxWidth, size, font);
+  
+  for (const line of lines) {
+    if (ctx.y[ctx.col] < MARGIN_BOTTOM + 12) {
+      ctx.pageIdx[ctx.col]++;
+      ctx.y[ctx.col] = PAGE_HEIGHT - MARGIN_TOP;
     }
-    y -= 10;
-    drawText(p, title.toUpperCase(), MARGIN_X, y, sizeSectionTitle, { bold: true, color: PRIMARY });
-    y -= 4;
-    p.drawLine({
-      start: { x: MARGIN_X, y: y },
-      end: { x: PAGE_WIDTH - MARGIN_X, y: y },
-      thickness: 0.75,
-      color: LIGHT_GRAY,
-    });
-    y -= 8;
-  };
+    const page = getOrAddPage(ctx.pdf, ctx.pageIdx[ctx.col], ctx.primaryColor);
+    page.drawText(line, { x, y: ctx.y[ctx.col], size, font, color: opts.color || BLACK });
+    ctx.y[ctx.col] -= lineHeight;
+  }
+};
 
-  const sectionsToRender = ['Summary', 'Experience', 'Projects', 'Skills', 'Education', 'Certifications', 'Languages'];
-  for (const canonical of sectionsToRender) {
-    const sec = sections.find(s => s.title.toLowerCase().includes(canonical.toLowerCase()));
-    if (!sec || sec.content.length === 0) continue;
-
-    drawSectionHeader(canonical);
-
-    if (canonical === 'Summary') {
-      for (const line of sec.content) {
-        y = drawWrapped(p, line, MARGIN_X, y, FULL_W, sizeBody, lhBody, { color: DARK_GRAY });
-        y -= 2;
-      }
-    } 
-    else if (canonical === 'Experience') {
-      for (const rawLine of sec.content) {
-        const trimmed = safeText(rawLine).trim();
-        if (!trimmed) continue;
-
-        const isBullet = trimmed.startsWith('•');
-        const bulletTxt = isBullet ? trimmed.replace(/^•\s*/, '') : '';
-
-        if (!isBullet && /\d{4}/.test(trimmed)) {
-          const { label, date } = splitLabelAndDate(trimmed);
-          y -= 4;
-          const dateW = tw(date, sizeSubtitle, { italic: true });
-          drawText(p, safeText(label), MARGIN_X, y, sizeEntryHeader, { bold: true, color: BLACK });
-          if (date) {
-            drawText(p, date, PAGE_WIDTH - MARGIN_X - dateW, y, sizeSubtitle, { italic: true, color: GRAY });
-          }
-          y -= lhEntryHeader;
-          continue;
-        }
-        if (!isBullet && /\b(developer|engineer|intern|analyst|consultant|lead|architect|manager|designer|specialist|devops|sde)\b/i.test(trimmed)) {
-          y = drawWrapped(p, trimmed, MARGIN_X, y, FULL_W, sizeSubtitle, lhSubtitle, { bold: true, color: DARK_GRAY });
-          y -= 2;
-          continue;
-        }
-        if (isBullet) {
-          y = drawBullet(p, bulletTxt, MARGIN_X + 2, y, FULL_W - 2, sizeBody, lhBody);
-          y -= 1;
-          continue;
-        }
-        y = drawWrapped(p, trimmed, MARGIN_X, y, FULL_W, sizeBody, lhBody, { color: DARK_GRAY });
-        y -= 2;
-      }
-    }
-    else if (canonical === 'Projects') {
-      for (const rawLine of sec.content) {
-        const trimmed = safeText(rawLine).trim();
-        if (!trimmed) continue;
-
-        const isBullet = trimmed.startsWith('•');
-        const bulletTxt = isBullet ? trimmed.replace(/^•\s*/, '') : '';
-
-        if (!isBullet && trimmed.includes('|')) {
+const processCommonSections = (ctx, canonical, sec, fullW, sizeBody, lhBody, sizeSubtitle, lhSubtitle, sizeEntryHeader, lhEntryHeader, entrySpace) => {
+  if (canonical === 'Summary') {
+    sec.content.forEach(line => { flowText(ctx, line, ctx.x, fullW, sizeBody, lhBody, { color: DARK_GRAY }); ctx.y[ctx.col] -= 2; });
+  } else if (['Experience', 'Projects'].includes(canonical)) {
+    sec.content.forEach(rawLine => {
+      const trimmed = safeText(rawLine);
+      const isBullet = trimmed.startsWith('•');
+      if (!isBullet && (/\d{4}/.test(trimmed) || trimmed.includes('|'))) {
+        let display = trimmed, date = '';
+        if (canonical === 'Projects' && trimmed.includes('|')) {
           const parts = trimmed.split('|').map(pt => safeText(pt).trim());
-          const name  = parts[0];
-          const rest  = parts.slice(1).join(' | ');
-          const { label: tech, date } = splitLabelAndDate(rest);
-          const display = tech ? `${name}  |  ${tech}` : name;
-          y -= 4;
-          const dateW = tw(date, sizeSubtitle, { italic: true });
-          drawText(p, display, MARGIN_X, y, sizeEntryHeader, { bold: true, color: BLACK });
-          if (date) {
-            drawText(p, date, PAGE_WIDTH - MARGIN_X - dateW, y, sizeSubtitle, { italic: true, color: GRAY });
-          }
-          y -= lhEntryHeader;
-          continue;
+          const parsed = splitLabelAndDate(parts.slice(1).join(' | '));
+          display = parsed.label ? `${parts[0]}  |  ${parsed.label}` : parts[0];
+          date = parsed.date;
+        } else {
+          const parsed = splitLabelAndDate(trimmed);
+          display = parsed.label;
+          date = parsed.date;
         }
-        if (!isBullet && /\d{4}/.test(trimmed)) {
-          const { label, date } = splitLabelAndDate(trimmed);
-          y -= 4;
-          const dateW = tw(date, sizeSubtitle, { italic: true });
-          drawText(p, safeText(label), MARGIN_X, y, sizeEntryHeader, { bold: true, color: BLACK });
-          if (date) {
-            drawText(p, date, PAGE_WIDTH - MARGIN_X - dateW, y, sizeSubtitle, { italic: true, color: GRAY });
-          }
-          y -= lhEntryHeader;
-          continue;
+        ctx.y[ctx.col] -= entrySpace;
+        const page = getOrAddPage(ctx.pdf, ctx.pageIdx[ctx.col], ctx.primaryColor);
+        page.drawText(display, { x: ctx.x, y: ctx.y[ctx.col], size: sizeEntryHeader, font: ctx.fonts.bold, color: BLACK });
+        if (date) {
+          const fontItalic = ctx.fonts.italic;
+          page.drawText(date, { x: ctx.x + fullW - fontItalic.widthOfTextAtSize(date, sizeSubtitle), y: ctx.y[ctx.col], size: sizeSubtitle, font: fontItalic, color: GRAY });
         }
+        ctx.y[ctx.col] -= lhEntryHeader;
+      } else if (!isBullet && canonical === 'Experience' && /\b(developer|engineer|intern|analyst|consultant|lead|architect|manager|designer|specialist|devops|sde)\b/i.test(trimmed)) {
+        flowText(ctx, trimmed, ctx.x, fullW, sizeSubtitle, lhSubtitle, { bold: true, color: DARK_GRAY });
+      } else {
+        const text = isBullet ? trimmed.replace(/^•\s*/, '') : trimmed;
         if (isBullet) {
-          y = drawBullet(p, bulletTxt, MARGIN_X + 2, y, FULL_W - 2, sizeBody, lhBody);
-          y -= 1;
-          continue;
-        }
-        y = drawWrapped(p, trimmed, MARGIN_X, y, FULL_W, sizeBody, lhBody, { color: DARK_GRAY });
-        y -= 2;
-      }
-    }
-    else if (canonical === 'Skills') {
-      for (const rawLine of sec.content) {
-        const trimmed = safeText(rawLine).trim();
-        if (!trimmed) continue;
-        
-        if (trimmed.includes(':')) {
-          const parts = trimmed.split(':');
-          const category = parts[0].trim();
-          const skillsList = parts[1].split(',').map(s => s.trim()).join(', ');
-          const display = `${category}: ${skillsList}`;
-          y = drawWrapped(p, display, MARGIN_X, y, FULL_W, sizeBody, lhBody, { color: DARK_GRAY });
-          y -= 3;
+          const p = getOrAddPage(ctx.pdf, ctx.pageIdx[ctx.col], ctx.primaryColor);
+          p.drawText('•', { x: ctx.x + 2, y: ctx.y[ctx.col], size: sizeBody, font: ctx.fonts.bold, color: ctx.primaryColor });
+          flowText(ctx, text, ctx.x + 12, fullW - 12, sizeBody, lhBody, { color: DARK_GRAY });
         } else {
-          y = drawWrapped(p, trimmed, MARGIN_X, y, FULL_W, sizeBody, lhBody, { color: DARK_GRAY });
-          y -= 2;
+          flowText(ctx, text, ctx.x, fullW, sizeBody, lhBody, { color: DARK_GRAY });
         }
       }
-    }
-    else if (canonical === 'Education') {
-      for (const rawLine of sec.content) {
-        const trimmed = safeText(rawLine).trim();
-        if (!trimmed) continue;
-
-        const isInst = /\b(university|college|school|institute|academy|vellore)\b/i.test(trimmed);
-
-        if (isInst) {
-          y -= 4;
-          y = drawWrapped(p, trimmed, MARGIN_X, y, FULL_W, sizeSubtitle, lhSubtitle, { bold: true, color: BLACK });
-          continue;
-        }
-        if (trimmed.startsWith('•') || trimmed.startsWith('+') || trimmed.startsWith('-')) {
-          const bulletTxt = trimmed.replace(/^[•+\-]\s*/, '');
-          y = drawWrapped(p, `•  ${bulletTxt}`, MARGIN_X, y, FULL_W, sizeBody, lhBody, { color: DARK_GRAY });
-          continue;
-        }
-        y = drawWrapped(p, trimmed, MARGIN_X, y, FULL_W, sizeBody, lhBody, { color: DARK_GRAY });
-      }
-    }
-    else {
-      for (const line of sec.content) {
-        y = drawWrapped(p, line, MARGIN_X, y, FULL_W, sizeBody, lhBody, { color: DARK_GRAY });
-        y -= 2;
-      }
-    }
-    y -= 5;
-  }
-
-  const pdfBytes = await pdf.save();
-  const blob     = new Blob([pdfBytes], { type: 'application/pdf' });
-  saveAs(blob, `${cleanFile}_optimized.pdf`);
-}
-
-// =====================================================================
-// MAIN TWO-COLUMN PDF GENERATION
-// =====================================================================
-export async function generateResumePDF({
-  resumeText,
-  fileName = 'resume',
-  score    = 0,
-  jobTitle = null,
-  email    = null,
-  phone    = null,
-  linkedin = null,
-  userName = null,
-  templateType = 'two-column',
-  primaryColor = '#1761c7',
-  fontFamily = 'Rubik',
-}) {
-  if (templateType === 'single-column') {
-    return await generateSingleColumnPDF({
-      resumeText,
-      fileName,
-      score,
-      jobTitle,
-      email,
-      phone,
-      linkedin,
-      userName,
-      primaryColor,
-      fontFamily,
     });
   }
-  const PRIMARY = primaryColor ? hexToRgbColor(primaryColor) : rgb(0.09, 0.38, 0.78);
-  // --- Extract contact info ---
-  const finalName     = extractNameFromFilename(fileName) || extractName(resumeText) || userName || 'Palash Mishra';
-  const finalJobTitle = extractJobTitle(resumeText) || jobTitle || 'Full Stack Developer';
-  const finalEmail    = extractEmail(resumeText) || email || 'palashmishra47@gmail.com';
-  const finalPhone    = extractPhoneNumber(resumeText) || phone || '+91-7428477219';
-  const finalLinkedIn = extractLinkedIn(resumeText) || linkedin || 'linkedin.com/in/palash-mishra-6a68a71aa';
-  const finalGitHub   = extractGitHub(resumeText)    || '';
+};
 
-  // --- Initialize Document ---
-  const pdf      = await PDFDocument.create();
-  const font     = await pdf.embedFont(StandardFonts.Helvetica);
-  const bold     = await pdf.embedFont(StandardFonts.HelveticaBold);
-  const italic   = await pdf.embedFont(StandardFonts.HelveticaOblique);
-  const boldItal = await pdf.embedFont(StandardFonts.HelveticaBoldOblique);
-
-  const pickFont = ({ bold: b, italic: i } = {}) => {
-    if (b && i) return boldItal;
-    if (b)      return bold;
-    if (i)      return italic;
-    return font;
+// =====================================================================
+// GENERATOR ROUTINES
+// =====================================================================
+export async function generateResumePDF(options) {
+  const { resumeText, fileName = 'resume', templateType = 'two-column', primaryColor = '#1761c7' } = options;
+  const PRIMARY = hexToRgbColor(primaryColor);
+  const data = {
+    userName: extractNameFromFilename(fileName) || extractName(resumeText) || options.userName || 'Palash Mishra',
+    jobTitle: extractJobTitle(resumeText) || options.jobTitle || 'Full Stack Developer',
+    email: extractEmail(resumeText) || options.email || 'palashmishra47@gmail.com',
+    phone: extractPhoneNumber(resumeText) || options.phone || '+91-7428477219',
+    linkedin: extractLinkedIn(resumeText) || options.linkedin || 'linkedin.com/in/palash-mishra-6a68a71aa',
+    github: extractGitHub(resumeText)
   };
 
-  const sections  = parseResumeSections(resumeText, { userName: finalName, email: finalEmail, phone: finalPhone, linkedin: finalLinkedIn });
-  const cleanFile = safeText(fileName).replace(/\.pdf$/i, '');
-
-  // --- Dimension Parameters (Two Column Layout) ---
-  const COL_GAP        = 20;
-  const FULL_W         = PAGE_WIDTH - MARGIN_X * 2;
-  const LEFT_COL_W     = Math.floor(FULL_W * 0.58); // Left column gets ~58% width (Summary, Experience, Projects)
-  const RIGHT_COL_W    = FULL_W - LEFT_COL_W - COL_GAP; // Right column gets ~39% width (Skills, Education)
-  const LEFT_COL_X     = MARGIN_X;
-  const RIGHT_COL_X    = MARGIN_X + LEFT_COL_W + COL_GAP;
-
-  // --- Helpers for text dimensions and wrap ---
-  const tw = (text, size, opts = {}) =>
-    pickFont(opts).widthOfTextAtSize(safeText(text), size);
-
-  const wrapText = (text, maxWidth, size, opts = {}) => {
-    const s = safeText(text);
-    if (!s) return [];
-    const useFont = pickFont(opts);
-    const words   = s.split(' ');
-    const lines   = [];
-    let cur       = '';
-    for (const word of words) {
-      const test = cur ? `${cur} ${word}` : word;
-      if (useFont.widthOfTextAtSize(test, size) <= maxWidth) {
-        cur = test;
-      } else {
-        if (cur) lines.push(cur);
-        if (useFont.widthOfTextAtSize(word, size) > maxWidth) {
-          lines.push(word);
-          cur = '';
-        } else {
-          cur = word;
-        }
-      }
-    }
-    if (cur) lines.push(cur);
-    return lines;
+  const pdf = await PDFDocument.create();
+  const ctx = {
+    pdf, primaryColor: PRIMARY, col: 'left', pageIdx: { left: 0, right: 0 }, y: { left: PAGE_HEIGHT - MARGIN_TOP, right: PAGE_HEIGHT - MARGIN_TOP },
+    fonts: { font: await pdf.embedFont(StandardFonts.Helvetica), bold: await pdf.embedFont(StandardFonts.HelveticaBold), italic: await pdf.embedFont(StandardFonts.HelveticaOblique), boldItal: await pdf.embedFont(StandardFonts.HelveticaBoldOblique) }
   };
-
-  // --- Font sizes & leading (with dynamic auto-fit for long resumes) ---
+  
+  const sections = parseResumeSections(resumeText, data);
   const isLong = resumeText.length > 2500;
-  
-  const sizeName        = isLong ? 20 : 24;
-  const sizeTitle       = isLong ? 10 : 11.5;
-  const sizeContact     = isLong ? 7.8 : 8.2;
-  const sizeSection     = isLong ? 8.8 : 9.5;
-  const sizeEntryHeader = isLong ? 8.2 : 9.0;
-  const sizeSubtitle    = isLong ? 7.5 : 8.2;
-  const sizeBody        = isLong ? 7.2 : 8.0;
+  const p = getOrAddPage(pdf, 0, PRIMARY);
 
-  const lhBody         = isLong ? 9.8 : 11.0;
-  const lhEntryHeader = isLong ? 11.0 : 12.0;
-  const lhSubtitle     = isLong ? 9.8 : 11.0;
-  
-  const secSpace       = isLong ? 8 : 14;
-  const entrySpace     = isLong ? 3 : 6;
+  if (templateType === 'single-column') {
+    let y = PAGE_HEIGHT - MARGIN_TOP;
+    ctx.col = 'left'; ctx.x = MARGIN_X;
+    
+    // Header setup
+    p.drawText(data.userName, { x: (PAGE_WIDTH - ctx.fonts.bold.widthOfTextAtSize(data.userName, 20)) / 2, y, size: 20, font: ctx.fonts.bold, color: PRIMARY });
+    y -= 18;
+    p.drawText(data.jobTitle.toUpperCase(), { x: (PAGE_WIDTH - ctx.fonts.bold.widthOfTextAtSize(data.jobTitle, 10)) / 2, y, size: 10, font: ctx.fonts.bold, color: GRAY });
+    y -= 14;
+    const info = [data.phone, data.email, data.linkedin, data.github].filter(Boolean).join("  |  ");
+    p.drawText(info, { x: (PAGE_WIDTH - ctx.fonts.font.widthOfTextAtSize(info, 8.5)) / 2, y, size: 8.5, font: ctx.fonts.font, color: DARK_GRAY });
+    ctx.y.left = y - 20;
 
-  // Create page
-  const p = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-  let cursorY = PAGE_HEIGHT - MARGIN_TOP;
+    ['Summary', 'Experience', 'Projects', 'Skills', 'Education', 'Certifications', 'Languages'].forEach(canonical => {
+      const sec = sections.find(s => s.title.toLowerCase().includes(canonical.toLowerCase()));
+      if (!sec || sec.content.length === 0) return;
 
-  // Active page trackers for left/right column page break rollovers
-  let activeLeftPage = p;
-  let activeRightPage = p;
+      if (ctx.y.left < MARGIN_BOTTOM + 35) { ctx.pageIdx.left++; ctx.y.left = PAGE_HEIGHT - MARGIN_TOP; }
+      ctx.y.left -= 10;
+      const page = getOrAddPage(pdf, ctx.pageIdx.left, PRIMARY);
+      page.drawText(canonical.toUpperCase(), { x: MARGIN_X, y: ctx.y.left, size: 10.5, font: ctx.fonts.bold, color: PRIMARY });
+      ctx.y.left -= 4;
+      page.drawLine({ start: { x: MARGIN_X, y: ctx.y.left }, end: { x: PAGE_WIDTH - MARGIN_X, y: ctx.y.left }, thickness: 0.75, color: LIGHT_GRAY });
+      ctx.y.left -= 8;
 
-  // Draw Helpers
-  const drawText = (page, text, x, y, size, opts = {}) => {
-    const s = safeText(text);
-    if (!s) return;
-    page.drawText(s, { x, y, size, font: pickFont(opts), color: opts.color || BLACK });
-  };
-
-  const drawLeftWrapped = (text, x, yVal, maxWidth, size, lineHeight, opts = {}) => {
-    const lines = wrapText(text, maxWidth, size, opts);
-    let cy = yVal;
-    for (const ln of lines) {
-      if (cy < MARGIN_BOTTOM + 12) {
-        let pageList = pdf.getPages();
-        let page2;
-        if (pageList.length < 2) {
-          page2 = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-          page2.drawRectangle({ x: 0, y: PAGE_HEIGHT - 6, width: PAGE_WIDTH, height: 6, fill: PRIMARY });
-        } else {
-          page2 = pageList[1];
-        }
-        activeLeftPage = page2;
-        cy = PAGE_HEIGHT - MARGIN_TOP;
-      }
-      drawText(activeLeftPage, ln, x, cy, size, opts);
-      cy -= lineHeight;
-    }
-    return cy;
-  };
-
-  const drawLeftBullet = (text, yVal, size, lineHeight) => {
-    if (yVal < MARGIN_BOTTOM + 12) {
-      let pageList = pdf.getPages();
-      let page2;
-      if (pageList.length < 2) {
-        page2 = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-        page2.drawRectangle({ x: 0, y: PAGE_HEIGHT - 6, width: PAGE_WIDTH, height: 6, fill: PRIMARY });
+      if (['Summary', 'Experience', 'Projects'].includes(canonical)) {
+        processCommonSections(ctx, canonical, sec, PAGE_WIDTH - MARGIN_X * 2, 9, 12.5, 9.5, 11.5, 10, 12, 4);
       } else {
-        page2 = pageList[1];
+        sec.content.forEach(line => {
+          flowText(ctx, line.replace(/^[•+\-]\s*/, '•  '), MARGIN_X, PAGE_WIDTH - MARGIN_X * 2, 9, 12.5, { color: DARK_GRAY });
+          ctx.y.left -= 2;
+        });
       }
-      activeLeftPage = page2;
-      yVal = PAGE_HEIGHT - MARGIN_TOP;
-    }
-    drawText(activeLeftPage, '•', LEFT_COL_X + 2, yVal, size, { color: PRIMARY });
-    return drawLeftWrapped(text, LEFT_COL_X + 12, yVal, LEFT_COL_W - 12, size, lineHeight, { color: DARK_GRAY });
-  };
-
-  const drawRightWrapped = (text, x, yVal, maxWidth, size, lineHeight, opts = {}) => {
-    const lines = wrapText(text, maxWidth, size, opts);
-    let cy = yVal;
-    for (const ln of lines) {
-      if (cy < MARGIN_BOTTOM + 12) {
-        let pageList = pdf.getPages();
-        let page2;
-        if (pageList.length < 2) {
-          page2 = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-          page2.drawRectangle({ x: 0, y: PAGE_HEIGHT - 6, width: PAGE_WIDTH, height: 6, fill: PRIMARY });
-        } else {
-          page2 = pageList[1];
-        }
-        activeRightPage = page2;
-        cy = PAGE_HEIGHT - MARGIN_TOP;
-      }
-      drawText(activeRightPage, ln, x, cy, size, opts);
-      cy -= lineHeight;
-    }
-    return cy;
-  };
-
-  // --- Render Header (Centered) ---
-  // Top page accent bar
-  p.drawRectangle({
-    x: 0,
-    y: PAGE_HEIGHT - 6,
-    width: PAGE_WIDTH,
-    height: 6,
-    fill: PRIMARY
-  });
-  
-  // Name
-  drawText(p, finalName.toUpperCase(), MARGIN_X, cursorY, sizeName, { bold: true, color: BLACK });
-  cursorY -= sizeName + (isLong ? 2 : 4);
-
-  // Job Title
-  if (finalJobTitle) {
-    drawText(p, finalJobTitle.toUpperCase(), MARGIN_X, cursorY, sizeTitle, { bold: true, color: PRIMARY });
-    cursorY -= sizeTitle + (isLong ? 6 : 8);
-  }
-
-  // Contact Info Row in colored Banner
-  const contactParts = [
-    finalPhone ? `Phone: ${finalPhone}` : '',
-    finalEmail ? `Email: ${finalEmail}` : '',
-    finalLinkedIn ? `LinkedIn: ${finalLinkedIn.replace(/^https?:\/\/(www\.)?/, '')}` : '',
-    finalGitHub ? `GitHub: ${finalGitHub.replace(/^https?:\/\/(www\.)?/, '')}` : ''
-  ].filter(Boolean);
-
-  const sep = '   •   ';
-  const contactStr = contactParts.join(sep);
-  const bannerH = isLong ? 15 : 18;
-  
-  // Draw light-teal banner background
-  p.drawRectangle({
-    x: MARGIN_X,
-    y: cursorY - (isLong ? 4 : 2),
-    width: FULL_W,
-    height: bannerH,
-    color: rgb(0.93, 0.96, 0.98),
-  });
-
-  // Center contact text inside the banner
-  const contactW = tw(contactStr, sizeContact);
-  drawText(p, contactStr, MARGIN_X + (FULL_W - contactW) / 2, cursorY - (isLong ? 1 : 0), sizeContact, { color: DARK_GRAY });
-  cursorY -= bannerH + (isLong ? 10 : 15);
-
-  const topColumnsY = cursorY; // Keep columns synchronized at this top level
-
-  // ====================================================================
-  // DRAW LEFT COLUMN (Summary, Experience, Projects)
-  // ====================================================================
-  let leftY = topColumnsY;
-
-  const drawLeftSectionHeader = (title) => {
-    leftY -= (isLong ? 3 : 5);
-    if (leftY < MARGIN_BOTTOM + 25) {
-      let pageList = pdf.getPages();
-      let page2;
-      if (pageList.length < 2) {
-        page2 = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-        page2.drawRectangle({ x: 0, y: PAGE_HEIGHT - 6, width: PAGE_WIDTH, height: 6, fill: PRIMARY });
-      } else {
-        page2 = pageList[1];
-      }
-      activeLeftPage = page2;
-      leftY = PAGE_HEIGHT - MARGIN_TOP;
-    }
-    drawText(activeLeftPage, title.toUpperCase(), LEFT_COL_X, leftY, sizeSection, { bold: true, color: PRIMARY });
-    leftY -= 2;
-    activeLeftPage.drawLine({
-      start: { x: LEFT_COL_X, y: leftY },
-      end: { x: LEFT_COL_X + LEFT_COL_W, y: leftY },
-      thickness: 1.0,
-      color: PRIMARY
     });
-    leftY -= (isLong ? 4 : 8);
-  };
+  } else {
+    // Two Column layout configuration calculations
+    const FULL_W = PAGE_WIDTH - MARGIN_X * 2, LEFT_W = Math.floor(FULL_W * 0.58), RIGHT_W = FULL_W - LEFT_W - 20;
+    let cursorY = PAGE_HEIGHT - MARGIN_TOP;
+    
+    p.drawText(data.userName.toUpperCase(), { x: MARGIN_X, y: cursorY, size: isLong ? 20 : 24, font: ctx.fonts.bold, color: BLACK });
+    cursorY -= (isLong ? 22 : 28);
+    p.drawText(data.jobTitle.toUpperCase(), { x: MARGIN_X, y: cursorY, size: isLong ? 10 : 11.5, font: ctx.fonts.bold, color: PRIMARY });
+    cursorY -= (isLong ? 16 : 20);
 
-  // Summary
-  const summarySec = sections.find(s => s.title.toLowerCase() === 'summary');
-  if (summarySec) {
-    drawLeftSectionHeader('Summary');
-    for (const rawLine of summarySec.content) {
-      const trimmed = safeText(rawLine).trim();
-      if (!trimmed) continue;
-      leftY = drawLeftWrapped(trimmed, LEFT_COL_X, leftY, LEFT_COL_W, sizeBody, lhBody, { color: DARK_GRAY });
-      leftY -= (isLong ? 1 : 2);
-    }
-    leftY -= secSpace;
-  }
+    const row = [data.phone && `Phone: ${data.phone}`, data.email && `Email: ${data.email}`, data.linkedin && `LinkedIn: ${data.linkedin.replace(/^https?:\/\/(www\.)?/, '')}`, data.github && `GitHub: ${data.github.replace(/^https?:\/\/(www\.)?/, '')}`].filter(Boolean).join('   •   ');
+    p.drawRectangle({ x: MARGIN_X, y: cursorY - 2, width: FULL_W, height: isLong ? 15 : 18, color: rgb(0.93, 0.96, 0.98) });
+    p.drawText(row, { x: MARGIN_X + (FULL_W - ctx.fonts.font.widthOfTextAtSize(row, isLong ? 7.8 : 8.2)) / 2, y: cursorY, size: isLong ? 7.8 : 8.2, font: ctx.fonts.font, color: DARK_GRAY });
+    
+    const topY = cursorY - (isLong ? 25 : 33);
+    ctx.y = { left: topY, right: topY };
 
-  // Experience
-  const expSec = sections.find(s => s.title.toLowerCase().includes('experience'));
-  if (expSec) {
-    drawLeftSectionHeader('Experience');
-    for (const rawLine of expSec.content) {
-      const trimmed = safeText(rawLine).trim();
-      if (!trimmed) continue;
+    const drawTwoColHeader = (column, title, x, w) => {
+      ctx.y[column] -= (isLong ? 3 : 5);
+      if (ctx.y[column] < MARGIN_BOTTOM + 25) { ctx.pageIdx[column]++; ctx.y[column] = PAGE_HEIGHT - MARGIN_TOP; }
+      const page = getOrAddPage(pdf, ctx.pageIdx[column], PRIMARY);
+      page.drawText(title.toUpperCase(), { x, y: ctx.y[column], size: isLong ? 8.8 : 9.5, font: ctx.fonts.bold, color: PRIMARY });
+      ctx.y[column] -= 2;
+      page.drawLine({ start: { x, y: ctx.y[column] }, end: { x: x + w, y: ctx.y[column] }, thickness: 1.0, color: PRIMARY });
+      ctx.y[column] -= (isLong ? 4 : 8);
+    };
 
-      const isBullet = trimmed.startsWith('•');
-      const bulletTxt = isBullet ? trimmed.replace(/^•\s*/, '') : '';
-
-      if (!isBullet && /\d{4}/.test(trimmed)) {
-        const { label, date } = splitLabelAndDate(trimmed);
-        leftY -= entrySpace;
-        
-        if (leftY < MARGIN_BOTTOM + 20) {
-          let pageList = pdf.getPages();
-          let page2;
-          if (pageList.length < 2) {
-            page2 = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-            page2.drawRectangle({ x: 0, y: PAGE_HEIGHT - 6, width: PAGE_WIDTH, height: 6, fill: PRIMARY });
-          } else {
-            page2 = pageList[1];
-          }
-          activeLeftPage = page2;
-          leftY = PAGE_HEIGHT - MARGIN_TOP;
-        }
-
-        const dateW = tw(date, sizeSubtitle, { italic: true });
-        drawText(activeLeftPage, safeText(label), LEFT_COL_X, leftY, sizeEntryHeader, { bold: true, color: BLACK });
-        if (date) {
-          drawText(activeLeftPage, date, LEFT_COL_X + LEFT_COL_W - dateW, leftY, sizeSubtitle, { italic: true, color: GRAY });
-        }
-        leftY -= lhEntryHeader;
-        continue;
-      }
-      if (!isBullet && /\b(developer|engineer|intern|analyst|consultant|lead|architect|manager|designer|specialist|devops|sde)\b/i.test(trimmed)) {
-        leftY = drawLeftWrapped(trimmed, LEFT_COL_X, leftY, LEFT_COL_W, sizeSubtitle, lhSubtitle, { bold: true, color: DARK_GRAY });
-        leftY -= (isLong ? 0.5 : 2);
-        continue;
-      }
-      if (isBullet) {
-        leftY = drawLeftBullet(bulletTxt, leftY, sizeBody, lhBody);
-        leftY -= (isLong ? 0.5 : 1);
-        continue;
-      }
-      leftY = drawLeftWrapped(trimmed, LEFT_COL_X, leftY, LEFT_COL_W, sizeBody, lhBody, { color: DARK_GRAY });
-      leftY -= (isLong ? 1 : 2);
-    }
-    leftY -= secSpace;
-  }
-
-  // Projects
-  const projSec = sections.find(s => s.title.toLowerCase().includes('project'));
-  if (projSec) {
-    drawLeftSectionHeader('Projects');
-    for (const rawLine of projSec.content) {
-      const trimmed = safeText(rawLine).trim();
-      if (!trimmed) continue;
-
-      const isBullet = trimmed.startsWith('•');
-      const bulletTxt = isBullet ? trimmed.replace(/^•\s*/, '') : '';
-
-      if (!isBullet && trimmed.includes('|')) {
-        const parts = trimmed.split('|').map(pt => safeText(pt).trim());
-        const name  = parts[0];
-        const rest  = parts.slice(1).join(' | ');
-        const { label: tech, date } = splitLabelAndDate(rest);
-        const display = tech ? `${name}  |  ${tech}` : name;
-        leftY -= entrySpace;
-
-        if (leftY < MARGIN_BOTTOM + 20) {
-          let pageList = pdf.getPages();
-          let page2;
-          if (pageList.length < 2) {
-            page2 = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-            page2.drawRectangle({ x: 0, y: PAGE_HEIGHT - 6, width: PAGE_WIDTH, height: 6, fill: PRIMARY });
-          } else {
-            page2 = pageList[1];
-          }
-          activeLeftPage = page2;
-          leftY = PAGE_HEIGHT - MARGIN_TOP;
-        }
-
-        const dateW = tw(date, sizeSubtitle, { italic: true });
-        drawText(activeLeftPage, display, LEFT_COL_X, leftY, sizeEntryHeader, { bold: true, color: BLACK });
-        if (date) {
-          drawText(activeLeftPage, date, LEFT_COL_X + LEFT_COL_W - dateW, leftY, sizeSubtitle, { italic: true, color: GRAY });
-        }
-        leftY -= lhEntryHeader;
-        continue;
-      }
-      if (!isBullet && /\d{4}/.test(trimmed)) {
-        const { label, date } = splitLabelAndDate(trimmed);
-        leftY -= entrySpace;
-
-        if (leftY < MARGIN_BOTTOM + 20) {
-          let pageList = pdf.getPages();
-          let page2;
-          if (pageList.length < 2) {
-            page2 = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-            page2.drawRectangle({ x: 0, y: PAGE_HEIGHT - 6, width: PAGE_WIDTH, height: 6, fill: PRIMARY });
-          } else {
-            page2 = pageList[1];
-          }
-          activeLeftPage = page2;
-          leftY = PAGE_HEIGHT - MARGIN_TOP;
-        }
-
-        const dateW = tw(date, sizeSubtitle, { italic: true });
-        drawText(activeLeftPage, safeText(label), LEFT_COL_X, leftY, sizeEntryHeader, { bold: true, color: BLACK });
-        if (date) {
-          drawText(activeLeftPage, date, LEFT_COL_X + LEFT_COL_W - dateW, leftY, sizeSubtitle, { italic: true, color: GRAY });
-        }
-        leftY -= lhEntryHeader;
-        continue;
-      }
-      if (isBullet) {
-        leftY = drawLeftBullet(bulletTxt, leftY, sizeBody, lhBody);
-        leftY -= (isLong ? 0.5 : 1);
-        continue;
-      }
-      leftY = drawLeftWrapped(trimmed, LEFT_COL_X, leftY, LEFT_COL_W, sizeBody, lhBody, { color: DARK_GRAY });
-      leftY -= (isLong ? 1 : 2);
-    }
-  }
-
-  // ====================================================================
-  // DRAW RIGHT COLUMN (Skills with Rounded Badges, Education)
-  // ====================================================================
-  let rightY = topColumnsY;
-
-  const drawRightSectionHeader = (title) => {
-    rightY -= (isLong ? 3 : 5);
-    if (rightY < MARGIN_BOTTOM + 25) {
-      let pageList = pdf.getPages();
-      let page2;
-      if (pageList.length < 2) {
-        page2 = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-        page2.drawRectangle({ x: 0, y: PAGE_HEIGHT - 6, width: PAGE_WIDTH, height: 6, fill: PRIMARY });
-      } else {
-        page2 = pageList[1];
-      }
-      activeRightPage = page2;
-      rightY = PAGE_HEIGHT - MARGIN_TOP;
-    }
-    drawText(activeRightPage, title.toUpperCase(), RIGHT_COL_X, rightY, sizeSection, { bold: true, color: PRIMARY });
-    rightY -= 2;
-    activeRightPage.drawLine({
-      start: { x: RIGHT_COL_X, y: rightY },
-      end: { x: RIGHT_COL_X + RIGHT_COL_W, y: rightY },
-      thickness: 1.0,
-      color: PRIMARY
+    // Left Column logic
+    ctx.col = 'left'; ctx.x = MARGIN_X;
+    ['Summary', 'Experience', 'Projects'].forEach(canonical => {
+      const sec = sections.find(s => s.title.toLowerCase().includes(canonical.toLowerCase().replace(/s$/, '')));
+      if (!sec) return;
+      drawTwoColHeader('left', canonical, MARGIN_X, LEFT_W);
+      processCommonSections(ctx, canonical, sec, LEFT_W, isLong ? 7.2 : 8.0, isLong ? 9.8 : 11.0, isLong ? 7.5 : 8.2, isLong ? 9.8 : 11.0, isLong ? 8.2 : 9.0, isLong ? 11.0 : 12.0, isLong ? 3 : 6);
+      ctx.y.left -= (isLong ? 8 : 14);
     });
-    rightY -= (isLong ? 4 : 8);
-  };
 
-  // Skills Section
-  const skillsSec = sections.find(s => s.title.toLowerCase().includes('skill') || s.title.toLowerCase().includes('technolog'));
-  if (skillsSec) {
-    drawRightSectionHeader('Skills');
-    for (const rawLine of skillsSec.content) {
-      const trimmed = safeText(rawLine).trim();
-      if (!trimmed) continue;
+    // Right Column logic
+    ctx.col = 'right'; ctx.x = MARGIN_X + LEFT_W + 20;
+    ['Skills', 'Education'].forEach(canonical => {
+      const sec = sections.find(s => s.title.toLowerCase().includes(canonical.toLowerCase().replace(/s$/, '')));
+      if (!sec) return;
+      drawTwoColHeader('right', canonical, ctx.x, RIGHT_W);
 
-      if (trimmed.includes(':')) {
-        const colon = trimmed.indexOf(':');
-        const category = trimmed.slice(0, colon).trim();
-        const value = trimmed.slice(colon + 1).trim();
-
-        // Draw Category Subheading
-        rightY -= 4;
-        if (rightY < MARGIN_BOTTOM + 20) {
-          let pageList = pdf.getPages();
-          let page2;
-          if (pageList.length < 2) {
-            page2 = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-            page2.drawRectangle({ x: 0, y: PAGE_HEIGHT - 6, width: PAGE_WIDTH, height: 6, fill: PRIMARY });
-          } else {
-            page2 = pageList[1];
+      if (canonical === 'Skills') {
+        sec.content.forEach(rawLine => {
+          const trimmed = safeText(rawLine);
+          let list = trimmed.split(','), cat = "";
+          if (trimmed.includes(':')) {
+            const idx = trimmed.indexOf(':');
+            cat = trimmed.slice(0, idx).trim();
+            ctx.y.right -= 4;
+            const page = getOrAddPage(pdf, ctx.pageIdx.right, PRIMARY);
+            page.drawText(cat, { x: ctx.x, y: ctx.y.right, size: isLong ? 7.5 : 8.2, font: ctx.fonts.bold, color: BLACK });
+            ctx.y.right -= (isLong ? 9.8 : 11.0);
+            list = trimmed.slice(idx + 1).split(',');
           }
-          activeRightPage = page2;
-          rightY = PAGE_HEIGHT - MARGIN_TOP;
-        }
-        drawText(activeRightPage, category, RIGHT_COL_X, rightY, sizeSubtitle, { bold: true, color: BLACK });
-        rightY -= lhSubtitle;
-
-        // Parse individual comma-separated skills and draw them as premium badges
-        const skillsList = value.split(',').map(s => s.trim()).filter(Boolean);
-        let badgeX = RIGHT_COL_X;
-        const badgeHeight = sizeBody + 6;
-
-        for (const skill of skillsList) {
-          const textW = tw(skill, sizeBody);
-          const badgeWidth = textW + 10;
-
-          // Wrap badges to next row if they exceed the column width boundary
-          if (badgeX + badgeWidth > RIGHT_COL_X + RIGHT_COL_W) {
-            badgeX = RIGHT_COL_X;
-            rightY -= (badgeHeight + 4);
-          }
-
-          if (rightY < MARGIN_BOTTOM + 15) {
-            let pageList = pdf.getPages();
-            let page2;
-            if (pageList.length < 2) {
-              page2 = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-              page2.drawRectangle({ x: 0, y: PAGE_HEIGHT - 6, width: PAGE_WIDTH, height: 6, fill: PRIMARY });
-            } else {
-              page2 = pageList[1];
-            }
-            activeRightPage = page2;
-            rightY = PAGE_HEIGHT - MARGIN_TOP;
-            badgeX = RIGHT_COL_X;
-          }
-
-          // Draw Badge Background
-          activeRightPage.drawRectangle({
-            x: badgeX,
-            y: rightY - 2,
-            width: badgeWidth,
-            height: badgeHeight,
-            color: PRIMARY,
+          let bx = ctx.x;
+          list.map(s => s.trim()).filter(Boolean).forEach(skill => {
+            const tw = ctx.fonts.font.widthOfTextAtSize(skill, isLong ? 7.2 : 8.0) + 10;
+            if (bx + tw > ctx.x + RIGHT_W) { bx = ctx.x; ctx.y.right -= (isLong ? 7.2 : 8.0) + 10; }
+            if (ctx.y.right < MARGIN_BOTTOM + 15) { ctx.pageIdx.right++; ctx.y.right = PAGE_HEIGHT - MARGIN_TOP; bx = ctx.x; }
+            const page = getOrAddPage(pdf, ctx.pageIdx.right, PRIMARY);
+            page.drawRectangle({ x: bx, y: ctx.y.right - 2, width: tw, height: (isLong ? 7.2 : 8.0) + 6, fill: PRIMARY });
+            page.drawText(skill, { x: bx + 5, y: ctx.y.right + 1, size: isLong ? 7.2 : 8.0, font: ctx.fonts.font, color: rgb(1, 1, 1) });
+            bx += tw + 4;
           });
-
-          // Draw Skill Text
-          drawText(activeRightPage, skill, badgeX + 5, rightY + 1, sizeBody, { color: rgb(1, 1, 1) });
-          badgeX += badgeWidth + 4; // space between badges
-        }
-        rightY -= (badgeHeight + 8);
+          ctx.y.right -= ((isLong ? 7.2 : 8.0) + 14);
+        });
       } else {
-        // Flat skills without category: render as simple badge line wrapping
-        const skillsList = trimmed.split(',').map(s => s.trim()).filter(Boolean);
-        let badgeX = RIGHT_COL_X;
-        const badgeHeight = sizeBody + 6;
-
-        for (const skill of skillsList) {
-          const textW = tw(skill, sizeBody);
-          const badgeWidth = textW + 10;
-
-          if (badgeX + badgeWidth > RIGHT_COL_X + RIGHT_COL_W) {
-            badgeX = RIGHT_COL_X;
-            rightY -= (badgeHeight + 4);
-          }
-
-          if (rightY < MARGIN_BOTTOM + 15) {
-            let pageList = pdf.getPages();
-            let page2;
-            if (pageList.length < 2) {
-              page2 = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-              page2.drawRectangle({ x: 0, y: PAGE_HEIGHT - 6, width: PAGE_WIDTH, height: 6, fill: PRIMARY });
-            } else {
-              page2 = pageList[1];
-            }
-            activeRightPage = page2;
-            rightY = PAGE_HEIGHT - MARGIN_TOP;
-            badgeX = RIGHT_COL_X;
-          }
-
-          activeRightPage.drawRectangle({
-            x: badgeX,
-            y: rightY - 2,
-            width: badgeWidth,
-            height: badgeHeight,
-            color: PRIMARY,
-          });
-
-          drawText(activeRightPage, skill, badgeX + 5, rightY + 1, sizeBody, { color: rgb(1, 1, 1) });
-          badgeX += badgeWidth + 4;
-        }
-        rightY -= (badgeHeight + 8);
+        sec.content.forEach(rawLine => {
+          const trimmed = safeText(rawLine);
+          const isInst = /\b(university|college|school|institute|academy|vellore)\b/i.test(trimmed);
+          if (isInst) ctx.y.right -= 4;
+          flowText(ctx, trimmed.replace(/^[•+\-]\s*/, '•  '), ctx.x, RIGHT_W, isLong ? 7.2 : 8.0, isLong ? 9.8 : 11.0, { bold: isInst, color: isInst ? BLACK : DARK_GRAY });
+        });
       }
-    }
-    rightY -= 5;
+    });
   }
 
-  // Education Section
-  const eduSec = sections.find(s => s.title.toLowerCase().includes('education'));
-  if (eduSec) {
-    drawRightSectionHeader('Education');
-    for (const rawLine of eduSec.content) {
-      const trimmed = safeText(rawLine).trim();
-      if (!trimmed) continue;
-
-      const isInst = /\b(university|college|school|institute|academy|vellore)\b/i.test(trimmed);
-
-      if (isInst) {
-        rightY -= 4;
-        rightY = drawRightWrapped(trimmed, RIGHT_COL_X, rightY, RIGHT_COL_W, sizeSubtitle, lhSubtitle, { bold: true, color: BLACK });
-        continue;
-      }
-
-      if (trimmed.startsWith('•') || trimmed.startsWith('+') || trimmed.startsWith('-')) {
-        const bulletTxt = trimmed.replace(/^[•+\-]\s*/, '');
-        rightY = drawRightWrapped(`•  ${bulletTxt}`, RIGHT_COL_X, rightY, RIGHT_COL_W, sizeBody, lhBody, { color: DARK_GRAY });
-        continue;
-      }
-
-      // Default draw wrapped
-      rightY = drawRightWrapped(trimmed, RIGHT_COL_X, rightY, RIGHT_COL_W, sizeBody, lhBody, { color: DARK_GRAY });
-    }
-  }
-
-  // --- Save ---
-  const pdfBytes = await pdf.save();
-  const blob     = new Blob([pdfBytes], { type: 'application/pdf' });
-  saveAs(blob, `${cleanFile}_optimized.pdf`);
+  saveAs(new Blob([await pdf.save()], { type: 'application/pdf' }), `${safeText(fileName).replace(/\.pdf$/i, '')}_optimized.pdf`);
 }

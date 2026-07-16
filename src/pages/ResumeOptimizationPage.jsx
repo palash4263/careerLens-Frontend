@@ -10,6 +10,7 @@ import { optimizeResume, optimizeSection } from "../services/resumeOptimizationS
 import { generateResumePDF } from "../utils/pdfGenerator";
 import PremiumDropdown from "../components/resume/PremiumDropdown";
 import ScoreRing from "../components/resume/ScoreRing";
+import OptimizerShieldHero from "../components/canvas/OptimizerShieldHero";
 // ====== UTILITY FUNCTIONS ======
 const TECH_KEYWORDS = [
   'React', 'Angular', 'Vue', 'Node.js', 'Express', 'Python', 'Django', 'Flask', 'Java', 'Spring Boot', 'Spring MVC', 
@@ -918,9 +919,9 @@ export default function ResumeOptimizationPage() {
 
        <motion.div className="optimizer-hero-right" variants={staggerItem}>
   {/* Container wrapper ensuring the Three.js Canvas has a stable, bounded render space */}
-  {/* <div style={{ width: "100%", height: "380px", minWidth: "300px", position: "relative" }}>
-    <ResumeMatrix />
-  </div> */}
+  <div style={{ width: "100%", height: "380px", minWidth: "300px", position: "relative" }}>
+    <OptimizerShieldHero  />
+  </div>
 </motion.div>
           </motion.div>
         </motion.section>

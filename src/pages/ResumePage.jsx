@@ -1,6 +1,7 @@
 // ResumePage.jsx - Premium Redesign with View Resume Feature
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import * as THREE from "three";
 import {
   getResumes,
   uploadResume,
@@ -8,11 +9,9 @@ import {
   getResumeFile,
 } from "../services/resumeService";
 import { useScrollReveal } from "../hooks/useScrollReveal";
-
+import ResumeSaas3DHero from "../components/canvas/ResumeSaas3DHero";
 import { motion } from "framer-motion";
 import "../assets/resume.css";
-import SynapseCore from "../components/canvas/SynapseCore";
-
 
 function ResumePage() {
   const navigate = useNavigate();
@@ -317,7 +316,7 @@ function ResumePage() {
                 </div>
               ) : (
                 <div style={{ width: "100%", height: "100%", minHeight: "400px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <SynapseCore />
+                  <ResumeSaas3DHero  />
                 </div>
               )}
             </div>

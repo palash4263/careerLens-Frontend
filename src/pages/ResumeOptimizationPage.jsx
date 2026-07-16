@@ -10,6 +10,7 @@ import { optimizeResume, optimizeSection } from "../services/resumeOptimizationS
 import { generateResumePDF } from "../utils/pdfGenerator";
 import PremiumDropdown from "../components/resume/PremiumDropdown";
 import ScoreRing from "../components/resume/ScoreRing";
+import FloatingModel from "../components/canvas/FloatingModel";
 
 // ====== UTILITY FUNCTIONS ======
 const TECH_KEYWORDS = [
@@ -917,51 +918,12 @@ export default function ResumeOptimizationPage() {
               </motion.div>
             </div>
 
-            <motion.div className="optimizer-hero-right" variants={staggerItem}>
-              <div className="hero-stats-modern">
-                <motion.div
-                  className="hero-stat-card"
-                  whileHover={reduceMotion ? {} : { y: -5, scale: 1.02 }}
-                >
-                  <div className="stat-card-icon-wrapper purple">
-                    <FileText size={16} />
-                  </div>
-                  <div className="hero-stat-number"><CountUp value={resumes.length} /></div>
-                  <div className="hero-stat-label">Resumes Ready</div>
-                  <div className="hero-stat-bar">
-                    <span className="bar-inner purple" style={{ width: '75%' }}></span>
-                  </div>
-                </motion.div>
-
-                <motion.div
-                  className="hero-stat-card"
-                  whileHover={reduceMotion ? {} : { y: -5, scale: 1.02 }}
-                >
-                  <div className="stat-card-icon-wrapper blue">
-                    <Target size={16} />
-                  </div>
-                  <div className="hero-stat-number"><CountUp value={jobDescriptions.length} /></div>
-                  <div className="hero-stat-label">Job Targets</div>
-                  <div className="hero-stat-bar">
-                    <span className="bar-inner blue" style={{ width: '60%' }}></span>
-                  </div>
-                </motion.div>
-
-                <motion.div
-                  className="hero-stat-card highlight"
-                  whileHover={reduceMotion ? {} : { y: -5, scale: 1.02 }}
-                >
-                  <div className="stat-card-icon-wrapper green">
-                    <Sparkles size={16} />
-                  </div>
-                  <div className="hero-stat-number">{result ? 'Active' : 'Ready'}</div>
-                  <div className="hero-stat-label">AI Engine</div>
-                  <div className="hero-stat-bar">
-                    <span className="bar-inner green" style={{ width: result ? '100%' : '30%' }}></span>
-                  </div>
-                </motion.div>
-              </div>
-            </motion.div>
+       <motion.div className="optimizer-hero-right" variants={staggerItem}>
+  {/* Container wrapper ensuring the Three.js Canvas has a stable, bounded render space */}
+  <div style={{ width: "100%", height: "380px", minWidth: "300px", position: "relative" }}>
+    <FloatingModel />
+  </div>
+</motion.div>
           </motion.div>
         </motion.section>
 
@@ -1447,157 +1409,193 @@ export default function ResumeOptimizationPage() {
                           </motion.span>
                         </div>
                         <div className="compare-content-modern" style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem', background: 'rgba(15, 23, 42, 0.4)' }}>
-                          {Object.keys(editedSections).map(sectionKey => {
-                            const sectionContent = editedSections[sectionKey];
-                            const isPrimary = ['Header', 'Summary', 'Experience', 'Projects', 'Skills', 'Education'].includes(sectionKey);
-                            if (!isPrimary && (!sectionContent || !sectionContent.trim())) return null;
+                        {Object.keys(editedSections).map(sectionKey => {
+  const sectionContent = editedSections[sectionKey];
+  const isPrimary = ['Header', 'Summary', 'Experience', 'Projects', 'Skills', 'Education'].includes(sectionKey);
+  if (!isPrimary && (!sectionContent || !sectionContent.trim())) return null;
 
-                            return (
-                              <div key={sectionKey} className="section-editor-card" style={{
-                                background: '#ffffff',
-                                border: '1px solid #e2e8f0',
-                                borderRadius: '16px',
-                                padding: '16px',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: '12px',
-                                position: 'relative',
-                                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -1px rgba(0,0,0,0.01)',
-                                transition: 'all 0.25s ease'
-                              }}>
-                                {/* Loading Overlay */}
-                                {optimizingSections[sectionKey] && (
-                                  <div style={{
-                                    position: 'absolute',
-                                    top: 0, left: 0, right: 0, bottom: 0,
-                                    background: 'rgba(255, 255, 255, 0.85)',
-                                    backdropFilter: 'blur(2px)',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    zIndex: 10,
-                                    borderRadius: '16px',
-                                    gap: '10px'
-                                  }}>
-                                    <div className="spinner-modern" style={{ borderColor: '#7c3aed', borderTopColor: 'transparent' }} />
-                                    <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#7c3aed', fontFamily: "'Outfit', sans-serif" }}>AI Personalizing...</span>
-                                  </div>
-                                )}
+  return (
+    <div 
+      key={sectionKey} 
+      className="section-editor-card group" 
+      style={{
+        background: 'rgba(17, 24, 39, 0.6)',
+        backdropFilter: 'blur(12px)',
+        border: '1px solid rgba(124, 58, 237, 0.15)',
+        borderRadius: '16px',
+        padding: '20px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '16px',
+        position: 'relative',
+        boxShadow: '0 10px 30px -10px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.05)',
+        transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+      }}
+    >
+      {/* Loading Overlay */}
+      {optimizingSections[sectionKey] && (
+        <div style={{
+          position: 'absolute',
+          top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(11, 15, 25, 0.85)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10,
+          borderRadius: '16px',
+          gap: '12px'
+        }}>
+          <div className="spinner-modern" style={{ borderColor: '#a855f7', borderTopColor: 'transparent', width: '28px', height: '28px' }} />
+          <span style={{ fontSize: '0.85rem', fontWeight: '600', color: '#a855f7', fontFamily: "Outfit, sans-serif", letterSpacing: '0.05em' }}>AI Personalizing...</span>
+        </div>
+      )}
 
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.95rem', fontWeight: '700', color: '#0f172a', fontFamily: 'Outfit, sans-serif' }}>
-                                    <span>{getSectionIcon(sectionKey)}</span>
-                                    <span>{sectionKey} Section</span>
-                                  </div>
+      {/* Header Row */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{
+            background: 'rgba(124, 58, 237, 0.15)',
+            width: '32px',
+            height: '32px',
+            borderRadius: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '1.1rem',
+            border: '1px solid rgba(124, 58, 237, 0.25)'
+          }}>
+            {getSectionIcon(sectionKey)}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <span style={{ fontSize: '0.95rem', fontWeight: '700', color: '#f8fafc', fontFamily: 'Outfit, sans-serif' }}>
+              {sectionKey} Section
+            </span>
+          </div>
+        </div>
 
-                                  <button
-                                    onClick={() => setShowPromptInput(prev => ({ ...prev, [sectionKey]: !prev[sectionKey] }))}
-                                    style={{
-                                      background: 'rgba(124, 58, 237, 0.08)',
-                                      color: '#7c3aed',
-                                      border: '1px solid rgba(124, 58, 237, 0.15)',
-                                      borderRadius: '99px',
-                                      padding: '4px 10px',
-                                      fontSize: '0.75rem',
-                                      fontWeight: '600',
-                                      cursor: 'pointer',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      gap: '4px',
-                                      transition: 'all 0.2s ease',
-                                    }}
-                                  >
-                                    <Sparkles size={12} />
-                                    <span>AI Optimize</span>
-                                  </button>
-                                </div>
+        <button
+          onClick={() => setShowPromptInput(prev => ({ ...prev, [sectionKey]: !prev[sectionKey] }))}
+          style={{
+            background: showPromptInput[sectionKey] ? 'linear-gradient(135deg, #7c3aed, #4f46e5)' : 'rgba(124, 58, 237, 0.1)',
+            color: showPromptInput[sectionKey] ? '#ffffff' : '#a78bfa',
+            border: '1px solid rgba(124, 58, 237, 0.3)',
+            borderRadius: '99px',
+            padding: '6px 14px',
+            fontSize: '0.75rem',
+            fontWeight: '600',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            boxShadow: showPromptInput[sectionKey] ? '0 0 15px rgba(124, 58, 237, 0.4)' : 'none',
+            transition: 'all 0.2s ease',
+          }}
+        >
+          <Sparkles size={12} />
+          <span>AI Optimize</span>
+        </button>
+      </div>
 
-                                <AutoGrowingTextarea
-                                  value={sectionContent}
-                                  onChange={(e) => {
-                                    setEditedSections(prev => ({
-                                      ...prev,
-                                      [sectionKey]: e.target.value
-                                    }));
-                                  }}
-                                  style={{
-                                    width: '100%',
-                                    background: 'transparent',
-                                    border: 'none',
-                                    color: '#334155',
-                                    fontFamily: "'Inter', sans-serif",
-                                    fontSize: '0.88rem',
-                                    lineHeight: '1.6',
-                                    padding: '0',
-                                    outline: 'none',
-                                  }}
-                                  placeholder={`Add information for ${sectionKey}...`}
-                                />
+      {/* Editor Content Area */}
+      <div style={{
+        background: 'rgba(15, 23, 42, 0.4)',
+        border: '1px solid rgba(255, 255, 255, 0.05)',
+        borderRadius: '12px',
+        padding: '14px',
+        transition: 'border-color 0.2s ease',
+      }}>
+        <AutoGrowingTextarea
+          value={sectionContent}
+          onChange={(e) => {
+            setEditedSections(prev => ({
+              ...prev,
+              [sectionKey]: e.target.value
+            }));
+          }}
+          style={{
+            width: '100%',
+            background: 'transparent',
+            border: 'none',
+            color: '#cbd5e1',
+            fontFamily: "'Inter', sans-serif",
+            fontSize: '0.9rem',
+            lineHeight: '1.6',
+            padding: '0',
+            outline: 'none',
+          }}
+          placeholder={`Add high-impact points for your ${sectionKey.toLowerCase()} section...`}
+        />
+      </div>
 
-                                {/* AI Prompt Input */}
-                                <AnimatePresence>
-                                  {showPromptInput[sectionKey] && (
-                                    <motion.div
-                                      initial={{ opacity: 0, height: 0 }}
-                                      animate={{ opacity: 1, height: 'auto' }}
-                                      exit={{ opacity: 0, height: 0 }}
-                                      style={{
-                                        borderTop: '1px solid #f1f5f9',
-                                        paddingTop: '10px',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        gap: '8px',
-                                        overflow: 'hidden'
-                                      }}
-                                    >
-                                      <input
-                                        type="text"
-                                        value={sectionPrompts[sectionKey] || ""}
-                                        onChange={(e) => setSectionPrompts(prev => ({ ...prev, [sectionKey]: e.target.value }))}
-                                        placeholder="Customize prompt: E.g., make it sound more senior, add metrics..."
-                                        style={{
-                                          width: '100%',
-                                          background: '#f8fafc',
-                                          border: '1px solid #e2e8f0',
-                                          borderRadius: '8px',
-                                          padding: '8px 12px',
-                                          fontSize: '0.8rem',
-                                          color: '#334155',
-                                          fontFamily: "'Inter', sans-serif",
-                                          outline: 'none',
-                                        }}
-                                        onKeyDown={(e) => {
-                                          if (e.key === 'Enter') handleOptimizeSection(sectionKey);
-                                        }}
-                                      />
-                                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-                                        <button
-                                          onClick={() => handleOptimizeSection(sectionKey)}
-                                          disabled={optimizingSections[sectionKey]}
-                                          style={{
-                                            background: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
-                                            color: '#ffffff',
-                                            border: 'none',
-                                            borderRadius: '8px',
-                                            padding: '6px 12px',
-                                            fontSize: '0.75rem',
-                                            fontWeight: '700',
-                                            cursor: 'pointer',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '4px',
-                                          }}
-                                        >
-                                          <Sparkles size={10} /> Apply AI
-                                        </button>
-                                      </div>
-                                    </motion.div>
-                                  )}
-                                </AnimatePresence>
-                              </div>
-                            );
-                          })}
+      {/* AI Prompt Input Expansion */}
+      <AnimatePresence>
+        {showPromptInput[sectionKey] && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            style={{
+              borderTop: '1px solid rgba(255, 255, 255, 0.05)',
+              paddingTop: '14px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '10px',
+              overflow: 'hidden'
+            }}
+          >
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <input
+                type="text"
+                value={sectionPrompts[sectionKey] || ""}
+                onChange={(e) => setSectionPrompts(prev => ({ ...prev, [sectionKey]: e.target.value }))}
+                placeholder="E.g., Make it sound more metrics-driven, highlight cloud scaling tools..."
+                style={{
+                  width: '100%',
+                  background: 'rgba(15, 23, 42, 0.6)',
+                  border: '1px solid rgba(124, 58, 237, 0.25)',
+                  borderRadius: '10px',
+                  padding: '10px 14px',
+                  fontSize: '0.82rem',
+                  color: '#e2e8f0',
+                  fontFamily: "'Inter', sans-serif",
+                  outline: 'none',
+                  paddingRight: '100px'
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleOptimizeSection(sectionKey);
+                }}
+              />
+              <button
+                onClick={() => handleOptimizeSection(sectionKey)}
+                disabled={optimizingSections[sectionKey]}
+                style={{
+                  position: 'absolute',
+                  right: '6px',
+                  background: 'linear-gradient(135deg, #a855f7, #7c3aed)',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '6px 12px',
+                  fontSize: '0.75rem',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  boxShadow: '0 4px 10px rgba(124, 58, 237, 0.3)'
+                }}
+              >
+                <Sparkles size={10} /> Apply
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+})}
                         </div>
                       </motion.div>
                     </div>

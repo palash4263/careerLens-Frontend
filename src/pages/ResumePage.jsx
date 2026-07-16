@@ -11,6 +11,8 @@ import { useScrollReveal } from "../hooks/useScrollReveal";
 
 import { motion } from "framer-motion";
 import "../assets/resume.css";
+import SynapseCore from "../components/canvas/SynapseCore";
+
 
 function ResumePage() {
   const navigate = useNavigate();
@@ -20,7 +22,7 @@ function ResumePage() {
   const [loading, setLoading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [analyzingId, setAnalyzingId] = useState(null);
-  const [viewingResume, setViewingResume] = useState(null); // ✅ State for viewing resume
+  const [viewingResume, setViewingResume] = useState(null); 
   const [pdfUrl, setPdfUrl] = useState(null);
   const [scanStep, setScanStep] = useState(0); 
   const fileInputRef = useRef(null);
@@ -116,7 +118,6 @@ function ResumePage() {
     }, 1100);
   };
 
-  // ✅ Handle viewing resume
   const handleViewResume = async (resume) => {
     setViewingResume(resume);
     setPdfUrl(null);
@@ -130,7 +131,6 @@ function ResumePage() {
     }
   };
 
-  // ✅ Close modal
   const closeModal = () => {
     setViewingResume(null);
     if (pdfUrl) {
@@ -139,7 +139,6 @@ function ResumePage() {
     }
   };
 
-  // ✅ Download PDF file securely
   const handleDownload = () => {
     if (!pdfUrl) {
       showToast("PDF content is still loading...", "info");
@@ -154,7 +153,6 @@ function ResumePage() {
     showToast("Download started!", "success");
   };
 
-  // ✅ Open preview in a new window
   const handleOpenNewTab = () => {
     if (pdfUrl) {
       window.open(pdfUrl, '_blank');
@@ -163,7 +161,6 @@ function ResumePage() {
     }
   };
 
-  // Calculate stats
   const totalResumes = resumes.length;
   const totalViews = resumes.reduce((acc, r) => acc + (r.views || 0), 0);
   const bestAtsScore = resumes.length > 0 ? Math.max(...resumes.map(r => r.atsScore || 0)) : 0;
@@ -195,7 +192,7 @@ function ResumePage() {
           </div>
         </div>
 
-        {/* Upload Section */}
+        {/* Upload Studio Card */}
         <div className="upload-premium-card scroll-reveal-3d">
           <div className="upload-premium-glow"></div>
           <div className="upload-premium-content">
@@ -270,6 +267,7 @@ function ResumePage() {
               </div>
             </div>
 
+            {/* Right Interactive Visual Node */}
             <div className="upload-premium-right">
               {selectedFile ? (
                 <div className="parsing-console-premium">
@@ -318,32 +316,8 @@ function ResumePage() {
                   )}
                 </div>
               ) : (
-                <div className="impact-card">
-                  <div className="impact-circle">
-                    <svg className="impact-ring" viewBox="0 0 120 120">
-                      <circle className="impact-ring-bg" cx="60" cy="60" r="54" />
-                      <circle
-                        className="impact-ring-progress"
-                        cx="60"
-                        cy="60"
-                        r="54"
-                        style={{
-                          strokeDasharray: 339.292,
-                          strokeDashoffset: 74.644
-                        }}
-                      />
-                    </svg>
-                    <div className="impact-content">
-                      <span className="impact-value">78%</span>
-                      <span className="impact-label">Resume Impact</span>
-                    </div>
-                  </div>
-                  <div className="impact-text">
-                    <span className="impact-title">Great Progress!</span>
-                    <span className="impact-description">
-                      Keep optimizing your resumes to increase your chances.
-                    </span>
-                  </div>
+                <div style={{ width: "100%", height: "100%", minHeight: "400px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <SynapseCore />
                 </div>
               )}
             </div>
@@ -380,7 +354,7 @@ function ResumePage() {
           </div>
         </div>
 
-        {/* Resume List */}
+        {/* Resume Inventory List */}
         <section className="resume-list-premium scroll-reveal-3d">
           <div className="resume-list-header">
             <h2>Uploaded Resumes</h2>
@@ -453,7 +427,6 @@ function ResumePage() {
                     </div>
 
                     <div className="resume-card-actions">
-                      {/* ✅ View Resume Button */}
                       <button
                         className="resume-action-btn view"
                         onClick={() => handleViewResume(resume)}
@@ -508,7 +481,7 @@ function ResumePage() {
         </section>
       </div>
 
-      {/* ✅ Resume View Modal */}
+      {/* Secure Document Preview Overlay Frame */}
       {viewingResume && (
         <div className="resume-modal-overlay" onClick={closeModal}>
           <div className="resume-modal-content" onClick={(e) => e.stopPropagation()}>

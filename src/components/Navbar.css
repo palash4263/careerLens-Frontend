@@ -250,7 +250,10 @@
 }
 
 .nb-avatar span {
-  -webkit-text-fill-color: currentColor;
+  color: #ffffff !important;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.5px;
 }
 
 .nb-online {
@@ -273,13 +276,13 @@
 .nb-user-name {
   font-size: 12.5px;
   font-weight: 600;
-  color: var(--shell-nav-text);
+  color: #ffffff;
 }
 
 .nb-user-role {
   font-size: 10px;
   font-weight: 500;
-  color: var(--shell-nav-text-faint);
+  color: rgba(255, 255, 255, 0.5);
   letter-spacing: 0.01em;
 }
 

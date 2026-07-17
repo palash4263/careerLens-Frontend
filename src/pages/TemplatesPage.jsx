@@ -58,6 +58,27 @@ const TEMPLATES = [
     layout: "single-column",
     tags: ["ATS-Friendly", "Single Column"],
   },
+  {
+    id: "minimalist-slate",
+    name: "Minimalist Slate",
+    description: "Ultra-clean minimalist layout focusing on whitespace and high contrast. Perfect for designers, minimalists, and recruiters who hate clutter.",
+    layout: "single-column",
+    tags: ["ATS-Friendly", "Single Column", "Modern"],
+  },
+  {
+    id: "portfolio-emerald",
+    name: "Portfolio Emerald",
+    description: "Modern two-column layout with a prominent header banner. Ideal for developers and designers displaying portfolio projects and links.",
+    layout: "two-column",
+    tags: ["Top Picks", "Double Column", "Modern"],
+  },
+  {
+    id: "traditional-serif",
+    name: "Traditional Serif",
+    description: "Elegant classic academic style layout featuring refined serif styling. Tailored for law, medicine, academia, and executive boardrooms.",
+    layout: "single-column",
+    tags: ["ATS-Friendly", "Single Column"],
+  },
 ];
 
 export default function TemplatesPage() {

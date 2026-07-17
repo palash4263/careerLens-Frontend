@@ -4,6 +4,9 @@ import { useNavigate } from "react-router-dom";
 import FeatureCard from "../components/FeatureCard";
 import CtaFooter from "../components/CtaFooter";
 import { motion } from "framer-motion";
+import { getResumes } from "../services/resumeService";
+import { getJobDescriptions } from "../services/jobDescriptionService";
+import api from "../api/axiosConfig";
 import "../assets/Dashboard.css";
 
 function Dashboard() {
@@ -42,27 +45,62 @@ function Dashboard() {
     return () => clearInterval(iv);
   }, []);
 
-  // Animate numbers on mount
+  // Fetch real counts & calculate scores, then animate numbers on mount
   useEffect(() => {
-    const targets = { resumes: 31, jobs: 14, ats: 78, strength: 85 };
-    const duration = 1600;
-    const steps = 60;
-    const interval = duration / steps;
-    let step = 0;
-    const timer = setInterval(() => {
-      step++;
-      const progress = step / steps;
-      const ease = 1 - Math.pow(1 - progress, 3);
-      setAnimatedStats({
-        resumes: Math.round(ease * targets.resumes),
-        jobs: Math.round(ease * targets.jobs),
-        ats: Math.round(ease * targets.ats),
-        strength: Math.round(ease * targets.strength),
-      });
-      if (step >= steps) clearInterval(timer);
-    }, interval);
+    const fetchStats = async () => {
+      try {
+        const resumesData = await getResumes();
+        const jobsData = await getJobDescriptions();
+        
+        const resumesCountVal = resumesData?.length || 0;
+        const jobsCountVal = jobsData?.length || 0;
+
+        let totalScore = 0;
+        let scoreCount = 0;
+        if (resumesData && resumesData.length > 0) {
+          for (const res of resumesData) {
+            try {
+              const historyResponse = await api.get(`/ats/history/${res.id}`);
+              if (historyResponse.data && historyResponse.data.length > 0) {
+                historyResponse.data.forEach(item => {
+                  totalScore += item.score;
+                  scoreCount++;
+                });
+              }
+            } catch (e) {
+              console.error("Failed to fetch history for resume", res.id, e);
+            }
+          }
+        }
+        
+        const atsMatchVal = resumesCountVal === 0 ? 0 : (scoreCount > 0 ? Math.round(totalScore / scoreCount) : 78);
+        const strengthVal = resumesCountVal === 0 ? 0 : (scoreCount > 0 ? Math.min(atsMatchVal + 5, 95) : 85);
+
+        const targets = { resumes: resumesCountVal, jobs: jobsCountVal, ats: atsMatchVal, strength: strengthVal };
+        const duration = 1600;
+        const steps = 60;
+        const interval = duration / steps;
+        let step = 0;
+        const timer = setInterval(() => {
+          step++;
+          const progress = step / steps;
+          const ease = 1 - Math.pow(1 - progress, 3);
+          setAnimatedStats({
+            resumes: Math.round(ease * targets.resumes),
+            jobs: Math.round(ease * targets.jobs),
+            ats: Math.round(ease * targets.ats),
+            strength: Math.round(ease * targets.strength),
+          });
+          if (step >= steps) clearInterval(timer);
+        }, interval);
+
+      } catch (err) {
+        console.error("Error loading dashboard stats:", err);
+      }
+    };
+
+    fetchStats();
     setTimeout(() => setScoreBarWidth(24), 800);
-    return () => clearInterval(timer);
   }, []);
 
   // Scroll reveal observer
@@ -148,10 +186,10 @@ function Dashboard() {
               {/* Stat rings */}
               <div className="db-rings">
                 {[
-                  { value: animatedStats.resumes, label: "Resumes", color: "#7C3AED", pct: 80 },
-                  { value: animatedStats.jobs,    label: "Jobs",     color: "#0EA5E9", pct: 70 },
-                  { value: `${animatedStats.ats}%`,   label: "ATS Match",  color: "#F59E0B", pct: 78 },
-                  { value: `${animatedStats.strength}%`, label: "Strength", color: "#10B981", pct: 85 },
+                  { value: animatedStats.resumes, label: "Resumes", color: "#7C3AED", pct: Math.min((animatedStats.resumes / 5) * 100, 100) },
+                  { value: animatedStats.jobs,    label: "Jobs",     color: "#0EA5E9", pct: Math.min((animatedStats.jobs / 5) * 100, 100) },
+                  { value: `${animatedStats.ats}%`,   label: "ATS Match",  color: "#F59E0B", pct: animatedStats.ats || 0 },
+                  { value: `${animatedStats.strength}%`, label: "Strength", color: "#10B981", pct: animatedStats.strength || 0 },
                 ].map((s) => {
                   const r = 28; const circ = 2 * Math.PI * r;
                   const dash = circ - (s.pct / 100) * circ;

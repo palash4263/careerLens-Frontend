@@ -1,351 +1,410 @@
-import { useEffect, useRef } from "react";
-import * as THREE from "three";
+// src/components/canvas/ResumeSaas3DHero.jsx
+import { useState } from "react";
 
-/**
- * ResumeSaas3DHero
- * -----------------
- * Drop-in 3D hero visual for a resume-management SaaS (styled for "Career Lens":
- * near-black background, violet/gold accents, teal "success" states).
- *
- * A floating resume card slowly rotates while a teal scan-line sweeps across it
- * (representing ATS analysis). Three badge sprites orbit the card, echoing the
- * "ATS Optimized / Job Matched / 94% Fit" language already used in the product.
- *
- * Usage: <ResumeSaas3DHero /> — fills its parent container (set a height on the parent).
- */
 export default function ResumeSaas3DHero() {
-  const mountRef = useRef(null);
+  const [coords, setCoords] = useState({ x: 0, y: 0 });
+  const [isHovered, setIsHovered] = useState(false);
 
-  useEffect(() => {
-    const mount = mountRef.current;
-    if (!mount) return;
+  const handleMouseMove = (e) => {
+    const el = e.currentTarget;
+    const rect = el.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5; // normalized between -0.5 and 0.5
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    setCoords({ x, y });
+  };
 
-    // ---------- palette (matches Career Lens dashboard) ----------
-    const COLOR_BG = 0x0a0913;
-    const COLOR_GOLD = 0xf3b83c;
-    const COLOR_VIOLET = 0x9b6bf2;
-    const COLOR_VIOLET_DEEP = 0x4c2f8f;
-    const COLOR_TEAL = 0x2ee6a6;
-    const COLOR_BLUE = 0x5b8def;
-    const COLOR_CARD = 0x171426;
-    const COLOR_LINE = 0x3a3550;
-    const COLOR_TEXT_LINE = 0x55506c;
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    setCoords({ x: 0, y: 0 });
+  };
 
-    // ---------- scene / camera / renderer ----------
-    // Guard against the panel not having a laid-out size yet (common in flex/grid
-    // parents on first mount) — fall back to a sane default and correct on resize.
-    const initW = mount.clientWidth || mount.offsetWidth || 480;
-    const initH = mount.clientHeight || mount.offsetHeight || 480;
+  // Base 3D tilting variables
+  const rotateX = isHovered ? coords.y * -20 : 0;
+  const rotateY = isHovered ? coords.x * 20 : 0;
 
-    const scene = new THREE.Scene();
-
-    const camera = new THREE.PerspectiveCamera(42, initW / initH, 0.1, 100);
-    camera.position.set(0, 0.3, 7.2);
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setSize(initW, initH);
-    renderer.domElement.style.display = "block";
-    renderer.domElement.style.width = "100%";
-    renderer.domElement.style.height = "100%";
-    mount.appendChild(renderer.domElement);
-
-    // ---------- lights ----------
-    scene.add(new THREE.AmbientLight(0x3a3355, 1.1));
-
-    const goldLight = new THREE.PointLight(COLOR_GOLD, 2.2, 20);
-    goldLight.position.set(3, 3, 4);
-    scene.add(goldLight);
-
-    const violetLight = new THREE.PointLight(COLOR_VIOLET, 2.6, 20);
-    violetLight.position.set(-4, -2, 3);
-    scene.add(violetLight);
-
-    const rimLight = new THREE.PointLight(COLOR_TEAL, 1.2, 20);
-    rimLight.position.set(0, -3, -4);
-    scene.add(rimLight);
-
-    // ---------- helper: canvas text sprite (rounded pill badge) ----------
-    function makeBadge(label, sub, accentHex) {
-      const canvas = document.createElement("canvas");
-      const w = 512, h = 176;
-      canvas.width = w;
-      canvas.height = h;
-      const ctx = canvas.getContext("2d");
-
-      const accent = "#" + accentHex.toString(16).padStart(6, "0");
-
-      // rounded card background
-      const r = 28;
-      ctx.fillStyle = "rgba(15, 13, 26, 0.92)";
-      roundRect(ctx, 8, 8, w - 16, h - 16, r);
-      ctx.fill();
-      ctx.lineWidth = 3;
-      ctx.strokeStyle = accent;
-      roundRect(ctx, 8, 8, w - 16, h - 16, r);
-      ctx.stroke();
-
-      // status dot
-      ctx.beginPath();
-      ctx.arc(52, h / 2, 14, 0, Math.PI * 2);
-      ctx.fillStyle = accent;
-      ctx.fill();
-
-      // label
-      ctx.fillStyle = "#f4f2fb";
-      ctx.font = "600 40px 'Segoe UI', Arial, sans-serif";
-      ctx.textBaseline = "middle";
-      ctx.fillText(label, 84, h / 2 - 18);
-
-      // sub
-      ctx.fillStyle = accent;
-      ctx.font = "600 34px 'Segoe UI', Arial, sans-serif";
-      ctx.fillText(sub, 84, h / 2 + 32);
-
-      const tex = new THREE.CanvasTexture(canvas);
-      tex.minFilter = THREE.LinearFilter;
-      const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false });
-      const sprite = new THREE.Sprite(mat);
-      sprite.scale.set(2.1, 0.72, 1);
-      return sprite;
-    }
-
-    function roundRect(ctx, x, y, w, h, r) {
-      ctx.beginPath();
-      ctx.moveTo(x + r, y);
-      ctx.arcTo(x + w, y, x + w, y + h, r);
-      ctx.arcTo(x + w, y + h, x, y + h, r);
-      ctx.arcTo(x, y + h, x, y, r);
-      ctx.arcTo(x, y, x + w, y, r);
-      ctx.closePath();
-    }
-
-    // ---------- resume card group ----------
-    const resumeGroup = new THREE.Group();
-    scene.add(resumeGroup);
-
-    // base card
-    const cardGeo = new THREE.PlaneGeometry(2.6, 3.4);
-    const cardMat = new THREE.MeshStandardMaterial({
-      color: COLOR_CARD,
-      roughness: 0.55,
-      metalness: 0.15,
-      side: THREE.DoubleSide,
-    });
-    const card = new THREE.Mesh(cardGeo, cardMat);
-    resumeGroup.add(card);
-
-    // glowing edge frame
-    const edges = new THREE.EdgesGeometry(cardGeo);
-    const edgeMat = new THREE.LineBasicMaterial({ color: COLOR_VIOLET, transparent: true, opacity: 0.8 });
-    resumeGroup.add(new THREE.LineSegments(edges, edgeMat));
-
-    // header bar (name)
-    const headerGeo = new THREE.PlaneGeometry(1.35, 0.16);
-    const headerMat = new THREE.MeshBasicMaterial({ color: COLOR_GOLD });
-    const header = new THREE.Mesh(headerGeo, headerMat);
-    header.position.set(-0.55, 1.42, 0.01);
-    resumeGroup.add(header);
-
-    // contact line
-    const contactGeo = new THREE.PlaneGeometry(0.9, 0.06);
-    const contactMat = new THREE.MeshBasicMaterial({ color: COLOR_LINE });
-    const contact = new THREE.Mesh(contactGeo, contactMat);
-    contact.position.set(-0.75, 1.2, 0.01);
-    resumeGroup.add(contact);
-
-    // avatar circle
-    const avatarGeo = new THREE.CircleGeometry(0.24, 32);
-    const avatarMat = new THREE.MeshStandardMaterial({ color: COLOR_VIOLET_DEEP, emissive: COLOR_VIOLET, emissiveIntensity: 0.25 });
-    const avatar = new THREE.Mesh(avatarGeo, avatarMat);
-    avatar.position.set(0.95, 1.35, 0.01);
-    resumeGroup.add(avatar);
-
-    // section divider
-    const dividerGeo = new THREE.PlaneGeometry(2.2, 0.03);
-    const dividerMat = new THREE.MeshBasicMaterial({ color: COLOR_TEAL, transparent: true, opacity: 0.7 });
-    const divider = new THREE.Mesh(dividerGeo, dividerMat);
-    divider.position.set(0, 0.95, 0.01);
-    resumeGroup.add(divider);
-
-    // paragraph text lines (varying widths, like body copy)
-    const lineWidths = [2.15, 1.9, 2.0, 1.5, 2.1, 1.75, 1.95, 1.3, 2.15, 1.6, 1.85, 1.4];
-    let y = 0.72;
-    lineWidths.forEach((w, i) => {
-      const geo = new THREE.PlaneGeometry(w, 0.055);
-      const mat = new THREE.MeshBasicMaterial({ color: COLOR_TEXT_LINE });
-      const line = new THREE.Mesh(geo, mat);
-      line.position.set(-1.3 + w / 2, y, 0.01);
-      resumeGroup.add(line);
-      y -= 0.155;
-      if (i === 5) {
-        // extra divider mid-page
-        const d2 = new THREE.Mesh(dividerGeo.clone(), new THREE.MeshBasicMaterial({ color: COLOR_BLUE, transparent: true, opacity: 0.5 }));
-        d2.position.set(0, y - 0.06, 0.01);
-        resumeGroup.add(d2);
-        y -= 0.2;
-      }
-    });
-
-    // ATS scan line (glowing bar that sweeps top to bottom)
-    const scanGeo = new THREE.PlaneGeometry(2.6, 0.05);
-    const scanMat = new THREE.MeshBasicMaterial({
-      color: COLOR_TEAL,
-      transparent: true,
-      opacity: 0.85,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-    });
-    const scanLine = new THREE.Mesh(scanGeo, scanMat);
-    scanLine.position.z = 0.03;
-    resumeGroup.add(scanLine);
-
-    // soft glow behind scan line
-    const scanGlowGeo = new THREE.PlaneGeometry(2.6, 0.4);
-    const scanGlowMat = new THREE.MeshBasicMaterial({
-      color: COLOR_TEAL,
-      transparent: true,
-      opacity: 0.12,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-    });
-    const scanGlow = new THREE.Mesh(scanGlowGeo, scanGlowMat);
-    scanGlow.position.z = 0.02;
-    resumeGroup.add(scanGlow);
-
-    resumeGroup.rotation.y = -0.15;
-
-    // ---------- orbiting badges ----------
-    const badgeATS = makeBadge("ATS optimized", "98% pass rate", COLOR_TEAL);
-    const badgeJob = makeBadge("Job matched", "Product Lead · Remote", COLOR_BLUE);
-    const badgeFit = makeBadge("Resume strength", "94% fit score", COLOR_GOLD);
-    const badges = [badgeATS, badgeJob, badgeFit];
-    badges.forEach((b) => scene.add(b));
-
-    // ---------- ambient particle field ----------
-    const PARTICLE_COUNT = 260;
-    const positions = new Float32Array(PARTICLE_COUNT * 3);
-    for (let i = 0; i < PARTICLE_COUNT; i++) {
-      const radius = 5 + Math.random() * 6;
-      const theta = Math.random() * Math.PI * 2;
-      const phi = Math.acos(2 * Math.random() - 1);
-      positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
-      positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
-      positions[i * 3 + 2] = radius * Math.cos(phi) - 2;
-    }
-    const particleGeo = new THREE.BufferGeometry();
-    particleGeo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-    const particleMat = new THREE.PointsMaterial({
-      color: COLOR_VIOLET,
-      size: 0.035,
-      transparent: true,
-      opacity: 0.55,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-    });
-    const particles = new THREE.Points(particleGeo, particleMat);
-    scene.add(particles);
-
-    // ---------- mouse parallax ----------
-    const mouse = { x: 0, y: 0 };
-    function onPointerMove(e) {
-      const rect = mount.getBoundingClientRect();
-      mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-      mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-    }
-    mount.addEventListener("pointermove", onPointerMove);
-
-    // ---------- resize ----------
-    function handleResize() {
-      const w = mount.clientWidth;
-      const h = mount.clientHeight;
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-      renderer.setSize(w, h);
-    }
-    const resizeObserver = new ResizeObserver(handleResize);
-    resizeObserver.observe(mount);
-
-    // Force a re-measure shortly after mount in case the very first
-    // measurement above happened before the parent's flex/grid layout settled.
-    requestAnimationFrame(handleResize);
-    const settleTimer = setTimeout(handleResize, 250);
-
-    // ---------- animation loop ----------
-    const startTime = performance.now();
-    let frameId;
-
-    function animate() {
-      const t = (performance.now() - startTime) / 1000;
-
-      // resume card: gentle float + rotation, drifts toward mouse
-      resumeGroup.rotation.y = -0.15 + Math.sin(t * 0.35) * 0.25 + mouse.x * 0.25;
-      resumeGroup.rotation.x = Math.sin(t * 0.4) * 0.05 + mouse.y * 0.08;
-      resumeGroup.position.y = Math.sin(t * 0.6) * 0.12;
-
-      // scan line sweep (loops top -> bottom)
-      const scanT = (t * 0.35) % 1;
-      const scanY = 1.75 - scanT * 3.5;
-      scanLine.position.y = scanY;
-      scanGlow.position.y = scanY;
-
-      // orbiting badges on staggered elliptical paths
-      const orbitR = 3.15;
-      badges.forEach((b, i) => {
-        const speed = 0.22 + i * 0.05;
-        const offset = (i / badges.length) * Math.PI * 2;
-        const angle = t * speed + offset;
-        b.position.set(
-          Math.cos(angle) * orbitR,
-          Math.sin(angle * 0.8) * 1.3 + Math.sin(i * 2) * 0.3,
-          Math.sin(angle) * 1.6 - 0.5
-        );
-        // fade badges that swing behind the card
-        const depth = (b.position.z + 2.1) / 4.2;
-        b.material.opacity = THREE.MathUtils.clamp(0.35 + depth * 0.75, 0.25, 1);
-      });
-
-      // particle drift
-      particles.rotation.y = t * 0.02;
-      particles.rotation.x = t * 0.01;
-
-      // camera parallax
-      camera.position.x += (mouse.x * 0.8 - camera.position.x) * 0.04;
-      camera.position.y += (0.3 + mouse.y * 0.5 - camera.position.y) * 0.04;
-      camera.lookAt(0, 0, 0);
-
-      renderer.render(scene, camera);
-      frameId = requestAnimationFrame(animate);
-    }
-    animate();
-
-    // ---------- cleanup ----------
-    return () => {
-      cancelAnimationFrame(frameId);
-      clearTimeout(settleTimer);
-      resizeObserver.disconnect();
-      mount.removeEventListener("pointermove", onPointerMove);
-      mount.removeChild(renderer.domElement);
-      renderer.dispose();
-      [cardGeo, edges, headerGeo, contactGeo, avatarGeo, dividerGeo, scanGeo, scanGlowGeo, particleGeo].forEach((g) => g.dispose());
-      [cardMat, edgeMat, headerMat, contactMat, avatarMat, dividerMat, scanMat, scanGlowMat, particleMat].forEach((m) => m.dispose());
-      badges.forEach((b) => {
-        b.material.map.dispose();
-        b.material.dispose();
-      });
-    };
-  }, []);
-
-return (
-    <div
+  return (
+    <div 
+      className="hero-3d-scene"
+      onMouseMove={handleMouseMove}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={handleMouseLeave}
       style={{
         width: "100%",
         height: "100%",
-        minHeight: 480,
+        minHeight: "400px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
         position: "relative",
+        overflow: "visible",
+        perspective: "1200px"
       }}
     >
-      <div ref={mountRef} style={{ width: "100%", height: "100%" }} />
+      <style>{`
+        .hero-3d-stage {
+          position: relative;
+          width: 250px;
+          height: 330px;
+          transform-style: preserve-3d;
+          transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* ── BACK CARD (DARK COMPONENT) ── */
+        .res-card-back {
+          position: absolute;
+          width: 200px;
+          height: 260px;
+          background: #0f172a;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 10px;
+          padding: 14px;
+          box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+          transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease, border-color 0.4s ease;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          pointer-events: none;
+        }
+
+        /* Default (Not Hovered): Dark Card is completely hidden */
+        .res-card-back.default {
+          left: -10px;
+          top: 35px;
+          z-index: 1;
+          transform: translateZ(40px) rotateY(-8deg) rotateX(4deg) scale(0.95);
+          opacity: 0;
+        }
+
+        /* Hovered: Dark Card shuffles to the front and fades in */
+        .res-card-back.shuffled {
+          left: -10px;
+          top: 35px;
+          z-index: 5;
+          transform: translateZ(120px) rotateY(4deg) rotateX(-2deg);
+          opacity: 1;
+          border-color: rgba(124, 58, 237, 0.3);
+          box-shadow: 0 20px 45px rgba(124, 58, 237, 0.2);
+        }
+
+        /* ── FRONT CARD (WHITE COMPONENT) ── */
+        .res-card-front {
+          position: absolute;
+          width: 205px;
+          height: 268px;
+          background: #ffffff;
+          border: 1px solid rgba(0, 0, 0, 0.05);
+          border-radius: 10px;
+          padding: 16px 14px;
+          box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+          transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease;
+          display: flex;
+          gap: 10px;
+          pointer-events: none;
+        }
+
+        /* Default (Not Hovered): White Card is in the front and visible */
+        .res-card-front.default {
+          right: -10px;
+          top: 35px;
+          z-index: 2;
+          transform: translateZ(120px) rotateY(4deg) rotateX(-2deg);
+          opacity: 1;
+        }
+
+        /* Hovered: White Card shuffles to the back and fades out */
+        .res-card-front.shuffled {
+          right: -10px;
+          top: 35px;
+          z-index: 1;
+          transform: translateZ(40px) rotateY(-8deg) rotateX(4deg) scale(0.95);
+          opacity: 0;
+        }
+
+        /* Resume Content mock items */
+        .res-line-name {
+          height: 10px;
+          border-radius: 2px;
+        }
+        .res-card-back .res-line-name { background: #38bdf8; width: 60%; }
+        .res-card-front .res-line-name { background: #0f172a; width: 70%; }
+
+        .res-line-title {
+          height: 5px;
+          border-radius: 2px;
+          margin-top: -5px;
+        }
+        .res-card-back .res-line-title { background: #64748b; width: 35%; }
+        .res-card-front .res-line-title { background: #10b981; width: 45%; }
+
+        .res-divider {
+          height: 1px;
+          width: 100%;
+          background: #e2e8f0;
+          margin: 3px 0;
+        }
+        .res-card-back .res-divider { background: rgba(255, 255, 255, 0.1); }
+
+        .res-block-text {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+        .res-line-text {
+          height: 3.5px;
+          border-radius: 1px;
+        }
+        .res-card-back .res-line-text { background: rgba(255, 255, 255, 0.15); }
+        .res-card-front .res-line-text { background: #e2e8f0; }
+
+        .res-col-left {
+          flex: 1.5;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+        .res-col-right {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          border-left: 1px solid #f1f5f9;
+          padding-left: 6px;
+        }
+
+        /* ── FLOATING WIDGETS ── */
+        .widget-fonts {
+          position: absolute;
+          left: -70px;
+          top: 100px;
+          background: rgba(15, 23, 42, 0.85);
+          backdrop-filter: blur(8px);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 8px;
+          padding: 8px;
+          display: flex;
+          flex-direction: column;
+          gap: 5px;
+          width: 75px;
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+          transform: translateZ(160px);
+          font-family: sans-serif;
+        }
+
+        .widget-fonts-header {
+          font-size: 7px;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          color: #94a3b8;
+          font-weight: 700;
+          margin-bottom: 1px;
+        }
+
+        .font-row {
+          font-size: 8px;
+          font-weight: 600;
+          color: #cbd5e1;
+          padding: 2.5px 5px;
+          border-radius: 3px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        }
+
+        .font-row.active {
+          color: #10b981;
+          background: rgba(16, 185, 129, 0.1);
+        }
+
+        .widget-controls {
+          position: absolute;
+          left: -30px;
+          bottom: 15px;
+          background: #ffffff;
+          border: 1px solid rgba(0, 0, 0, 0.06);
+          border-radius: 8px;
+          padding: 10px;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          width: 145px;
+          box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
+          transform: translateZ(200px) rotateX(2deg) rotateY(-4deg);
+          font-family: sans-serif;
+        }
+
+        .control-slider-group {
+          display: flex;
+          flex-direction: column;
+          gap: 3px;
+        }
+
+        .slider-label {
+          display: flex;
+          justify-content: space-between;
+          font-size: 7px;
+          font-weight: 700;
+          text-transform: uppercase;
+          color: #64748b;
+          letter-spacing: 0.02em;
+        }
+
+        .slider-bar-wrap {
+          display: flex;
+          align-items: center;
+          gap: 5px;
+        }
+
+        .slider-bar-bg {
+          flex: 1;
+          height: 2.5px;
+          background: #e2e8f0;
+          border-radius: 2px;
+          position: relative;
+        }
+
+        .slider-bar-fill {
+          height: 100%;
+          background: #10b981;
+          border-radius: 2px;
+        }
+
+        .slider-handle {
+          position: absolute;
+          top: -2px;
+          width: 6.5px;
+          height: 6.5px;
+          border-radius: 50%;
+          background: #10b981;
+          box-shadow: 0 0 4px rgba(16, 185, 129, 0.5);
+        }
+
+        .slider-sign {
+          font-size: 8px;
+          font-weight: bold;
+          color: #94a3b8;
+        }
+      `}</style>
+
+      {/* 3D STAGE CONTAINER */}
+      <div 
+        className="hero-3d-stage"
+        style={{
+          transform: `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`
+        }}
+      >
+        
+        {/* 1. BACK CARD (DARK COMPONENT) */}
+        <div className={`res-card-back ${isHovered ? 'shuffled' : 'default'}`}>
+          <div className="res-line-name" />
+          <div className="res-line-title" />
+          <div className="res-divider" />
+          
+          <div className="res-block-text">
+            <div className="res-line-text" style={{ width: "90%" }} />
+            <div className="res-line-text" style={{ width: "95%" }} />
+            <div className="res-line-text" style={{ width: "80%" }} />
+          </div>
+
+          <div className="res-divider" />
+
+          <div className="res-block-text">
+            <div className="res-line-text" style={{ width: "85%" }} />
+            <div className="res-line-text" style={{ width: "60%" }} />
+          </div>
+        </div>
+
+        {/* 2. FRONT CARD (WHITE COMPONENT) */}
+        <div className={`res-card-front ${isHovered ? 'shuffled' : 'default'}`}>
+          <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "3px", background: "#10b981", borderRadius: "10px 10px 0 0" }} />
+          
+          {/* Left Column */}
+          <div className="res-col-left">
+            <div>
+              <div className="res-line-name" />
+              <div className="res-line-title" style={{ marginTop: "4px" }} />
+            </div>
+            
+            <div className="res-divider" />
+            
+            <div className="res-block-text">
+              <div className="res-line-text" style={{ width: "95%" }} />
+              <div className="res-line-text" style={{ width: "90%" }} />
+              <div className="res-line-text" style={{ width: "85%" }} />
+            </div>
+
+            <div className="res-block-text" style={{ marginTop: "4px" }}>
+              <div className="res-line-text" style={{ width: "40%", height: "6px", background: "#0f172a" }} />
+              <div className="res-line-text" style={{ width: "95%" }} />
+              <div className="res-line-text" style={{ width: "80%" }} />
+            </div>
+          </div>
+
+          {/* Right Sidebar */}
+          <div className="res-col-right">
+            <div className="res-block-text">
+              <div className="res-line-text" style={{ width: "60%", height: "6px", background: "#10b981" }} />
+              <div style={{ display: "flex", gap: "3px", flexWrap: "wrap" }}>
+                <div style={{ width: "18px", height: "6px", background: "rgba(16, 185, 129, 0.12)", border: "0.5px solid rgba(16, 185, 129, 0.3)", borderRadius: "1.5px" }} />
+                <div style={{ width: "24px", height: "6px", background: "rgba(16, 185, 129, 0.12)", border: "0.5px solid rgba(16, 185, 129, 0.3)", borderRadius: "1.5px" }} />
+                <div style={{ width: "20px", height: "6px", background: "rgba(16, 185, 129, 0.12)", border: "0.5px solid rgba(16, 185, 129, 0.3)", borderRadius: "1.5px" }} />
+              </div>
+            </div>
+
+            <div className="res-block-text" style={{ marginTop: "8px" }}>
+              <div className="res-line-text" style={{ width: "70%", height: "6px", background: "#0f172a" }} />
+              <div className="res-line-text" style={{ width: "90%" }} />
+              <div className="res-line-text" style={{ width: "80%" }} />
+            </div>
+          </div>
+        </div>
+
+        {/* 3. FLOATING FONTS LIST WIDGET */}
+        <div className="widget-fonts">
+          <span className="widget-fonts-header">Font</span>
+          <div className="font-row active">
+            <span>Rubik</span>
+            <span style={{ fontSize: "6px" }}>●</span>
+          </div>
+          <div className="font-row">Lato</div>
+          <div className="font-row">Raleway</div>
+          <div className="font-row">Exo</div>
+          <div className="font-row">Chivo</div>
+        </div>
+
+        {/* 4. FLOATING SLIDERS CONTROLS WIDGET */}
+        <div className="widget-controls">
+          <div className="control-slider-group">
+            <div className="slider-label">
+              <span>Page Margins</span>
+              <span style={{ color: "#10b981" }}>{isHovered ? "2" : "1"}</span>
+            </div>
+            <div className="slider-bar-wrap">
+              <span className="slider-sign">-</span>
+              <div className="slider-bar-bg">
+                <div className="slider-bar-fill" style={{ width: isHovered ? "50%" : "30%" }} />
+                <div className="slider-handle" style={{ left: isHovered ? "50%" : "30%" }} />
+              </div>
+              <span className="slider-sign">+</span>
+            </div>
+          </div>
+
+          <div className="control-slider-group">
+            <div className="slider-label">
+              <span>Section Spacing</span>
+              <span style={{ color: "#10b981" }}>{isHovered ? "4" : "3"}</span>
+            </div>
+            <div className="slider-bar-wrap">
+              <span className="slider-sign">-</span>
+              <div className="slider-bar-bg">
+                <div className="slider-bar-fill" style={{ width: isHovered ? "80%" : "65%" }} />
+                <div className="slider-handle" style={{ left: isHovered ? "80%" : "65%" }} />
+              </div>
+              <span className="slider-sign">+</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
     </div>
   );
 }

@@ -502,9 +502,14 @@ async function generateSingleColumnPDF({
   linkedin = null,
   userName = null,
   primaryColor = '#1761c7',
+  pageMargins = 1,
+  sectionSpacing = 3,
 }) {
   const PRIMARY = hexToRgbColor(primaryColor);
   const id = resolveIdentity(resumeText, fileName, { jobTitle, email, phone, linkedin, userName });
+
+  const marginX = Number(pageMargins) === 1 ? 24 : Number(pageMargins) === 2 ? 36 : 48;
+  const marginTop = Number(pageMargins) === 1 ? 18 : Number(pageMargins) === 2 ? 24 : 32;
 
   const pdf = await PDFDocument.create();
   const dh  = await createFontKit(pdf);
@@ -512,9 +517,9 @@ async function generateSingleColumnPDF({
 
   const sections  = parseResumeSections(resumeText, { userName: id.name, email: id.email, phone: id.phone, linkedin: id.linkedin });
   const cleanFile = safeText(fileName).replace(/\.pdf$/i, '');
-  const FULL_W    = PAGE_WIDTH - MARGIN_X * 2;
+  const FULL_W    = PAGE_WIDTH - marginX * 2;
 
-  const col = new Column(pdf, dh, PRIMARY, { x: MARGIN_X, width: FULL_W, y: PAGE_HEIGHT - MARGIN_TOP, pageMode: 'strict-one-page' });
+  const col = new Column(pdf, dh, PRIMARY, { x: marginX, width: FULL_W, y: PAGE_HEIGHT - marginTop, pageMode: 'strict-one-page' });
 
   const nameSize = 16;
   col.text(id.name, (PAGE_WIDTH - dh.tw(id.name, nameSize, { bold: true })) / 2, nameSize, { bold: true, color: PRIMARY });
@@ -527,14 +532,16 @@ async function generateSingleColumnPDF({
 
   const sizes = {
     sizeSectionTitle: 9.5, sizeEntryHeader: 9.0, sizeSubtitle: 8.0, sizeBody: 7.8,
-    lhBody: 10.5, lhEntryHeader: 11.5, lhSubtitle: 11.0, entrySpace: 2,
+    lhBody: 10.5, lhEntryHeader: 11.5, lhSubtitle: 11.0, 
+    entrySpace: Number(sectionSpacing) * 0.6,
+    secSpace: Number(sectionSpacing) * 1.5,
   };
 
   for (const canonical of ['Summary', 'Experience', 'Projects', 'Skills', 'Education', 'Certifications', 'Languages']) {
     const sec = sections.find(s => s.title.toLowerCase().includes(canonical.toLowerCase()));
     if (!sec || sec.content.length === 0) continue;
 
-    col.y -= 4;
+    col.y -= (Number(sectionSpacing) * 1.2);
     col.sectionHeader(canonical, sizes.sizeSectionTitle, { gapBefore: 3, gapAfter: 6, minGap: 12, lineColor: rgb(0.88, 0.90, 0.93), lineThickness: 0.6 });
 
     if (canonical === 'Summary') {
@@ -569,13 +576,18 @@ export async function generateResumePDF({
   userName = null,
   templateType = 'two-column',
   primaryColor = '#1761c7',
+  pageMargins = 1,
+  sectionSpacing = 3,
 }) {
   if (templateType === 'single-column') {
-    return generateSingleColumnPDF({ resumeText, fileName, jobTitle, email, phone, linkedin, userName, primaryColor });
+    return generateSingleColumnPDF({ resumeText, fileName, jobTitle, email, phone, linkedin, userName, primaryColor, pageMargins, sectionSpacing });
   }
 
   const PRIMARY = hexToRgbColor(primaryColor);
   const id = resolveIdentity(resumeText, fileName, { jobTitle, email, phone, linkedin, userName });
+
+  const marginX = Number(pageMargins) === 1 ? 24 : Number(pageMargins) === 2 ? 36 : 48;
+  const marginTop = Number(pageMargins) === 1 ? 18 : Number(pageMargins) === 2 ? 24 : 32;
 
   const pdf = await PDFDocument.create();
   const dh  = await createFontKit(pdf);
@@ -598,12 +610,12 @@ export async function generateResumePDF({
   }
 
   const COL_GAP     = 16;
-  const FULL_W      = PAGE_WIDTH - MARGIN_X * 2;
+  const FULL_W      = PAGE_WIDTH - marginX * 2;
   
   const LEFT_COL_W  = hasSkills ? Math.floor(FULL_W * 0.58) : FULL_W;
   const RIGHT_COL_W = hasSkills ? (FULL_W - LEFT_COL_W - COL_GAP) : 0;
-  const LEFT_COL_X  = MARGIN_X;
-  const RIGHT_COL_X = MARGIN_X + LEFT_COL_W + COL_GAP;
+  const LEFT_COL_X  = marginX;
+  const RIGHT_COL_X = marginX + LEFT_COL_W + COL_GAP;
 
   const sizes = {
     sizeName: 18, 
@@ -616,15 +628,15 @@ export async function generateResumePDF({
     lhBody: 10.5, 
     lhEntryHeader: 11.5,
     lhSubtitle: 11.0, 
-    secSpace: 5, 
-    entrySpace: 2,
+    secSpace: Number(sectionSpacing) * 1.5, 
+    entrySpace: Number(sectionSpacing) * 0.6,
   };
 
-  let cursorY = PAGE_HEIGHT - MARGIN_TOP;
+  let cursorY = PAGE_HEIGHT - marginTop;
 
   p.drawRectangle({ x: 0, y: PAGE_HEIGHT - 5, width: PAGE_WIDTH, height: 5, fill: PRIMARY });
 
-  dh.drawText(p, id.name.toUpperCase(), MARGIN_X, cursorY, sizes.sizeName, { bold: true, color: BLACK });
+  dh.drawText(p, id.name.toUpperCase(), marginX, cursorY, sizes.sizeName, { bold: true, color: BLACK });
   cursorY -= sizes.sizeName + 12; 
 
   const contactStr = [
@@ -635,9 +647,9 @@ export async function generateResumePDF({
   ].filter(Boolean).join('   •   ');
 
   const bannerH = 18; 
-  p.drawRectangle({ x: MARGIN_X, y: cursorY - 4, width: FULL_W, height: bannerH, color: rgb(0.95, 0.96, 0.98) });
+  p.drawRectangle({ x: marginX, y: cursorY - 4, width: FULL_W, height: bannerH, color: rgb(0.95, 0.96, 0.98) });
   const contactW = dh.tw(contactStr, sizes.sizeContact);
-  dh.drawText(p, contactStr, MARGIN_X + (FULL_W - contactW) / 2, cursorY - 1, sizes.sizeContact, { color: DARK_GRAY });
+  dh.drawText(p, contactStr, marginX + (FULL_W - contactW) / 2, cursorY - 1, sizes.sizeContact, { color: DARK_GRAY });
   cursorY -= bannerH + 18; 
 
   const colOpts = { pageMode: 'strict-one-page', accentBar: true, minGap: 10, bulletIndent: 10, bulletSizeAdd: 0 };

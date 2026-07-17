@@ -1,6 +1,6 @@
 // src/pages/ResumeOptimizationPage.jsx
 import { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence, useInView, useMotionValue, useSpring, useReducedMotion, animate } from "framer-motion";
 import { Copy, Check, Sparkles, TrendingUp, FileText, Eye, Zap, Target, ChartBar as BarChart3, ArrowRight, Star, Clock, Download, Wand as Wand2 } from "lucide-react";
 import "./ResumeOptimizationPage.css";
@@ -471,12 +471,16 @@ const MAGNET_PHRASES = [
 ];
 
 export default function ResumeOptimizationPage() {
+  const navigate = useNavigate();
   const [resumes, setResumes] = useState([]);
   const [phraseIndex, setPhraseIndex] = useState(0);
   const [jobDescriptions, setJobDescriptions] = useState([]);
-  const [selectedResume, setSelectedResume] = useState("");
-  const [selectedJobDescription, setSelectedJobDescription] = useState("");
-  const [result, setResult] = useState(null);
+  const [selectedResume, setSelectedResume] = useState(() => localStorage.getItem("cl_selected_resume") || "");
+  const [selectedJobDescription, setSelectedJobDescription] = useState(() => localStorage.getItem("cl_selected_jd") || "");
+  const [result, setResult] = useState(() => {
+    const saved = localStorage.getItem("cl_optimization_result");
+    return saved ? JSON.parse(saved) : null;
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [copySuccess, setCopySuccess] = useState(false);
@@ -487,6 +491,41 @@ export default function ResumeOptimizationPage() {
   const [selectedFont, setSelectedFont] = useState('Rubik');
   const [searchParams] = useSearchParams();
 
+  // Sync state values to localStorage
+  useEffect(() => {
+    localStorage.setItem("cl_selected_resume", selectedResume);
+  }, [selectedResume]);
+
+  useEffect(() => {
+    localStorage.setItem("cl_selected_jd", selectedJobDescription);
+  }, [selectedJobDescription]);
+
+  useEffect(() => {
+    if (result) {
+      localStorage.setItem("cl_optimization_result", JSON.stringify(result));
+    } else {
+      localStorage.removeItem("cl_optimization_result");
+    }
+  }, [result]);
+
+  const [editedSections, setEditedSections] = useState(() => {
+    const saved = localStorage.getItem("cl_edited_sections");
+    return saved ? JSON.parse(saved) : {
+      Header: '',
+      Summary: '',
+      Experience: '',
+      Projects: '',
+      Skills: '',
+      Education: '',
+      Certifications: '',
+      Languages: '',
+    };
+  });
+
+  useEffect(() => {
+    localStorage.setItem("cl_edited_sections", JSON.stringify(editedSections));
+  }, [editedSections]);
+
   useEffect(() => {
     const templateParam = searchParams.get("template");
     const colorParam = searchParams.get("color");
@@ -496,17 +535,6 @@ export default function ResumeOptimizationPage() {
     if (colorParam) setSelectedColor(colorParam);
     if (fontParam) setSelectedFont(fontParam);
   }, [searchParams]);
-
-  const [editedSections, setEditedSections] = useState({
-    Header: '',
-    Summary: '',
-    Experience: '',
-    Projects: '',
-    Skills: '',
-    Education: '',
-    Certifications: '',
-    Languages: '',
-  });
 
   const [optimizingSections, setOptimizingSections] = useState({});
   const [sectionPrompts, setSectionPrompts] = useState({});
@@ -1353,476 +1381,96 @@ export default function ResumeOptimizationPage() {
                       <><Copy size={16} /> Copy Optimized</>
                     )}
                   </motion.button>
+
+                  <motion.button
+                    className="copy-btn-modern"
+                    onClick={() => {
+                      if (window.confirm("Are you sure you want to reset this session? Your current edits will be cleared.")) {
+                        setResult(null);
+                        setEditedSections({
+                          Header: '',
+                          Summary: '',
+                          Experience: '',
+                          Projects: '',
+                          Skills: '',
+                          Education: '',
+                          Certifications: '',
+                          Languages: '',
+                        });
+                        setSelectedResume("");
+                        setSelectedJobDescription("");
+                        localStorage.removeItem("cl_selected_resume");
+                        localStorage.removeItem("cl_selected_jd");
+                        localStorage.removeItem("cl_optimization_result");
+                        localStorage.removeItem("cl_edited_sections");
+                      }
+                    }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    style={{ background: 'rgba(239, 68, 68, 0.08)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.2)' }}
+                  >
+                    🗑️ Reset Session
+                  </motion.button>
                 </div>
               </div>
 
-              <div className="view-toggle-modern" style={{ marginBottom: '1.5rem' }}>
-                <button
-                  className={viewMode === 'side-by-side' ? 'active' : ''}
-                  onClick={() => setViewMode('side-by-side')}
-                >
-                  <FileText size={16} />
-                  Live Editor
-                </button>
-                <button
-                  className={viewMode === 'design-playground' ? 'active' : ''}
-                  onClick={() => setViewMode('design-playground')}
-                >
-                  <Sparkles size={16} />
-                  Design Playground
-                </button>
-              </div>
-
-              {/* Side by Side View */}
-              <AnimatePresence mode="wait">
-                {viewMode === 'side-by-side' && (
-                  <motion.div
-                    key="side-by-side"
-                    className="compare-modern"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <div className="compare-header-modern">
-                      <h3>📝 Live Editor</h3>
-                      <span className="compare-hint">✏️ Edit the optimized sections directly below</span>
-                    </div>
- 
-                    <div className="compare-grid-modern" style={{ gridTemplateColumns: '1fr' }}>
-                      <motion.div
-                        className="compare-col-modern after"
-                        initial={{ y: 20, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        transition={{ delay: 0.1 }}
-                      >
-                        <div className="compare-tag-modern after">
-                          <span>✨</span> Optimized (Live Editor)
-                          <motion.span
-                            className="new-badge-modern"
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            transition={{ delay: 0.4, type: "spring", stiffness: 260, damping: 14 }}
-                          >
-                            EDITABLE
-                          </motion.span>
-                        </div>
-                        <div className="compare-content-modern" style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem', background: 'rgba(15, 23, 42, 0.4)' }}>
-                        {Object.keys(editedSections).map(sectionKey => {
-  const sectionContent = editedSections[sectionKey];
-  const isPrimary = ['Header', 'Summary', 'Experience', 'Projects', 'Skills', 'Education'].includes(sectionKey);
-  if (!isPrimary && (!sectionContent || !sectionContent.trim())) return null;
-
-  return (
-    <div 
-      key={sectionKey} 
-      className="section-editor-card group" 
-      style={{
-        background: 'rgba(17, 24, 39, 0.6)',
-        backdropFilter: 'blur(12px)',
-        border: '1px solid rgba(124, 58, 237, 0.15)',
-        borderRadius: '16px',
-        padding: '20px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '16px',
-        position: 'relative',
-        boxShadow: '0 10px 30px -10px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.05)',
-        transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-      }}
-    >
-      {/* Loading Overlay */}
-      {optimizingSections[sectionKey] && (
-        <div style={{
-          position: 'absolute',
-          top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(11, 15, 25, 0.85)',
-          backdropFilter: 'blur(4px)',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 10,
-          borderRadius: '16px',
-          gap: '12px'
-        }}>
-          <div className="spinner-modern" style={{ borderColor: '#a855f7', borderTopColor: 'transparent', width: '28px', height: '28px' }} />
-          <span style={{ fontSize: '0.85rem', fontWeight: '600', color: '#a855f7', fontFamily: "Outfit, sans-serif", letterSpacing: '0.05em' }}>AI Personalizing...</span>
-        </div>
-      )}
-
-      {/* Header Row */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{
-            background: 'rgba(124, 58, 237, 0.15)',
-            width: '32px',
-            height: '32px',
-            borderRadius: '8px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '1.1rem',
-            border: '1px solid rgba(124, 58, 237, 0.25)'
-          }}>
-            {getSectionIcon(sectionKey)}
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ fontSize: '0.95rem', fontWeight: '700', color: '#f8fafc', fontFamily: 'Outfit, sans-serif' }}>
-              {sectionKey} Section
-            </span>
-          </div>
-        </div>
-
-        <button
-          onClick={() => setShowPromptInput(prev => ({ ...prev, [sectionKey]: !prev[sectionKey] }))}
-          style={{
-            background: showPromptInput[sectionKey] ? 'linear-gradient(135deg, #7c3aed, #4f46e5)' : 'rgba(124, 58, 237, 0.1)',
-            color: showPromptInput[sectionKey] ? '#ffffff' : '#a78bfa',
-            border: '1px solid rgba(124, 58, 237, 0.3)',
-            borderRadius: '99px',
-            padding: '6px 14px',
-            fontSize: '0.75rem',
-            fontWeight: '600',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            boxShadow: showPromptInput[sectionKey] ? '0 0 15px rgba(124, 58, 237, 0.4)' : 'none',
-            transition: 'all 0.2s ease',
-          }}
-        >
-          <Sparkles size={12} />
-          <span>AI Optimize</span>
-        </button>
-      </div>
-
-      {/* Editor Content Area */}
-      <div style={{
-        background: 'rgba(15, 23, 42, 0.4)',
-        border: '1px solid rgba(255, 255, 255, 0.05)',
-        borderRadius: '12px',
-        padding: '14px',
-        transition: 'border-color 0.2s ease',
-      }}>
-        <AutoGrowingTextarea
-          value={sectionContent}
-          onChange={(e) => {
-            setEditedSections(prev => ({
-              ...prev,
-              [sectionKey]: e.target.value
-            }));
-          }}
-          style={{
-            width: '100%',
-            background: 'transparent',
-            border: 'none',
-            color: '#cbd5e1',
-            fontFamily: "'Inter', sans-serif",
-            fontSize: '0.9rem',
-            lineHeight: '1.6',
-            padding: '0',
-            outline: 'none',
-          }}
-          placeholder={`Add high-impact points for your ${sectionKey.toLowerCase()} section...`}
-        />
-      </div>
-
-      {/* AI Prompt Input Expansion */}
-      <AnimatePresence>
-        {showPromptInput[sectionKey] && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            style={{
-              borderTop: '1px solid rgba(255, 255, 255, 0.05)',
-              paddingTop: '14px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '10px',
-              overflow: 'hidden'
-            }}
-          >
-            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-              <input
-                type="text"
-                value={sectionPrompts[sectionKey] || ""}
-                onChange={(e) => setSectionPrompts(prev => ({ ...prev, [sectionKey]: e.target.value }))}
-                placeholder="E.g., Make it sound more metrics-driven, highlight cloud scaling tools..."
+              {/* Call-to-action for Full-Screen Live Editor */}
+              <div 
+                className="editor-cta-card-modern"
                 style={{
-                  width: '100%',
-                  background: 'rgba(15, 23, 42, 0.6)',
-                  border: '1px solid rgba(124, 58, 237, 0.25)',
-                  borderRadius: '10px',
-                  padding: '10px 14px',
-                  fontSize: '0.82rem',
-                  color: '#e2e8f0',
-                  fontFamily: "'Inter', sans-serif",
-                  outline: 'none',
-                  paddingRight: '100px'
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleOptimizeSection(sectionKey);
-                }}
-              />
-              <button
-                onClick={() => handleOptimizeSection(sectionKey)}
-                disabled={optimizingSections[sectionKey]}
-                style={{
-                  position: 'absolute',
-                  right: '6px',
-                  background: 'linear-gradient(135deg, #a855f7, #7c3aed)',
-                  color: '#ffffff',
-                  border: 'none',
-                  borderRadius: '6px',
-                  padding: '6px 12px',
-                  fontSize: '0.75rem',
-                  fontWeight: '700',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  boxShadow: '0 4px 10px rgba(124, 58, 237, 0.3)'
+                  background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.4), rgba(15, 23, 42, 0.6))',
+                  border: '1px solid rgba(124, 58, 237, 0.2)',
+                  borderRadius: '24px',
+                  padding: '40px',
+                  textAlign: 'center',
+                  marginTop: '2rem',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  boxShadow: '0 20px 50px rgba(0, 0, 0, 0.4)'
                 }}
               >
-                <Sparkles size={10} /> Apply
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-})}
-                        </div>
-                      </motion.div>
-                    </div>
-                  </motion.div>
-                )}
+                <div style={{ position: 'absolute', top: '-50px', left: '-50px', width: '150px', height: '150px', background: 'radial-gradient(circle, rgba(124,58,237,0.15) 0%, transparent 70%)', pointerEvents: 'none' }} />
+                <div style={{ position: 'absolute', bottom: '-50px', right: '-50px', width: '150px', height: '150px', background: 'radial-gradient(circle, rgba(59,130,246,0.15) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
-                {/* Design Playground View */}
-                {viewMode === 'design-playground' && (
-                  <motion.div
-                    key="design-playground"
-                    initial={{ opacity: 0, scale: 0.98 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.98 }}
-                    transition={{ duration: 0.4 }}
-                    style={{ marginBottom: '2rem' }}
+                <motion.div
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <span style={{ fontSize: '3rem', display: 'block', marginBottom: '1rem' }}>✍️</span>
+                  <h3 style={{ fontFamily: 'Outfit, sans-serif', fontSize: '1.5rem', fontWeight: '800', color: '#fff', margin: '0 0 10px 0' }}>
+                    Interactive Optimization Studio
+                  </h3>
+                  <p style={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.6)', maxWidth: '500px', margin: '0 auto 24px auto', lineHeight: '1.6' }}>
+                    Your optimized resume content is prepared! Open the dedicated Full-Page Live Editor to customize sections with AI side-by-side with a real-time layout simulator.
+                  </p>
+                  
+                  <motion.button
+                    className="download-btn-modern"
+                    onClick={() => navigate("/resume-editor")}
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    style={{
+                      margin: '0 auto',
+                      fontSize: '0.9rem',
+                      padding: '12px 32px',
+                      borderRadius: '12px',
+                      background: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
+                      boxShadow: '0 8px 24px rgba(124, 58, 237, 0.3)',
+                      color: '#ffffff',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontWeight: '700',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem', flexWrap: 'wrap', gap: '10px' }}>
-                      <div>
-                        <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#fff', display: 'flex', alignItems: 'center', gap: '8px', fontFamily: 'Outfit, sans-serif' }}>
-                          🎨 Interactive Styling Simulator
-                        </h3>
-                        <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.78rem', color: 'rgba(255,255,255,0.45)' }}>
-                          Hover over the canvas to browse style choices, or try themes out in real-time. Customized styles apply to downloaded PDFs.
-                        </p>
-                      </div>
-                      <span style={{ fontSize: '0.76rem', background: 'rgba(124, 58, 237, 0.1)', color: '#a78bfa', padding: '4px 10px', borderRadius: '12px', border: '1px solid rgba(124, 58, 237, 0.2)', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                        <Sparkles size={12} /> Premium Styling
-                      </span>
-                    </div>
-
-                    <div className="design-playground-modern" ref={playgroundRef} onMouseMove={handlePlaygroundMouseMove} onMouseLeave={() => setMouseOverPlayground(false)}>
-                      <div className="design-playground-dotgrid" />
-
-                      <motion.div 
-                        className="design-playground-blob"
-                        animate={{ 
-                          scale: [1, 1.25, 0.95, 1],
-                          x: [-40, 30, -20, -40],
-                          y: [20, -30, 40, 20]
-                        }}
-                        transition={{ 
-                          duration: 12, 
-                          repeat: Infinity, 
-                          ease: 'easeInOut' 
-                        }}
-                        style={{ top: '20%', left: '20%' }}
-                      />
-                      <motion.div 
-                        className="design-playground-blob"
-                        animate={{ 
-                          scale: [1.1, 0.9, 1.2, 1.1],
-                          x: [30, -40, 20, 30],
-                          y: [-30, 20, -40, -30]
-                        }}
-                        transition={{ 
-                          duration: 15, 
-                          repeat: Infinity, 
-                          ease: 'easeInOut' 
-                        }}
-                        style={{ bottom: '20%', right: '20%', background: 'radial-gradient(circle, rgba(59,130,246,0.2) 0%, rgba(16,185,129,0.06) 50%, rgba(0,0,0,0) 70%)' }}
-                      />
-
-                      <div className="floating-widget" style={{ position: 'absolute', top: '24px', right: '24px', width: '110px' }}>
-                        <div className="widget-title">Colors</div>
-                        <div className="widget-colors-grid">
-                          {PREMIUM_THEMES.map((theme) => (
-                            <button
-                              key={theme.hex}
-                              className={`color-dot-btn ${selectedColor === theme.hex ? 'active' : ''}`}
-                              style={{ backgroundColor: theme.hex }}
-                              onClick={() => setSelectedColor(theme.hex)}
-                              title={theme.name}
-                            />
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="floating-widget" style={{ position: 'absolute', bottom: '24px', left: '24px', width: '135px' }}>
-                        <div className="widget-title">Font Style</div>
-                        <div className="widget-font-list">
-                          {PREMIUM_FONTS.map((fontOpt) => (
-                            <div
-                              key={fontOpt.name}
-                              className={`font-option-row ${selectedFont === fontOpt.name ? 'active' : ''}`}
-                              onClick={() => setSelectedFont(fontOpt.name)}
-                              style={{ fontFamily: fontOpt.family }}
-                            >
-                              <span>{fontOpt.name}</span>
-                              {selectedFont === fontOpt.name && <Check size={10} style={{ color: '#10b981' }} />}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="mini-resume-card">
-                        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '4px', backgroundColor: selectedColor }} />
-
-                        {selectedTemplate === 'two-column' ? (
-                          <div className="mini-resume-twocol" style={{ fontFamily: PREMIUM_FONTS.find(f => f.name === selectedFont)?.family || 'Rubik, sans-serif' }}>
-                            <div className="mini-resume-left">
-                              <div style={{ marginBottom: '14px' }}>
-                                <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#111', textTransform: 'uppercase', letterSpacing: '0.02em', lineHeight: '1.2' }}>
-                                  {getUserData().name}
-                                </div>
-                                <div style={{ fontSize: '7.5px', fontWeight: '700', color: selectedColor, textTransform: 'uppercase', marginTop: '2px', letterSpacing: '0.04em' }}>
-                                  {jobDescriptions.find(j => j.id === Number(selectedJobDescription))?.title || 'Professional Resume'}
-                                </div>
-                              </div>
-
-                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px', background: 'rgba(230, 242, 255, 0.45)', borderRadius: '3px', padding: '4px 6px', marginBottom: '14px' }}>
-                                <div style={{ height: '3.5px', width: '30px', background: 'rgba(0,0,0,0.18)', borderRadius: '1px' }}></div>
-                                <div style={{ height: '3.5px', width: '45px', background: 'rgba(0,0,0,0.18)', borderRadius: '1px' }}></div>
-                                <div style={{ height: '3.5px', width: '25px', background: 'rgba(0,0,0,0.18)', borderRadius: '1px' }}></div>
-                              </div>
-
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                                <div style={{ fontSize: '7px', fontWeight: 'bold', color: selectedColor, textTransform: 'uppercase', borderBottom: `0.75px solid ${selectedColor}`, paddingBottom: '2px', width: '100%', letterSpacing: '0.04em' }}>
-                                  Experience
-                                </div>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginTop: '2px' }}>
-                                  <div style={{ height: '5px', width: '80%', background: '#333', borderRadius: '1px' }}></div>
-                                  <div style={{ height: '3.5px', width: '35%', background: '#888', borderRadius: '1px' }}></div>
-                                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2px', marginTop: '1px' }}>
-                                    <div style={{ height: '2px', width: '90%', background: '#ccc' }}></div>
-                                    <div style={{ height: '2px', width: '95%', background: '#ccc' }}></div>
-                                    <div style={{ height: '2px', width: '80%', background: '#ccc' }}></div>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="mini-resume-right">
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                                <div style={{ fontSize: '7px', fontWeight: 'bold', color: selectedColor, textTransform: 'uppercase', borderBottom: `0.75px solid ${selectedColor}`, paddingBottom: '2px', width: '100%', letterSpacing: '0.04em' }}>
-                                  Skills
-                                </div>
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3.5px', marginTop: '2px' }}>
-                                  {['React', 'Node.js', 'AWS', 'Next.js', 'Docker', 'REST'].map(skill => (
-                                    <span key={skill} style={{ fontSize: '5px', padding: '1.8px 4px', background: selectedColor, color: '#fff', borderRadius: '2px', fontWeight: 'bold' }}>
-                                      {skill}
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginTop: '14px' }}>
-                                <div style={{ fontSize: '7px', fontWeight: 'bold', color: selectedColor, textTransform: 'uppercase', borderBottom: `0.75px solid ${selectedColor}`, paddingBottom: '2px', width: '100%', letterSpacing: '0.04em' }}>
-                                  Education
-                                </div>
-                                <div style={{ marginTop: '2px' }}>
-                                  <div style={{ height: '4px', width: '85%', background: '#222', borderRadius: '1px' }}></div>
-                                  <div style={{ height: '3px', width: '60%', background: '#888', borderRadius: '1px', marginTop: '2px' }}></div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="mini-resume-onecol" style={{ fontFamily: PREMIUM_FONTS.find(f => f.name === selectedFont)?.family || 'Rubik, sans-serif' }}>
-                            <div style={{ display: 'flex', flexZero: 'column', alignItems: 'center', marginBottom: '14px' }}>
-                              <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#111', textTransform: 'uppercase', letterSpacing: '0.02em', textAlign: 'center' }}>
-                                {getUserData().name}
-                              </div>
-                              <div style={{ fontSize: '7.5px', fontWeight: '700', color: '#666', textTransform: 'uppercase', marginTop: '2px', letterSpacing: '0.04em', textAlign: 'center' }}>
-                                {jobDescriptions.find(j => j.id === Number(selectedJobDescription))?.title || 'Professional Resume'}
-                              </div>
-                              <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', marginTop: '4px' }}>
-                                <div style={{ height: '3.5px', width: '25px', background: 'rgba(0,0,0,0.18)', borderRadius: '1px' }}></div>
-                                <div style={{ height: '3.5px', width: '35px', background: 'rgba(0,0,0,0.18)', borderRadius: '1px' }}></div>
-                                <div style={{ height: '3.5px', width: '25px', background: 'rgba(0,0,0,0.18)', borderRadius: '1px' }}></div>
-                              </div>
-                            </div>
-
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginBottom: '12px' }}>
-                              <div style={{ fontSize: '7px', fontWeight: 'bold', color: selectedColor, textTransform: 'uppercase', width: '100%', letterSpacing: '0.04em' }}>
-                                Summary
-                              </div>
-                              <div style={{ height: '0.75px', backgroundColor: '#e5e7eb', width: '100%', marginBottom: '2px' }} />
-                              <div style={{ height: '3px', width: '100%', background: '#ccc' }}></div>
-                              <div style={{ height: '3px', width: '95%', background: '#ccc' }}></div>
-                            </div>
-
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginBottom: '12px' }}>
-                              <div style={{ fontSize: '7px', fontWeight: 'bold', color: selectedColor, textTransform: 'uppercase', width: '100%', letterSpacing: '0.04em' }}>
-                                Experience
-                              </div>
-                              <div style={{ height: '0.75px', backgroundColor: '#e5e7eb', width: '100%', marginBottom: '2px' }} />
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2px' }}>
-                                <div style={{ height: '5px', width: '50%', background: '#333', borderRadius: '1px' }}></div>
-                                <div style={{ height: '4px', width: '20%', background: '#888', borderRadius: '1px' }}></div>
-                              </div>
-                              <div style={{ height: '3.5px', width: '30%', background: '#888', borderRadius: '1px', marginTop: '1px' }}></div>
-                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2px', marginTop: '3px' }}>
-                                <div style={{ height: '2px', width: '98%', background: '#ccc' }}></div>
-                                <div style={{ height: '2px', width: '92%', background: '#ccc' }}></div>
-                              </div>
-                            </div>
-
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                              <div style={{ fontSize: '7px', fontWeight: 'bold', color: selectedColor, textTransform: 'uppercase', width: '100%', letterSpacing: '0.04em' }}>
-                                Technical Skills
-                              </div>
-                              <div style={{ height: '0.75px', backgroundColor: '#e5e7eb', width: '100%', marginBottom: '2px' }} />
-                              <div style={{ fontSize: '5.5px', color: '#333', lineHeight: '1.3', marginTop: '2px' }}>
-                                <span style={{ fontWeight: 'bold' }}>Languages:</span> JavaScript, TypeScript, Python, HTML/CSS
-                              </div>
-                              <div style={{ fontSize: '5.5px', color: '#333', lineHeight: '1.3' }}>
-                                <span style={{ fontWeight: 'bold' }}>Frameworks:</span> React, Node.js, Next.js, Express, Docker
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      <motion.div 
-                        className="custom-demo-cursor" 
-                        style={{ 
-                          x: cursorXSpring, 
-                          y: cursorYSpring, 
-                          '--cursor-color': selectedColor 
-                        }}
-                      >
-                        <div className="custom-demo-cursor-pointer" />
-                        <div className="custom-demo-cursor-pill">{getUserData().name.split(' ')[0]}</div>
-                      </motion.div>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                    <Sparkles size={16} />
+                    <span>Open Full-Screen Live Editor</span>
+                  </motion.button>
+                </motion.div>
+              </div>
 
               {/* Keywords */}
               {result.keywords?.length > 0 && (

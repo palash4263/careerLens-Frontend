@@ -222,14 +222,16 @@ export default function Navbar() {
 
             {/* User pill */}
             <Link to="/profile" className="nb-user">
-              <div className="nb-avatar">
-                {userAvatar && userAvatar.startsWith("http") ? (
-                  <img src={userAvatar} alt="avatar" className="nb-avatar-img" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
-                ) : (
-                  <span>{userInitials}</span>
-                )}
-                <div className="nb-online" />
-              </div>
+             <div className="nb-avatar">
+  {userAvatar && userAvatar.startsWith("http") ? (
+    <img src={userAvatar} alt="avatar" className="nb-avatar-img" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+  ) : (
+    <span style={{ color: '#ffffff', fontWeight: '700', fontSize: '0.85rem' }}>
+      {userInitials}
+    </span>
+  )}
+  <div className="nb-online" />
+</div>
               <div className="nb-user-info">
                 <span className="nb-user-name">{userName}</span>
                 <span className="nb-user-role">{userRole}</span>

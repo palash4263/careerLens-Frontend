@@ -231,6 +231,119 @@ const calculateScoreDetails = (resumeText, jdText) => {
   };
 };
 
+const auditResumeText = (text, fileName) => {
+  if (!text) {
+    return {
+      score: 65,
+      grade: "B-",
+      contact: { email: false, phone: false, linkedin: false, github: false, portfolio: false, score: 40 },
+      sections: { experience: false, education: false, skills: false, projects: false, score: 50 },
+      impact: { actionVerbs: [], metricsCount: 0, score: 45 },
+      ats: { parseable: true, singleColumn: true, fileFormat: fileName?.toLowerCase()?.endsWith('.pdf'), score: 80 },
+      skills: ["COMMUNICATION", "TEAMWORK", "MANAGEMENT"],
+      recs: ["Please ensure your resume contains readable text. Scanning placeholder files might result in limited insights."]
+    };
+  }
+
+  const textLower = text.toLowerCase();
+  
+  // 1. Contact Info check
+  const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+  const phoneRegex = /\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}/g;
+  
+  const hasEmail = emailRegex.test(text);
+  const hasPhone = phoneRegex.test(text);
+  const hasLinkedin = textLower.includes("linkedin.com") || textLower.includes("linkedin");
+  const hasGithub = textLower.includes("github.com") || textLower.includes("github");
+  const hasPortfolio = textLower.includes("portfolio") || textLower.includes("website") || textLower.includes("personal-site") || textLower.includes("behance") || textLower.includes("dribbble");
+  
+  let contactScore = 0;
+  if (hasEmail) contactScore += 30;
+  if (hasPhone) contactScore += 30;
+  if (hasLinkedin) contactScore += 20;
+  if (hasGithub) contactScore += 10;
+  if (hasPortfolio) contactScore += 10;
+
+  // 2. Sections check
+  const hasExperience = textLower.includes("experience") || textLower.includes("employment") || textLower.includes("history") || textLower.includes("work") || textLower.includes("professional profile");
+  const hasEducation = textLower.includes("education") || textLower.includes("academic") || textLower.includes("university") || textLower.includes("college") || textLower.includes("school");
+  const hasSkills = textLower.includes("skills") || textLower.includes("competencies") || textLower.includes("expertise") || textLower.includes("technologies") || textLower.includes("specialties");
+  const hasProjects = textLower.includes("projects") || textLower.includes("portfolio") || textLower.includes("accomplishments") || textLower.includes("certifications") || textLower.includes("awards");
+  
+  let sectionScore = 0;
+  if (hasExperience) sectionScore += 35;
+  if (hasEducation) sectionScore += 30;
+  if (hasSkills) sectionScore += 20;
+  if (hasProjects) sectionScore += 15;
+
+  // 3. Impact check (action verbs & metrics)
+  const verbsList = ["led", "managed", "designed", "developed", "built", "implemented", "increased", "created", "optimized", "spearheaded", "collaborated", "facilitated", "analyzed", "delivered", "coordinated", "engineered", "streamlined", "automated", "executed", "architected"];
+  const foundVerbs = verbsList.filter(verb => new RegExp(`\\b${verb}\\b`, 'i').test(text));
+  
+  const metricIndicators = ["%", "\\$", "\\bmillion\\b", "\\bbillion\\b", "\\brevenue\\b", "\\bpercent\\b", "\\bsaved\\b", "\\bincreased by\\b", "\\breduced by\\b", "\\bgrowth\\b"];
+  let foundMetricsCount = 0;
+  metricIndicators.forEach(ind => {
+    const matches = textLower.match(new RegExp(ind, 'g'));
+    if (matches) foundMetricsCount += matches.length;
+  });
+
+  let impactScore = Math.min(100, (foundVerbs.length * 5) + (foundMetricsCount * 12) + 20);
+
+  // 4. ATS check
+  const hasTables = textLower.includes("table") || textLower.includes("grid");
+  const isPdf = fileName?.toLowerCase()?.endsWith('.pdf');
+  
+  let atsScore = 80;
+  if (isPdf) atsScore += 10;
+  if (hasTables) atsScore -= 15;
+  
+  // Weighted Health Score Calculation
+  const finalScore = Math.round((contactScore * 0.25) + (sectionScore * 0.3) + (impactScore * 0.3) + (atsScore * 0.15));
+  
+  // Grade
+  let grade = "C";
+  if (finalScore >= 95) grade = "A+";
+  else if (finalScore >= 90) grade = "A";
+  else if (finalScore >= 85) grade = "A-";
+  else if (finalScore >= 80) grade = "B+";
+  else if (finalScore >= 75) grade = "B";
+  else if (finalScore >= 70) grade = "B-";
+  else if (finalScore >= 65) grade = "C+";
+  else if (finalScore >= 60) grade = "C";
+  else grade = "D";
+
+  // Action items recommendations
+  const recs = [];
+  if (!hasEmail) recs.push("Contact Information: Add a professional email address to your header.");
+  if (!hasPhone) recs.push("Contact Information: Provide a valid telephone/mobile contact number.");
+  if (!hasLinkedin) recs.push("Online Footprint: Include your professional LinkedIn profile URL.");
+  if (!hasGithub) recs.push("Code Presence: Link to your GitHub profile to showcase real code repositories.");
+  if (!hasExperience) recs.push("Layout structure: Define a clean, standard 'Work Experience' or 'Employment History' heading.");
+  if (!hasSkills) recs.push("Skills Section: Group and list your technical stack in a readable 'Skills' section.");
+  if (foundVerbs.length < 5) recs.push("Impact Verbs: Enhance bullet points using action-driven verbs (e.g. 'Spearheaded', 'Optimized').");
+  if (foundMetricsCount < 3) recs.push("Quantitative Metrics: Quantify achievements. Include percentages, dollars, or time metrics to prove your results.");
+  if (hasTables) recs.push("Parser Warning: Avoid utilizing dense tables or overlapping grid shapes which confuse ATS scan readers.");
+
+  const commonTech = ["react", "typescript", "javascript", "node", "python", "sql", "aws", "docker", "agile", "css", "html", "git", "java", "c++", "kubernetes", "rest", "nosql", "ci/cd"];
+  const parsedTech = commonTech.filter(tech => textLower.includes(tech)).map(t => t.toUpperCase());
+
+  return {
+    score: finalScore,
+    grade,
+    gradeClass: finalScore >= 85 ? "excellent" : finalScore >= 70 ? "good" : "poor",
+    keywordMatchRate: 0,
+    formattingScore: atsScore,
+    structureScore: sectionScore,
+    foundKeywords: parsedTech.length > 0 ? parsedTech : ["COMMUNICATION", "PROBLEM-SOLVING", "TEAMWORK", "AGILE"],
+    missingKeywords: [],
+    recs,
+    contact: { email: hasEmail, phone: hasPhone, linkedin: hasLinkedin, github: hasGithub, portfolio: hasPortfolio, score: contactScore },
+    sections: { experience: hasExperience, education: hasEducation, skills: hasSkills, projects: hasProjects, score: sectionScore },
+    impact: { actionVerbs: foundVerbs, metricsCount: foundMetricsCount, score: impactScore },
+    ats: { parseable: true, singleColumn: !hasTables, fileFormat: isPdf, score: atsScore }
+  };
+};
+
 const normalizeBackendScore = (backendResponse, heuristicResult) => {
   if (!backendResponse) return null;
 
@@ -364,12 +477,41 @@ export default function AtsScoreCalculatorPage() {
 
   const handleCalculateScore = async () => {
     const selectedResume = resumes.find(r => String(r.id) === String(selectedResumeId));
+    
+    if (!selectedResume) return;
+
+    if (selectedJobId === "standalone") {
+      setLoading(true);
+      try {
+        const audit = auditResumeText(selectedResume.extracted_text, selectedResume.file_name);
+        setScoreResult({
+          ...audit,
+          source: "heuristic",
+          sourceLabel: "Standalone CV Format & Quality Audit",
+          checklist: [
+            { label: "Email Contact Info", passed: audit.contact.email, desc: audit.contact.email ? "Email header parsed successfully." : "Missing email address." },
+            { label: "Phone Number Present", passed: audit.contact.phone, desc: audit.contact.phone ? "Phone contact parsed successfully." : "Missing phone number." },
+            { label: "LinkedIn Connection", passed: audit.contact.linkedin, desc: audit.contact.linkedin ? "Professional social profile linked." : "Missing LinkedIn link." },
+            { label: "Experience Section", passed: audit.sections.experience, desc: audit.sections.experience ? "Found professional work experience timeline." : "Missing experience section." },
+            { label: "Education Records", passed: audit.sections.education, desc: audit.sections.education ? "Found academic education history." : "Missing education records." },
+            { label: "Skills Specification", passed: audit.sections.skills, desc: audit.sections.skills ? "Found skills list section." : "Missing dedicated skills block." },
+            { label: "ATS File Format", passed: audit.ats.fileFormat, desc: audit.ats.fileFormat ? "Document uploaded as PDF." : "Non-PDF format." }
+          ]
+        });
+      } catch (err) {
+        console.error("Standalone audit failed", err);
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
     const selectedJob = jobDescriptions.find(j => String(j.id) === String(selectedJobId));
     const jdText = selectedJobId === "custom"
       ? customJobDescription
       : selectedJob?.description || "";
 
-    if (!selectedResume || !jdText) return;
+    if (!jdText) return;
 
     setLoading(true);
 
@@ -466,7 +608,9 @@ export default function AtsScoreCalculatorPage() {
   const selectedResume = resumes.find(r => String(r.id) === String(selectedResumeId));
   const hasJdText = selectedJobId === "custom" 
     ? customJobDescription.trim().length > 0 
-    : !!selectedJobId;
+    : selectedJobId === "standalone"
+      ? true
+      : !!selectedJobId;
 
   return (
     <motion.div 
@@ -565,6 +709,7 @@ export default function AtsScoreCalculatorPage() {
               onChange={(e) => setSelectedJobId(e.target.value)}
             >
               <option value="">Select a saved Job...</option>
+              <option value="standalone">⭐ Standalone CV Quality Audit (No JD required)</option>
               {jobDescriptions.map(j => (
                 <option key={j.id} value={j.id}>
                   {j.title} at {j.company}

@@ -13,6 +13,7 @@ import ResumePage from "./pages/ResumePage";
 import JobDescriptionPage from "./pages/JobDescriptionPage";
 import AtsPage from "./pages/AtsPage";
 import ResumeOptimizationPage from "./pages/ResumeOptimizationPage";
+import ResumeEditorPage from "./pages/ResumeEditorPage";
 import ProfilePage from "./pages/ProfilePage";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
@@ -38,7 +39,8 @@ function Layout() {
     location.pathname === "/login" ||
     location.pathname === "/register" ||
     location.pathname === "/forgot-password" ||
-    location.pathname === "/reset-password";
+    location.pathname === "/reset-password" ||
+    location.pathname === "/resume-editor";
 
   return (
     <>
@@ -101,6 +103,15 @@ function Layout() {
             element={
               <ProtectedRoute>
                 <ResumeOptimizationPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/resume-editor"
+            element={
+              <ProtectedRoute>
+                <ResumeEditorPage />
               </ProtectedRoute>
             }
           />

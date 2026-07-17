@@ -1,0 +1,158 @@
+/* src/components/canvas/CareerLensAnimation.css */
+
+.career-lens-anim-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #020617;
+  pointer-events: auto;
+  user-select: none;
+}
+
+.career-lens-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: pointer;
+}
+
+/* ====== Brand Header Overlay ====== */
+.anim-brand-header {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  right: 24px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  pointer-events: none;
+}
+
+.brand-logo-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  pointer-events: auto;
+}
+
+.brand-title {
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: 1.3rem;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+}
+
+/* ====== Role Selector Pills Overlay ====== */
+.role-selector-overlay {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  pointer-events: auto;
+}
+
+.role-selector-title {
+  font-family: 'Fira Code', monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #a3e635;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.role-pills-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.role-pill {
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  color: #94a3b8;
+  padding: 4px 10px;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(8px);
+}
+
+.role-pill:hover {
+  border-color: rgba(163, 230, 53, 0.4);
+  color: #ffffff;
+}
+
+.role-pill.active {
+  background: rgba(163, 230, 53, 0.12);
+  border-color: #a3e635;
+  color: #a3e635;
+  box-shadow: 0 0 12px rgba(163, 230, 53, 0.15);
+}
+
+/* ====== Live HUD Overlay (Namespaced & Strictly Sized) ====== */
+.cla-hud-overlay {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  right: 20px;
+  z-index: 10;
+  pointer-events: none;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.cla-score-hud, .cla-skill-tooltip-hud {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  background: rgba(15, 23, 42, 0.92) !important;
+  border: 1px solid rgba(163, 230, 53, 0.25) !important;
+  border-radius: 4px !important;
+  padding: 6px 12px !important;
+  backdrop-filter: blur(12px) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+  max-width: fit-content !important;
+  line-height: 1.2 !important;
+}
+
+.cla-score-label {
+  font-family: 'Fira Code', monospace !important;
+  font-size: 0.65rem !important;
+  font-weight: 700 !important;
+  color: #94a3b8 !important;
+  letter-spacing: 0.05em !important;
+  white-space: nowrap !important;
+  text-transform: uppercase !important;
+}
+
+.cla-score-val {
+  font-family: 'Fira Code', monospace !important;
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  color: #a3e635 !important;
+  white-space: nowrap !important;
+}
+
+.cla-hud-skill-name {
+  font-family: 'DM Serif Display', Georgia, serif !important;
+  font-size: 0.85rem !important;
+  color: #ffffff !important;
+  white-space: nowrap !important;
+}
+
+.cla-hud-skill-weight {
+  font-family: 'Fira Code', monospace !important;
+  font-size: 0.72rem !important;
+  color: #a3e635 !important;
+  font-weight: 600 !important;
+  white-space: nowrap !important;
+}

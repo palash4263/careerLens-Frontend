@@ -3,6 +3,7 @@ import { useState } from "react";
 import { GoogleLogin } from "@react-oauth/google";
 import { register, googleSignIn } from "../services/authService";
 import { useNavigate } from "react-router-dom";
+import CareerLensAnimation from "../components/canvas/CareerLensAnimation";
 import "./Register.css";
 
 const FIELDS = [
@@ -114,13 +115,7 @@ function Register() {
   return (
     <div className="register-shell">
       <aside className="register-brand">
-        <div className="register-brand-inner">
-          <span className="register-mark">✦</span>
-          <p className="register-quote">
-            "Every career milestone begins with a single optimized page."
-          </p>
-          <span className="register-quote-attr">CareerLens AI</span>
-        </div>
+        <CareerLensAnimation />
       </aside>
 
       <main className="register-panel">

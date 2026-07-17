@@ -28,9 +28,18 @@
 }
 
 .nb-scrolled .nb-wrap {
-  background: var(--shell-nav-bg-scrolled);
-  border-color: var(--shell-nav-border-strong);
+  max-width: 100%;
+  border-radius: 0;
+  border: none;
+  background: transparent;
   box-shadow: var(--shell-nav-shadow-scrolled);
+}
+
+/* 1. Remove the outer spacing and apply your main background color to the root */
+.nb-root.nb-scrolled {
+  padding: 0;
+  background: #06060c; /* Replace with your exact body/dashboard background hex code */
+  border-bottom: 1px solid var(--shell-nav-border-strong);
 }
 
 .nb-logo {

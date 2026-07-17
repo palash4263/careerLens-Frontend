@@ -298,73 +298,31 @@ function Dashboard() {
           </button>
         </section>
 
-        {/* ══════════ STATS CARDS — Premium Toggle Cards ══════════ */}
-        <div className="db-stats-grid">
-          {[
-            { emoji: "📄", value: animatedStats.resumes, label: "Resumes",         desc: "Total resumes uploaded and managed",    trend: "↑ 12% this month", color: "#a78bfa" },
-            { emoji: "💼", value: animatedStats.jobs,    label: "Jobs Analyzed",   desc: "Job descriptions parsed by AI engine", trend: "↑ 8% this month",  color: "#60a5fa" },
-            { emoji: "🎯", value: `${animatedStats.ats}%`,   label: "ATS Match",   desc: "Average ATS compatibility score",       trend: "Top 10% globally", color: "#fbbf24" },
-            { emoji: "💪", value: `${animatedStats.strength}%`, label: "Strength", desc: "Overall profile completion level",       trend: "Nearly complete",  color: "#34d399" },
-          ].map((s, i) => (
-            <div
-              key={s.label}
-              className="psc-card psc-active scroll-reveal"
-              style={{
-                "--card-glow-color": s.color,
-                "--card-glow-dim": `${s.color}33`,
-                transitionDelay: `${i * 0.1}s`,
-              }}
-            >
-              {/* Light layer */}
-              <div className="psc-light-layer">
-                <div className="psc-slit" />
-                <div className="psc-lumen">
-                  <div className="psc-lm-min" />
-                  <div className="psc-lm-mid" />
-                  <div className="psc-lm-hi" />
-                </div>
-                <div className="psc-darken">
-                  <div className="psc-dk-sl" />
-                  <div className="psc-dk-ll" />
-                  <div className="psc-dk-slt" />
-                  <div className="psc-dk-srt" />
-                </div>
-              </div>
-              {/* Content */}
-              <div className="psc-content">
-                {/* Premium Glassmorphic Badge with Emoji */}
-                <div className="psc-icon-badge" style={{
-                  position: 'absolute',
-                  top: '0.4rem',
-                  right: '0.4rem',
-                  background: 'rgba(255, 255, 255, 0.04)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: '12px',
-                  padding: '6px 8px',
-                  fontSize: '1.2rem',
-                  backdropFilter: 'blur(8px)',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
-                }}>
-                  {s.emoji}
-                </div>
-                {/* Value centered in card */}
-                <div className="psc-center-val">
-                  <span
-                    className="psc-value"
-                    style={{ color: '#ffffff' }}
-                  >
-                    {s.value}
-                  </span>
-                </div>
-                {/* Label + desc pinned to bottom */}
-                <div className="psc-bottom">
-                  <p className="psc-label">{s.label}</p>
-                  <p className="psc-desc">{s.desc} · {s.trend}</p>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+      {/* ══════════ STATS CARDS — Intersecting Circles ══════════ */}
+<div className="db-stats-circles">
+  {[
+    { emoji: "📄", value: animatedStats.resumes, label: "Resumes", color: "#a78bfa" },
+    { emoji: "💼", value: animatedStats.jobs, label: "Jobs Analyzed", color: "#60a5fa" },
+    { emoji: "🎯", value: `${animatedStats.ats}%`, label: "ATS Match", color: "#fbbf24" },
+    { emoji: "💪", value: `${animatedStats.strength}%`, label: "Strength", color: "#34d399" },
+  ].map((s, i) => (
+    <div
+      key={s.label}
+      className="stat-circle scroll-reveal"
+      style={{
+        "--circle-color": s.color,
+        zIndex: 4 - i,
+        transitionDelay: `${i * 0.1}s`,
+      }}
+    >
+      <div className="stat-circle-inner">
+        <span className="stat-circle-emoji">{s.emoji}</span>
+        <span className="stat-circle-value">{s.value}</span>
+        <span className="stat-circle-label">{s.label}</span>
+      </div>
+    </div>
+  ))}
+</div>
 
         {/* ══════════ FEATURES ══════════ */}
         <section className="db-features scroll-reveal-3d">

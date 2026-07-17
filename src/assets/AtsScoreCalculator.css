@@ -116,27 +116,25 @@
 
 /* Glassmorphic Cards */
 .ats-calc-card {
-  background: rgba(18, 17, 30, 0.7);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 20px;
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
   padding: 32px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
   position: relative;
   overflow: hidden;
   transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .ats-calc-card:hover {
-  border-color: rgba(251, 191, 36, 0.2);
-  box-shadow: 0 20px 40px rgba(251, 191, 36, 0.05);
+  border-color: rgba(163, 230, 53, 0.3);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
 }
 
 .ats-calc-card-title {
-  font-family: 'Outfit', sans-serif;
+  font-family: 'DM Serif Display', Georgia, serif;
   font-size: 1.4rem;
-  font-weight: 600;
+  font-weight: 400;
   margin-bottom: 24px;
   display: flex;
   align-items: center;
@@ -144,7 +142,7 @@
 }
 
 .ats-calc-card-title span.icon {
-  color: #fbbf24;
+  color: #a3e635;
 }
 
 /* Form Styles */
@@ -154,10 +152,10 @@
 
 .ats-calc-label {
   display: block;
-  font-family: 'Outfit', sans-serif;
-  font-size: 0.95rem;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
   font-weight: 500;
-  color: #d1d5db;
+  color: #94a3b8;
   margin-bottom: 10px;
 }
 
@@ -165,11 +163,11 @@
 .ats-calc-textarea {
   width: 100%;
   padding: 14px 18px;
-  background: rgba(31, 30, 56, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  color: #fff;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: #f8fafc;
+  font-family: 'Inter', sans-serif;
   font-size: 0.95rem;
   transition: all 0.2s ease;
 }
@@ -177,15 +175,15 @@
 .ats-calc-select:focus, 
 .ats-calc-textarea:focus {
   outline: none;
-  border-color: #fbbf24;
-  background: rgba(31, 30, 56, 0.8);
-  box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.15);
+  border-color: #a3e635;
+  background: #1e293b;
+  box-shadow: 0 0 0 3px rgba(163, 230, 53, 0.15);
 }
 
 .ats-calc-select {
   cursor: pointer;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23fbbf24'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23a3e635'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 18px center;
   background-size: 16px;
@@ -200,7 +198,7 @@
 /* Dropzone Styles */
 .ats-calc-dropzone {
   border: 2px dashed rgba(255, 255, 255, 0.15);
-  border-radius: 16px;
+  border-radius: 8px;
   padding: 30px;
   text-align: center;
   cursor: pointer;
@@ -213,50 +211,51 @@
 
 .ats-calc-dropzone:hover, 
 .ats-calc-dropzone.dragging {
-  border-color: #fbbf24;
-  background: rgba(251, 191, 36, 0.03);
+  border-color: #a3e635;
+  background: rgba(163, 230, 53, 0.04);
 }
 
 .ats-calc-dropzone-icon {
   font-size: 2.2rem;
   margin-bottom: 12px;
-  color: #fbbf24;
+  color: #a3e635;
 }
 
 .ats-calc-dropzone-text {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 0.95rem;
-  color: #9ca3af;
+  color: #94a3b8;
 }
 
 .ats-calc-dropzone-sub {
   font-size: 0.8rem;
-  color: #6b7280;
+  color: #64748b;
   margin-top: 6px;
 }
 
 .ats-calc-btn-primary {
   width: 100%;
   padding: 16px;
-  background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
-  color: #0c0b16;
+  background: #a3e635;
+  color: #0f172a;
   border: none;
-  border-radius: 12px;
-  font-family: 'Outfit', sans-serif;
-  font-size: 1.05rem;
-  font-weight: 600;
+  border-radius: 6px;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
   transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease;
-  box-shadow: 0 4px 20px rgba(251, 191, 36, 0.2);
+  box-shadow: 0 4px 16px rgba(163, 230, 53, 0.25);
 }
 
 .ats-calc-btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(251, 191, 36, 0.35);
+  box-shadow: 0 8px 24px rgba(163, 230, 53, 0.4);
 }
 
 .ats-calc-btn-primary:active {

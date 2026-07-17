@@ -688,7 +688,7 @@ export default function AtsScoreCalculatorPage() {
                   style={{ 
                     background: "none", 
                     border: "none", 
-                    color: "#fbbf24", 
+                    color: "#a3e635", 
                     fontSize: "0.85rem", 
                     cursor: "pointer",
                     textDecoration: "underline"

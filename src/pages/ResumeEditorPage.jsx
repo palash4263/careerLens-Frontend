@@ -271,9 +271,9 @@ export default function ResumeEditorPage() {
           </button>
           <div className="red-topbar-divider" />
           <div className="red-meta-info">
-            <span className="red-meta-title">Live Resume Editor</span>
+            <span className="red-meta-title" style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontSize: "1.1rem", fontWeight: 400 }}>Live Resume Editor</span>
             {result && (
-              <span className="red-score-badge">
+              <span className="red-score-badge" style={{ fontFamily: "'Fira Code', monospace", background: "rgba(163, 230, 53, 0.1)", borderColor: "rgba(163, 230, 53, 0.25)", color: "#a3e635" }}>
                 🎯 Est. Score: {result.estimated_new_score || 85}%
               </span>
             )}
@@ -351,15 +351,15 @@ export default function ResumeEditorPage() {
             padding: '16px 20px',
             display: 'flex',
             gap: '24px',
-            background: 'rgba(0, 0, 0, 0.15)',
+            background: 'rgba(0, 0, 0, 0.2)',
             borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
             flexShrink: 0,
             alignItems: 'center'
           }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.74rem', fontWeight: 'bold', color: '#94a3b8', fontFamily: 'Outfit, sans-serif', letterSpacing: '0.05em' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.74rem', fontWeight: 'bold', color: '#94a3b8', fontFamily: "'Fira Code', monospace", letterSpacing: '0.04em' }}>
                 <span>PAGE MARGINS</span>
-                <span style={{ color: '#a78bfa' }}>{pageMargins === 1 ? 'Narrow (24px)' : pageMargins === 2 ? 'Normal (36px)' : 'Wide (48px)'}</span>
+                <span style={{ color: '#a3e635' }}>{pageMargins === 1 ? 'Narrow (24px)' : pageMargins === 2 ? 'Normal (36px)' : 'Wide (48px)'}</span>
               </div>
               <input 
                 type="range" 
@@ -367,14 +367,14 @@ export default function ResumeEditorPage() {
                 max="3" 
                 value={pageMargins} 
                 onChange={(e) => setPageMargins(Number(e.target.value))}
-                style={{ width: '100%', height: '4px', accentColor: '#7c3aed', cursor: 'pointer' }}
+                style={{ width: '100%', height: '4px', accentColor: '#a3e635', cursor: 'pointer' }}
               />
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.74rem', fontWeight: 'bold', color: '#94a3b8', fontFamily: 'Outfit, sans-serif', letterSpacing: '0.05em' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.74rem', fontWeight: 'bold', color: '#94a3b8', fontFamily: "'Fira Code', monospace", letterSpacing: '0.04em' }}>
                 <span>SECTION SPACING</span>
-                <span style={{ color: '#a78bfa' }}>Level {sectionSpacing} ({sectionSpacing * 6}px)</span>
+                <span style={{ color: '#a3e635' }}>Level {sectionSpacing} ({sectionSpacing * 6}px)</span>
               </div>
               <input 
                 type="range" 
@@ -382,7 +382,7 @@ export default function ResumeEditorPage() {
                 max="5" 
                 value={sectionSpacing} 
                 onChange={(e) => setSectionSpacing(Number(e.target.value))}
-                style={{ width: '100%', height: '4px', accentColor: '#7c3aed', cursor: 'pointer' }}
+                style={{ width: '100%', height: '4px', accentColor: '#a3e635', cursor: 'pointer' }}
               />
             </div>
           </div>

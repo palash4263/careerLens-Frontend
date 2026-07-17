@@ -5,44 +5,17 @@
 /* ── Root Scope (scoped to avoid conflict with index.css) ── */
 .db-root {
   min-height: 100vh;
-  padding: 6rem 2.5rem 5rem;
+  padding: 6.5rem 2.5rem 5rem;
   position: relative;
   overflow: hidden;
-  font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
   color: #fff;
   background: transparent;
 }
 
-/* ── Ambient orbs ── */
+/* ── Ambient orbs (Hidden for paper/scanner theme) ── */
 .db-orb {
-  position: fixed;
-  border-radius: 50%;
-  filter: blur(100px);
-  pointer-events: none;
-  z-index: 0;
-}
-.db-orb-1 {
-  width: 600px; height: 600px;
-  top: -200px; left: -200px;
-  background: radial-gradient(circle, rgba(124,58,237,0.18) 0%, transparent 70%);
-  animation: orbFloat 14s ease-in-out infinite;
-}
-.db-orb-2 {
-  width: 500px; height: 500px;
-  top: 30%; right: -150px;
-  background: radial-gradient(circle, rgba(14,165,233,0.14) 0%, transparent 70%);
-  animation: orbFloat 18s ease-in-out infinite reverse;
-}
-.db-orb-3 {
-  width: 400px; height: 400px;
-  bottom: -100px; left: 30%;
-  background: radial-gradient(circle, rgba(16,185,129,0.10) 0%, transparent 70%);
-  animation: orbFloat 22s ease-in-out infinite;
-}
-@keyframes orbFloat {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  33%        { transform: translate(30px, -30px) scale(1.05); }
-  66%        { transform: translate(-20px, 20px) scale(0.95); }
+  display: none !important;
 }
 
 /* ── Content wrapper ── */
@@ -60,22 +33,21 @@
    HERO
 ══════════════════════════════════════════ */
 .db-hero {
-  background: transparent;
+  background: #0f172a;
   border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 28px;
+  border-radius: 8px;
   padding: 3rem 3.5rem;
-  backdrop-filter: blur(20px);
   position: relative;
   overflow: hidden;
 }
 
-/* Subtle top-edge gradient shine */
+/* Subtle top-edge shine */
 .db-hero::before {
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: 28px;
-  background: linear-gradient(135deg, rgba(124,58,237,0.06) 0%, transparent 60%);
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, transparent 60%);
   pointer-events: none;
 }
 
@@ -83,27 +55,27 @@
   display: inline-flex;
   align-items: center;
   gap: 0.6rem;
-  padding: 0.45rem 1.1rem;
-  background: rgba(124,58,237,0.12);
-  border: 1px solid rgba(124,58,237,0.25);
-  border-radius: 999px;
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: #a78bfa;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
+  padding: 0.4rem 1rem;
+  background: rgba(163, 230, 53, 0.08);
+  border: 1px solid rgba(163, 230, 53, 0.3);
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #a3e635;
+  font-family: 'Fira Code', monospace;
+  letter-spacing: 0.04em;
   margin-bottom: 2rem;
 }
 .db-badge-pulse {
   width: 7px; height: 7px;
-  background: #10b981;
+  background: #a3e635;
   border-radius: 50%;
-  box-shadow: 0 0 8px #10b981;
+  box-shadow: 0 0 8px #a3e635;
   animation: pulse 2s ease-in-out infinite;
 }
 @keyframes pulse {
-  0%, 100% { opacity: 1; box-shadow: 0 0 8px #10b981; }
-  50%        { opacity: 0.6; box-shadow: 0 0 18px #10b981; }
+  0%, 100% { opacity: 1; box-shadow: 0 0 8px #a3e635; }
+  50%        { opacity: 0.6; box-shadow: 0 0 18px #a3e635; }
 }
 
 .db-hero-body {
@@ -120,18 +92,17 @@
 
 .db-hero-title {
   font-size: clamp(2.2rem, 4vw, 3.4rem);
-  font-weight: 800;
-  line-height: 1.1;
-  letter-spacing: -0.025em;
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
   margin: 0;
-  color: #fff;
-  font-family: 'Outfit', sans-serif;
+  color: #f8fafc;
+  font-family: 'DM Serif Display', Georgia, serif;
 }
 .db-gradient-name {
-  background: linear-gradient(135deg, #a78bfa 0%, #60a5fa 50%, #34d399 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #a3e635;
+  background: none;
+  -webkit-text-fill-color: initial;
 }
 
 .db-hero-sub {

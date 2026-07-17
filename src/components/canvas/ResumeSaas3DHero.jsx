@@ -49,16 +49,16 @@ export default function ResumeSaas3DHero() {
           transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        /* ── BACK CARD (DARK COMPONENT) ── */
+        /* ── BACK CARD (PAPER DARK EXECUTIVE) ── */
         .res-card-back {
           position: absolute;
-          width: 200px;
-          height: 260px;
+          width: 205px;
+          height: 268px;
           background: #0f172a;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 10px;
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          border-radius: 4px;
           padding: 14px;
-          box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+          box-shadow: 0 1px 3px rgba(0,0,0,0.3), 0 8px 20px rgba(0,0,0,0.4);
           transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease, border-color 0.4s ease;
           display: flex;
           flex-direction: column;
@@ -66,75 +66,71 @@ export default function ResumeSaas3DHero() {
           pointer-events: none;
         }
 
-        /* Default (Not Hovered): Dark Card is completely hidden */
         .res-card-back.default {
           left: -10px;
           top: 35px;
           z-index: 1;
-          transform: translateZ(40px) rotateY(-8deg) rotateX(4deg) scale(0.95);
+          transform: translateZ(40px) rotateY(-10deg) rotateX(6deg) scale(0.95);
           opacity: 0;
         }
 
-        /* Hovered: Dark Card shuffles to the front and fades in */
         .res-card-back.shuffled {
           left: -10px;
           top: 35px;
           z-index: 5;
-          transform: translateZ(120px) rotateY(4deg) rotateX(-2deg);
+          transform: translateZ(120px) rotateY(8deg) rotateX(-4deg);
           opacity: 1;
-          border-color: rgba(124, 58, 237, 0.3);
-          box-shadow: 0 20px 45px rgba(124, 58, 237, 0.2);
+          border-color: rgba(163, 230, 53, 0.4);
+          box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
         }
 
-        /* ── FRONT CARD (WHITE COMPONENT) ── */
+        /* ── FRONT CARD (PAPER NEUTRAL CREAM) ── */
         .res-card-front {
           position: absolute;
           width: 205px;
           height: 268px;
-          background: #ffffff;
-          border: 1px solid rgba(0, 0, 0, 0.05);
-          border-radius: 10px;
+          background: #f8fafc;
+          border: 1px solid rgba(0, 0, 0, 0.08);
+          border-radius: 4px;
           padding: 16px 14px;
-          box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+          box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 6px 16px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.04);
           transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease;
           display: flex;
           gap: 10px;
           pointer-events: none;
         }
 
-        /* Default (Not Hovered): White Card is in the front and visible */
         .res-card-front.default {
           right: -10px;
           top: 35px;
           z-index: 2;
-          transform: translateZ(120px) rotateY(4deg) rotateX(-2deg);
+          transform: translateZ(120px) rotateY(8deg) rotateX(-4deg);
           opacity: 1;
         }
 
-        /* Hovered: White Card shuffles to the back and fades out */
         .res-card-front.shuffled {
           right: -10px;
           top: 35px;
           z-index: 1;
-          transform: translateZ(40px) rotateY(-8deg) rotateX(4deg) scale(0.95);
+          transform: translateZ(40px) rotateY(-10deg) rotateX(6deg) scale(0.95);
           opacity: 0;
         }
 
         /* Resume Content mock items */
         .res-line-name {
           height: 10px;
-          border-radius: 2px;
+          border-radius: 1px;
         }
-        .res-card-back .res-line-name { background: #38bdf8; width: 60%; }
+        .res-card-back .res-line-name { background: #a3e635; width: 60%; }
         .res-card-front .res-line-name { background: #0f172a; width: 70%; }
 
         .res-line-title {
           height: 5px;
-          border-radius: 2px;
+          border-radius: 1px;
           margin-top: -5px;
         }
         .res-card-back .res-line-title { background: #64748b; width: 35%; }
-        .res-card-front .res-line-title { background: #10b981; width: 45%; }
+        .res-card-front .res-line-title { background: #a3e635; width: 45%; }
 
         .res-divider {
           height: 1px;
@@ -154,7 +150,7 @@ export default function ResumeSaas3DHero() {
           border-radius: 1px;
         }
         .res-card-back .res-line-text { background: rgba(255, 255, 255, 0.15); }
-        .res-card-front .res-line-text { background: #e2e8f0; }
+        .res-card-front .res-line-text { background: #cbd5e1; }
 
         .res-col-left {
           flex: 1.5;
@@ -167,7 +163,7 @@ export default function ResumeSaas3DHero() {
           display: flex;
           flex-direction: column;
           gap: 8px;
-          border-left: 1px solid #f1f5f9;
+          border-left: 1px solid #e2e8f0;
           padding-left: 6px;
         }
 
@@ -176,18 +172,17 @@ export default function ResumeSaas3DHero() {
           position: absolute;
           left: -70px;
           top: 100px;
-          background: rgba(15, 23, 42, 0.85);
-          backdrop-filter: blur(8px);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          border-radius: 8px;
+          background: #0f172a;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 4px;
           padding: 8px;
           display: flex;
           flex-direction: column;
           gap: 5px;
-          width: 75px;
+          width: 80px;
           box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
           transform: translateZ(160px);
-          font-family: sans-serif;
+          font-family: 'Fira Code', monospace;
         }
 
         .widget-fonts-header {
@@ -201,35 +196,35 @@ export default function ResumeSaas3DHero() {
 
         .font-row {
           font-size: 8px;
-          font-weight: 600;
-          color: #cbd5e1;
+          font-weight: 500;
+          color: #94a3b8;
           padding: 2.5px 5px;
-          border-radius: 3px;
+          border-radius: 2px;
           display: flex;
           align-items: center;
           justify-content: space-between;
         }
 
         .font-row.active {
-          color: #10b981;
-          background: rgba(16, 185, 129, 0.1);
+          color: #a3e635;
+          background: rgba(163, 230, 53, 0.1);
         }
 
         .widget-controls {
           position: absolute;
           left: -30px;
           bottom: 15px;
-          background: #ffffff;
-          border: 1px solid rgba(0, 0, 0, 0.06);
-          border-radius: 8px;
+          background: #0f172a;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 4px;
           padding: 10px;
           display: flex;
           flex-direction: column;
           gap: 8px;
           width: 145px;
-          box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
+          box-shadow: 0 12px 25px rgba(0, 0, 0, 0.35);
           transform: translateZ(200px) rotateX(2deg) rotateY(-4deg);
-          font-family: sans-serif;
+          font-family: 'Fira Code', monospace;
         }
 
         .control-slider-group {
@@ -244,7 +239,7 @@ export default function ResumeSaas3DHero() {
           font-size: 7px;
           font-weight: 700;
           text-transform: uppercase;
-          color: #64748b;
+          color: #94a3b8;
           letter-spacing: 0.02em;
         }
 
@@ -257,14 +252,14 @@ export default function ResumeSaas3DHero() {
         .slider-bar-bg {
           flex: 1;
           height: 2.5px;
-          background: #e2e8f0;
+          background: #334155;
           border-radius: 2px;
           position: relative;
         }
 
         .slider-bar-fill {
           height: 100%;
-          background: #10b981;
+          background: #a3e635;
           border-radius: 2px;
         }
 
@@ -274,14 +269,14 @@ export default function ResumeSaas3DHero() {
           width: 6.5px;
           height: 6.5px;
           border-radius: 50%;
-          background: #10b981;
-          box-shadow: 0 0 4px rgba(16, 185, 129, 0.5);
+          background: #a3e635;
+          box-shadow: 0 0 4px rgba(163, 230, 53, 0.5);
         }
 
         .slider-sign {
           font-size: 8px;
           font-weight: bold;
-          color: #94a3b8;
+          color: #64748b;
         }
       `}</style>
 

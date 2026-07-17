@@ -4,9 +4,9 @@
   position: relative;
   width: 100%;
   min-height: 100vh;
-  background-color: #050508;
-  color: #f1f5f9;
-  padding: 80px 2rem 4rem 2rem;
+  background-color: #020617;
+  color: #f8fafc;
+  padding: 6.5rem 2rem 4rem 2rem;
   overflow: hidden;
   font-family: 'Inter', sans-serif;
 }
@@ -24,56 +24,23 @@
   pointer-events: none;
 }
 
-/* Drifting glowing background blobs */
+/* Drifting glowing background blobs (hidden for paper theme) */
 .tp-glow-blob {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(80px);
-  z-index: 1;
-  pointer-events: none;
-  opacity: 0.6;
-}
-
-.tp-blob-1 {
-  width: 450px;
-  height: 450px;
-  background: radial-gradient(circle, rgba(124, 58, 237, 0.18) 0%, rgba(59, 130, 246, 0.05) 60%, transparent 100%);
-  top: -10%;
-  right: -5%;
-  animation: tpDrift1 20s ease-in-out infinite alternate;
-}
-
-.tp-blob-2 {
-  width: 500px;
-  height: 500px;
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, rgba(16, 185, 129, 0.04) 60%, transparent 100%);
-  bottom: -15%;
-  left: -10%;
-  animation: tpDrift2 25s ease-in-out infinite alternate;
-}
-
-@keyframes tpDrift1 {
-  0% { transform: translate(0, 0) scale(1); }
-  100% { transform: translate(-80px, 50px) scale(1.1); }
-}
-
-@keyframes tpDrift2 {
-  0% { transform: translate(0, 0) scale(1); }
-  100% { transform: translate(60px, -60px) scale(1.08); }
+  display: none !important;
 }
 
 /* Content wrapper */
 .tp-content-wrap {
   position: relative;
   z-index: 5;
-  max-width: 1200px;
+  max-width: 1320px;
   margin: 0 auto;
 }
 
 /* Hero Section */
 .tp-hero {
   text-align: center;
-  padding: 3rem 0;
+  padding: 2rem 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -81,21 +48,18 @@
 }
 
 .tp-hero-header h1 {
-  font-family: 'Outfit', sans-serif;
-  font-size: 3rem;
-  font-weight: 900;
-  letter-spacing: -0.03em;
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: clamp(2.5rem, 5vw, 3.5rem);
+  font-weight: 400;
+  letter-spacing: -0.01em;
   margin: 0 0 1rem 0;
   color: #ffffff;
 }
 
 .tp-gradient-text {
-  background: linear-gradient(135deg, #a855f7, #3b82f6, #10b981);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-size: 200% auto;
-  animation: tpShimmer 6s linear infinite;
+  color: #a3e635;
+  background: none;
+  -webkit-text-fill-color: initial;
 }
 
 @keyframes tpShimmer {

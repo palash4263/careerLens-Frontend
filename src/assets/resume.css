@@ -1,34 +1,45 @@
 /* resume.css - Premium Resume Page (No Navbar) */
 
 :root {
-  --purple: #7C3AED;
-  --purple-dark: #6D28D9;
-  --purple-glow: rgba(124, 59, 237, 0.3);
-  --purple-light: rgba(124, 59, 237, 0.1);
+  /* Brand Graphite & Scanner Accents */
+  --purple: #3b82f6;
+  --purple-dark: #1e40af;
+  --purple-glow: rgba(59, 130, 246, 0.2);
+  --purple-light: rgba(59, 130, 246, 0.08);
   
-  --blue: #3B82F6;
-  --green: #10B981;
-  --orange: #F59E0B;
-  --pink: #EC4899;
-  --red: #EF4444;
+  --ink-accent: #64748b;
+  --scan-green: #a3e635;
+  --scan-amber: #fbbf24;
+  --scan-red: #f87171;
+  --paper: oklch(96% 0.005 250);
+  --paper-shadow: rgba(0, 0, 0, 0.15);
   
-  --bg-primary: #0A0A0F;
-  --bg-secondary: #12121A;
-  --bg-card: rgba(18, 18, 26, 0.85);
-  --bg-card-hover: rgba(30, 30, 45, 0.95);
+  --blue: #3b82f6;
+  --green: #a3e635;
+  --orange: #fbbf24;
+  --pink: #f43f5e;
+  --red: #f87171;
   
-  --text-primary: #F1F5F9;
-  --text-secondary: #94A3B8;
-  --text-tertiary: #64748B;
+  --bg-primary: #020617;
+  --bg-secondary: #0f172a;
+  --bg-card: rgba(15, 23, 42, 0.9);
+  --bg-card-hover: rgba(30, 41, 59, 0.95);
   
-  --border-light: rgba(255, 255, 255, 0.06);
-  --border-medium: rgba(255, 255, 255, 0.1);
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-tertiary: #64748b;
   
-  --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.6);
-  --shadow-hover: 0 12px 48px rgba(124, 59, 237, 0.2);
-
+  --font-serif: 'DM Serif Display', Georgia, serif;
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: 'Fira Code', monospace;
   
-  --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  --border-light: rgba(255, 255, 255, 0.08);
+  --border-medium: rgba(255, 255, 255, 0.15);
+  
+  --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.6);
+  
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ====== Wrapper ====== */
@@ -37,8 +48,7 @@
   background: var(--bg-primary);
   position: relative;
   overflow: hidden;
-  padding: 1.5rem 3rem;
-  padding-top: 10rem;
+  padding: 6.5rem 2.5rem 5rem;
 }
 
 .resume-wrapper::before {
@@ -71,7 +81,7 @@
 }
 
 .resume-page-content {
-  max-width: 1440px;
+  max-width: 1320px;
   margin: 0 auto;
   position: relative;
   z-index: 1;
@@ -94,22 +104,22 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.3rem 0.8rem;
-  background: rgba(124, 59, 237, 0.1);
-  border: 1px solid rgba(124, 59, 237, 0.2);
-  border-radius: 20px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: var(--purple);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 0.5rem;
+  background: rgba(163, 230, 53, 0.08);
+  border: 1px solid rgba(163, 230, 53, 0.25);
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #a3e635;
+  font-family: 'Fira Code', monospace;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.75rem;
 }
 
 .badge-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--green);
+  background: #a3e635;
   animation: pulse-dot 2s ease-in-out infinite;
 }
 
@@ -123,8 +133,9 @@
 }
 
 .page-title {
-  font-size: 2.5rem;
-  font-weight: 700;
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: clamp(2.2rem, 4vw, 3rem);
+  font-weight: 400;
   color: var(--text-primary);
   margin: 0 0 0.25rem 0;
 }

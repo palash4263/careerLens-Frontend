@@ -764,34 +764,42 @@ export default function AtsScoreCalculatorPage() {
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.3 }}
               >
-                {/* SVG circular progress ring */}
-                <div className="ats-calc-score-wrapper">
-                  <svg className="ats-calc-score-circle" viewBox="0 0 200 200">
-                    <circle className="ats-calc-score-bg" cx="100" cy="100" r="90" />
-                    <motion.circle 
-                      className="ats-calc-score-bar" 
-                      cx="100" 
-                      cy="100" 
-                      r="90" 
-                      stroke={
-                        scoreResult.score >= 80 ? "#10b981" : 
-                        scoreResult.score >= 60 ? "#f59e0b" : "#ef4444"
-                      }
-                      strokeDasharray={2 * Math.PI * 90}
-                      initial={{ strokeDashoffset: 2 * Math.PI * 90 }}
-                      animate={{ strokeDashoffset: getStrokeOffset(scoreResult.score) }}
-                      transition={{ duration: 1.2, ease: "easeOut" }}
-                    />
-                  </svg>
-                  <div className="ats-calc-score-center">
-                    <span className="ats-calc-score-number">{scoreResult.score}</span>
-                    <span className="ats-calc-score-label">ATS Match Score</span>
+                {/* Monospace Fira Code Score Readout & Scanner Beam */}
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px", margin: "16px 0" }}>
+                  <div className="mono-readout-score">
+                    <span>{scoreResult.score}</span>
+                    <span style={{ fontSize: "1.2rem", color: "#64748b" }}>/ 100</span>
                   </div>
+                  <span className={`ats-calc-badge ${scoreResult.gradeClass}`} style={{ fontFamily: "'Fira Code', monospace" }}>
+                    GRADE: {scoreResult.grade}
+                  </span>
                 </div>
 
-                <span className={`ats-calc-badge ${scoreResult.gradeClass}`}>
-                  {scoreResult.grade}
-                </span>
+                {/* Scanner Beam Paper Line Preview */}
+                <div className="ats-scanner-paper" style={{ margin: "20px 0" }}>
+                  <div className="ats-scan-beam-line" />
+                  <div style={{ opacity: 0.6, fontSize: "0.7rem", textTransform: "uppercase", marginBottom: "8px", letterSpacing: "0.05em" }}>
+                    [ATS-PARSER-SCAN :: STREAM READOUT]
+                  </div>
+                  
+                  {scoreResult.foundKeywords.slice(0, 4).map((kw, i) => (
+                    <div key={i} className="scan-line-item scan-line-hit">
+                      ✓ [MATCH] Line {i+12}: Detected required technical skill "{kw}"
+                    </div>
+                  ))}
+
+                  {scoreResult.missingKeywords.slice(0, 2).map((kw, i) => (
+                    <div key={i} className="scan-line-item scan-line-miss">
+                      ! [MISSING] Keyword missing from experience bullet points: "{kw}"
+                    </div>
+                  ))}
+
+                  {scoreResult.checklist.slice(0, 2).map((c, i) => (
+                    <div key={i} className={`scan-line-item ${c.passed ? "scan-line-hit" : "scan-line-warn"}`}>
+                      {c.passed ? "✓ [STRUCTURE]" : "? [WARNING]"} {c.label}: {c.desc}
+                    </div>
+                  ))}
+                </div>
 
                 <div style={{ marginTop: "10px", fontSize: "0.78rem", color: "#94a3b8", textAlign: "center" }}>
                   {scoreResult.sourceLabel || "Heuristic estimate"}

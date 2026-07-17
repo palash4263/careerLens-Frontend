@@ -36,8 +36,7 @@
   background: var(--bg-primary);
   position: relative;
   overflow: hidden;
-  padding: 3rem 3rem;
-  padding-top: 8rem;
+  padding: 6.5rem 2.5rem 5rem;
 }
 
 .jobs-wrapper::before {
@@ -70,7 +69,7 @@
 }
 
 .jobs-page-content {
-  max-width: 1440px;
+  max-width: 1320px;
   margin: 0 auto;
   position: relative;
   z-index: 1;
@@ -80,28 +79,15 @@
 .jobs-hero-premium {
   position: relative;
   padding: 2.5rem;
-  background: linear-gradient(135deg, rgba(124, 59, 237, 0.08), rgba(59, 130, 246, 0.04));
+  background: #0f172a;
   border: 1px solid var(--border-light);
-  border-radius: 24px;
+  border-radius: 8px;
   margin-bottom: 2.5rem;
   overflow: hidden;
-  backdrop-filter: blur(10px);
 }
 
 .jobs-hero-glow {
-  position: absolute;
-  top: -30%;
-  right: -10%;
-  width: 500px;
-  height: 500px;
-  background: radial-gradient(circle, var(--purple-glow) 0%, transparent 70%);
-  pointer-events: none;
-  animation: float-glow 6s ease-in-out infinite;
-}
-
-@keyframes float-glow {
-  0%, 100% { transform: translate(0, 0); }
-  50% { transform: translate(-20px, 20px); }
+  display: none !important;
 }
 
 .jobs-hero-content {
@@ -123,14 +109,14 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.3rem 0.8rem;
-  background: rgba(124, 59, 237, 0.1);
-  border: 1px solid rgba(124, 59, 237, 0.2);
-  border-radius: 20px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: var(--purple);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  background: rgba(163, 230, 53, 0.08);
+  border: 1px solid rgba(163, 230, 53, 0.25);
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #a3e635;
+  font-family: 'Fira Code', monospace;
+  letter-spacing: 0.04em;
   width: fit-content;
 }
 
@@ -138,7 +124,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--green);
+  background: #a3e635;
   animation: pulse-dot 2s ease-in-out infinite;
 }
 
@@ -152,17 +138,18 @@
 }
 
 .jobs-hero-title {
-  font-size: 2.5rem;
-  font-weight: 700;
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: clamp(2.2rem, 4vw, 3rem);
+  font-weight: 400;
   margin: 0;
   color: var(--text-primary);
   line-height: 1.2;
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, var(--purple), var(--blue));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #a3e635;
+  background: none;
+  -webkit-text-fill-color: initial;
 }
 
 .jobs-hero-sub {

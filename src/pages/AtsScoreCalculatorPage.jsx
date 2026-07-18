@@ -1,5 +1,6 @@
 // src/pages/AtsScoreCalculatorPage.jsx
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Sparkles, 
@@ -8,6 +9,8 @@ import {
 import { getResumes, uploadResume } from "../services/resumeService";
 import { getJobDescriptions } from "../services/jobDescriptionService";
 import { analyzeResume } from "../services/atsService";
+import ScanCompletionModal from "../components/resume/ScanCompletionModal";
+import "../components/resume/ScanCompletionModal.css";
 import "../assets/AtsScoreCalculator.css";
 
 const TECH_KEYWORDS = [
@@ -437,6 +440,7 @@ const normalizeBackendScore = (backendResponse, heuristicResult) => {
 };
 
 export default function AtsScoreCalculatorPage() {
+  const navigate = useNavigate();
   const [resumes, setResumes] = useState([]);
   const [selectedResumeId, setSelectedResumeId] = useState("");
   const [jobDescriptions, setJobDescriptions] = useState([]);
@@ -448,6 +452,7 @@ export default function AtsScoreCalculatorPage() {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
   
   const fileInputRef = useRef(null);
 
@@ -527,29 +532,34 @@ export default function AtsScoreCalculatorPage() {
 
         if (normalized) {
           setScoreResult(normalized);
+          setShowCompletionModal(true);
           return;
         }
       }
 
-      setScoreResult({
+      const res = {
         ...heuristicDetails,
         source: "heuristic",
         sourceLabel:
           selectedJobId === "custom"
             ? "Heuristic estimate for pasted job text"
             : "Heuristic fallback estimate",
-      });
+      };
+      setScoreResult(res);
+      setShowCompletionModal(true);
     } catch (err) {
       console.error("ATS scoring failed, falling back to local estimate", err);
       const heuristicDetails = calculateScoreDetails(selectedResume.extracted_text, jdText);
-      setScoreResult({
+      const res = {
         ...heuristicDetails,
         source: "heuristic",
         sourceLabel:
           selectedJobId === "custom"
             ? "Heuristic estimate for pasted job text"
             : "Heuristic fallback estimate",
-      });
+      };
+      setScoreResult(res);
+      setShowCompletionModal(true);
     } finally {
       setLoading(false);
     }
@@ -925,6 +935,14 @@ export default function AtsScoreCalculatorPage() {
           </div>
         )}
       </div>
+
+      <ScanCompletionModal
+        isOpen={showCompletionModal}
+        onClose={() => setShowCompletionModal(false)}
+        score={scoreResult?.score || 94}
+        keywordsCount={scoreResult?.foundKeywords?.length || 12}
+        onEdit={() => navigate('/resume-editor')}
+      />
     </motion.div>
   );
 }

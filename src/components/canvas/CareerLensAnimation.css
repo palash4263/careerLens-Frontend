@@ -38,121 +38,124 @@
 .brand-logo-container {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   pointer-events: auto;
+}
+
+.brand-text-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .brand-title {
   font-family: 'DM Serif Display', Georgia, serif;
-  font-size: 1.3rem;
+  font-size: 1.45rem;
   color: #ffffff;
   letter-spacing: -0.01em;
+  line-height: 1.1;
 }
 
-/* ====== Role Selector Pills Overlay ====== */
-.role-selector-overlay {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  pointer-events: auto;
-}
-
-.role-selector-title {
+.brand-sub {
   font-family: 'Fira Code', monospace;
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 700;
-  color: #a3e635;
-  letter-spacing: 0.08em;
+  color: #f59e0b;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
-.role-pills-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.role-pill {
-  background: rgba(15, 23, 42, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 4px;
-  color: #94a3b8;
-  padding: 4px 10px;
-  font-family: 'Fira Code', monospace;
-  font-size: 0.72rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  backdrop-filter: blur(8px);
-}
-
-.role-pill:hover {
-  border-color: rgba(163, 230, 53, 0.4);
-  color: #ffffff;
-}
-
-.role-pill.active {
-  background: rgba(163, 230, 53, 0.12);
-  border-color: #a3e635;
-  color: #a3e635;
-  box-shadow: 0 0 12px rgba(163, 230, 53, 0.15);
-}
-
-/* ====== Live HUD Overlay (Namespaced & Strictly Sized) ====== */
+/* ====== Cinematic Interstellar Status HUD ====== */
 .cla-hud-overlay {
   position: absolute;
-  bottom: 20px;
-  left: 20px;
-  right: 20px;
+  bottom: 24px;
+  left: 24px;
+  right: 24px;
   z-index: 10;
   pointer-events: none;
   display: flex;
   justify-content: flex-start;
 }
 
-.cla-score-hud, .cla-skill-tooltip-hud {
-  display: inline-flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  background: rgba(15, 23, 42, 0.92) !important;
-  border: 1px solid rgba(163, 230, 53, 0.25) !important;
-  border-radius: 4px !important;
-  padding: 6px 12px !important;
-  backdrop-filter: blur(12px) !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
-  max-width: fit-content !important;
-  line-height: 1.2 !important;
+.cla-interstellar-hud {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 6px;
+  background: rgba(15, 23, 42, 0.92);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: 8px;
+  padding: 10px 16px;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6), 0 0 20px rgba(245, 158, 11, 0.15);
 }
 
-.cla-score-label {
-  font-family: 'Fira Code', monospace !important;
-  font-size: 0.65rem !important;
-  font-weight: 700 !important;
-  color: #94a3b8 !important;
-  letter-spacing: 0.05em !important;
-  white-space: nowrap !important;
-  text-transform: uppercase !important;
+.interstellar-badge {
+  font-family: 'Fira Code', monospace;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #f59e0b;
+  letter-spacing: 0.08em;
 }
 
-.cla-score-val {
-  font-family: 'Fira Code', monospace !important;
-  font-size: 0.75rem !important;
-  font-weight: 700 !important;
-  color: #a3e635 !important;
-  white-space: nowrap !important;
+.interstellar-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.cla-hud-skill-name {
-  font-family: 'DM Serif Display', Georgia, serif !important;
-  font-size: 0.85rem !important;
-  color: #ffffff !important;
-  white-space: nowrap !important;
+.interstellar-icon {
+  font-size: 1.2rem;
 }
 
-.cla-hud-skill-weight {
-  font-family: 'Fira Code', monospace !important;
-  font-size: 0.72rem !important;
-  color: #a3e635 !important;
-  font-weight: 600 !important;
-  white-space: nowrap !important;
+.interstellar-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.interstellar-title {
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: 0.92rem;
+  color: #ffffff;
+}
+
+.interstellar-stat {
+  font-family: 'Fira Code', monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #a3e635;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 600px) {
+  .anim-brand-header {
+    display: none; /* Hide redundant logo inside top canvas on mobile to prevent overlap */
+  }
+  .cla-hud-overlay {
+    bottom: 8px;
+    left: 10px;
+    right: 10px;
+  }
+  .cla-interstellar-hud {
+    padding: 4px 10px;
+    gap: 2px;
+    border-radius: 6px;
+    background: rgba(15, 23, 42, 0.95);
+  }
+  .interstellar-badge {
+    font-size: 0.5rem;
+    letter-spacing: 0.05em;
+  }
+  .interstellar-content {
+    gap: 6px;
+  }
+  .interstellar-icon {
+    font-size: 0.95rem;
+  }
+  .interstellar-title {
+    font-size: 0.72rem;
+  }
+  .interstellar-stat {
+    font-size: 0.6rem;
+  }
 }

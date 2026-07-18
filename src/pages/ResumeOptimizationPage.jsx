@@ -69,6 +69,55 @@ const getSectionIcon = (sectionKey) => {
   }
 };
 
+const sanitizeSections = (sectionsObj) => {
+  if (!sectionsObj || typeof sectionsObj !== 'object') return sectionsObj;
+  const cleaned = { ...sectionsObj };
+
+  const SECTION_HEADER_KEYWORDS = [
+    'experience', 'work experience', 'professional experience', 'employment history', 'career history',
+    'education', 'academic background', 'projects', 'personal projects', 'skills', 'technical skills',
+    'certifications', 'languages', 'summary', 'professional summary'
+  ];
+
+  if (cleaned.Education && typeof cleaned.Education === 'string') {
+    const eduLines = cleaned.Education.split('\n');
+    const validEduLines = [];
+    let foundSectionBreak = false;
+
+    for (const line of eduLines) {
+      const trimmed = line.trim();
+      const lower = trimmed.toLowerCase().replace(/[:#\-_*]/g, '').trim();
+
+      if (SECTION_HEADER_KEYWORDS.includes(lower) && lower !== 'education' && lower !== 'academic background') {
+        foundSectionBreak = true;
+        continue;
+      }
+
+      if (!foundSectionBreak) {
+        validEduLines.push(line);
+      }
+    }
+
+    cleaned.Education = validEduLines.join('\n').trim();
+  }
+
+  for (const key of Object.keys(cleaned)) {
+    if (cleaned[key] && typeof cleaned[key] === 'string') {
+      const lines = cleaned[key].split('\n');
+      const filteredLines = lines.filter(line => {
+        const trimmedLower = line.trim().toLowerCase().replace(/[:#\-_*]/g, '');
+        if (SECTION_HEADER_KEYWORDS.includes(trimmedLower) && trimmedLower !== key.toLowerCase()) {
+          return false;
+        }
+        return true;
+      });
+      cleaned[key] = filteredLines.join('\n').trim();
+    }
+  }
+
+  return cleaned;
+};
+
 const parseSectionsFromText = (text) => {
   const sections = {
     Header: '',
@@ -119,7 +168,6 @@ const parseSectionsFromText = (text) => {
     if (headerSec) {
       if (currentLines.length > 0) {
         const freshContent = currentLines.join('\n').trim();
-        // Fixed: Accumulates multiple entries under the same section key seamlessly
         sections[currentSection] = sections[currentSection]
           ? sections[currentSection] + '\n' + freshContent
           : freshContent;
@@ -138,7 +186,7 @@ const parseSectionsFromText = (text) => {
       : freshContent;
   }
 
-  return sections;
+  return sanitizeSections(sections);
 };
 
 const reconstructResumeText = (sectionsObj) => {

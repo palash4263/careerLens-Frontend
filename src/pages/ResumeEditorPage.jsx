@@ -11,6 +11,8 @@ import { getResumes } from "../services/resumeService";
 import { getJobDescriptions } from "../services/jobDescriptionService";
 import { optimizeSection } from "../services/resumeOptimizationService";
 import { generateResumePDF } from "../utils/pdfGenerator";
+import ScanCompletionModal from "../components/resume/ScanCompletionModal";
+import "../components/resume/ScanCompletionModal.css";
 import api from "../api/axiosConfig";
 import "./ResumeEditorPage.css";
 
@@ -40,6 +42,57 @@ const SECTION_ICONS = {
   Languages: "🌐",
 };
 
+const sanitizeSections = (sectionsObj) => {
+  if (!sectionsObj || typeof sectionsObj !== 'object') return sectionsObj;
+  const cleaned = { ...sectionsObj };
+
+  const SECTION_HEADER_KEYWORDS = [
+    'experience', 'work experience', 'professional experience', 'employment history', 'career history',
+    'education', 'academic background', 'projects', 'personal projects', 'skills', 'technical skills',
+    'certifications', 'languages', 'summary', 'professional summary'
+  ];
+
+  // Fix Education section if Experience or orphaned date/location lines got appended into Education
+  if (cleaned.Education && typeof cleaned.Education === 'string') {
+    const eduLines = cleaned.Education.split('\n');
+    const validEduLines = [];
+    let foundSectionBreak = false;
+
+    for (const line of eduLines) {
+      const trimmed = line.trim();
+      const lower = trimmed.toLowerCase().replace(/[:#\-_*]/g, '').trim();
+
+      if (SECTION_HEADER_KEYWORDS.includes(lower) && lower !== 'education' && lower !== 'academic background') {
+        foundSectionBreak = true;
+        continue;
+      }
+
+      if (!foundSectionBreak) {
+        validEduLines.push(line);
+      }
+    }
+
+    cleaned.Education = validEduLines.join('\n').trim();
+  }
+
+  // Sanitize all section keys: remove standalone section headers inside section content
+  for (const key of Object.keys(cleaned)) {
+    if (cleaned[key] && typeof cleaned[key] === 'string') {
+      const lines = cleaned[key].split('\n');
+      const filteredLines = lines.filter(line => {
+        const trimmedLower = line.trim().toLowerCase().replace(/[:#\-_*]/g, '');
+        if (SECTION_HEADER_KEYWORDS.includes(trimmedLower) && trimmedLower !== key.toLowerCase()) {
+          return false;
+        }
+        return true;
+      });
+      cleaned[key] = filteredLines.join('\n').trim();
+    }
+  }
+
+  return cleaned;
+};
+
 export default function ResumeEditorPage() {
   const navigate = useNavigate();
   const [resumes, setResumes] = useState([]);
@@ -54,7 +107,7 @@ export default function ResumeEditorPage() {
 
   const [editedSections, setEditedSections] = useState(() => {
     const saved = localStorage.getItem("cl_edited_sections");
-    return saved ? JSON.parse(saved) : {
+    const parsed = saved ? JSON.parse(saved) : {
       Header: '',
       Summary: '',
       Experience: '',
@@ -64,6 +117,7 @@ export default function ResumeEditorPage() {
       Certifications: '',
       Languages: '',
     };
+    return sanitizeSections(parsed);
   });
 
   const [selectedTemplate, setSelectedTemplate] = useState(() => localStorage.getItem("cl_selected_template") || 'two-column');
@@ -78,6 +132,7 @@ export default function ResumeEditorPage() {
   const [copySuccess, setCopySuccess] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [activeSection, setActiveSection] = useState("Header");
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
 
   // Sync state values to localStorage
   useEffect(() => {
@@ -197,6 +252,8 @@ export default function ResumeEditorPage() {
         pageMargins: pageMargins,
         sectionSpacing: sectionSpacing,
       });
+
+      setShowCompletionModal(true);
     } catch (err) {
       console.error("Failed to download PDF in full-page editor:", err);
       alert("Failed to build PDF. Please check your text formats.");
@@ -750,6 +807,14 @@ export default function ResumeEditorPage() {
         </section>
 
       </main>
+
+      <ScanCompletionModal
+        isOpen={showCompletionModal}
+        onClose={() => setShowCompletionModal(false)}
+        title="PDF Resume Compiled & Exported!"
+        subtitle="Your ATS-optimized PDF resume has been formatted and saved."
+        score={result?.estimated_new_score || 95}
+      />
     </div>
   );
 }

@@ -388,9 +388,15 @@ const renderTimelineSection = (col, content, sizes, splitPipe = false) => {
 
 const renderEducationSection = (col, content, sizes) => {
   const { sizeSubtitle, sizeBody, lhSubtitle, lhBody } = sizes;
+  const SECTION_TITLES = ['experience', 'work experience', 'professional experience', 'projects', 'skills', 'certifications', 'languages'];
+
   for (const rawLine of content) {
     const trimmed = safeText(rawLine).trim();
     if (!trimmed) continue;
+
+    const lower = trimmed.toLowerCase().replace(/[:#\-_*]/g, '').trim();
+    // Skip orphaned section headers inside Education
+    if (SECTION_TITLES.includes(lower)) continue;
 
     if (/\b(university|college|school|institute|academy|vellore)\b/i.test(trimmed)) {
       col.y -= 2;

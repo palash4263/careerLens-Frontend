@@ -258,12 +258,16 @@ export default function CareerLensAnimation() {
       {/* Brand Header */}
       <div className="anim-brand-header">
         <div className="brand-logo-container">
-          <svg className="login-mark-svg" viewBox="0 0 100 100" width="32" height="32" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="50" cy="50" r="42" fill="none" stroke="#a3e635" strokeWidth="6" />
-            <circle cx="50" cy="50" r="22" fill="none" stroke="#a3e635" strokeWidth="4" />
-            <circle cx="50" cy="50" r="8" fill="#a3e635" />
+          <svg viewBox="0 0 100 100" width="34" height="34" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="50" cy="50" r="42" fill="none" stroke="#FBBF24" strokeWidth="4" />
+            <circle cx="50" cy="50" r="24" fill="none" stroke="#FBBF24" strokeWidth="4" />
+            <circle cx="50" cy="50" r="8" fill="#FBBF24" />
+            <line x1="50" y1="2" x2="50" y2="98" stroke="#FBBF24" strokeWidth="4" />
+            <line x1="2" y1="50" x2="98" y2="50" stroke="#FBBF24" strokeWidth="4" />
+            <line x1="16" y1="16" x2="84" y2="84" stroke="#FBBF24" strokeWidth="4" />
+            <line x1="16" y1="84" x2="84" y2="16" stroke="#FBBF24" strokeWidth="4" />
           </svg>
-          <span className="brand-title">CareerLens AI</span>
+          <span className="brand-title">Career Lens</span>
         </div>
 
         {/* Role Selector Pills */}

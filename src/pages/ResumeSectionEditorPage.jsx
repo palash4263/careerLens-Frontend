@@ -444,8 +444,11 @@ export default function ResumeSectionEditorPage() {
       const selectedResume = resumes.find((item) => String(item.id) === String(selectedResumeId));
       const selectedJob = jobs.find((item) => String(item.id) === String(selectedJobId));
 
+      const isSectionsEmpty = !editedSections || Object.values(editedSections).every(v => !v || !v.trim());
+
       await generateResumePDF({
-        resumeText: liveResumeText,
+        resumeText: isSectionsEmpty ? liveResumeText : '',
+        editedSections: isSectionsEmpty ? null : editedSections,
         fileName: selectedResume?.file_name || "resume",
         jobTitle: selectedJob ? `${selectedJob.title} at ${selectedJob.company}` : targetLabel,
         score: 0,

@@ -106,6 +106,7 @@ const extractNameFromFilename = (fileName) => {
   if (!fileName || typeof fileName !== 'string' || fileName.toLowerCase() === 'resume') return null;
   let clean = fileName.replace(/\.pdf$/i, '').replace(/[_.\-]optimized/i, '').replace(/[_.\-]resume/i, '').replace(/resume/i, '');
   clean = clean.replace(/\d+/g, '').replace(/\(\s*\)/g, '');
+  clean = clean.replace(/([a-zA-Z]{3,})s$/i, '$1'); // Strip possessive 's' e.g. Palashs -> Palash
   clean = clean.replace(/[_\-]+/g, ' ').trim();
   if (!clean.includes(' ')) clean = clean.replace(/([a-z])([A-Z])/g, '$1 $2');
   const words = clean.split(/\s+/).filter(Boolean);
@@ -127,6 +128,19 @@ const extractJobTitle = (rawText) => {
   return null;
 };
 
+const resolveIdentity = (resumeText, fileName, opts) => {
+  // When editedSections is passed directly, use Header content as the text source
+  const src = resumeText || opts.headerText || '';
+  return {
+    name:     opts.userName || extractName(src) || extractNameFromFilename(fileName) || 'Applicant Name',
+    title:    extractJobTitle(src) || opts.jobTitle || 'Software Engineer',
+    email:    extractEmail(src) || opts.email || '',
+    phone:    extractPhoneNumber(src) || opts.phone || '',
+    linkedin: extractLinkedIn(src) || opts.linkedin || '',
+    github:   extractGitHub(src) || '',
+  };
+};
+
 const SECTION_ALIASES = {
   Header:         ['Header', 'Contact', 'Contact Info', 'Personal Info', 'Personal Information'],
   Summary:        ['Summary', 'Professional Summary', 'Objective', 'Profile', 'About'],
@@ -135,7 +149,6 @@ const SECTION_ALIASES = {
   Projects:       ['Projects', 'Personal Projects', 'Key Projects', 'Academic Projects'],
   Skills:         ['Skills', 'Technical Skills', 'Core Skills', 'Skills Summary', 'Technologies', 'Additional Skills'],
   Certifications: ['Certifications', 'Certificates', 'Licenses & Certifications', 'Awards & Certifications'],
-  Languages:      ['Languages', 'Language Proficiency'],
 };
 const CANONICAL_SECTIONS = Object.keys(SECTION_ALIASES);
 
@@ -300,15 +313,28 @@ class Column {
     }
   }
 
+  // Truncate text to fit within maxWidth, appending '…' if needed
+  truncateToWidth(str, size, maxWidth, opts = {}) {
+    const useFont = this.dh._pickFont ? this.dh._pickFont(opts) : null;
+    const s = str.trim();
+    const full = this.dh.wrapText(s, maxWidth, size, opts);
+    if (full.length === 0) return s;
+    // Return the first wrapped line — wrapText already word-breaks at maxWidth
+    const firstLine = full[0];
+    // If text had to wrap (more than 1 line), add ellipsis
+    if (full.length > 1) {
+      return `${firstLine.trimEnd()}…`;
+    }
+    return firstLine;
+  }
+
   bullet(str, size, lineHeight) {
     this.ensure(this.minGap);
     this.dh.drawText(this.page, '•', this.x + 2, this.y, size + this.bulletSizeAdd, { color: this.PRIMARY });
-    const savedX = this.x, savedW = this.width;
-    this.x += this.bulletIndent;
-    this.width -= this.bulletIndent;
-    this.wrapped(str, size, lineHeight, { color: DARK_GRAY });
-    this.x = savedX;
-    this.width = savedW;
+    const availW = this.width - this.bulletIndent;
+    const oneLine = this.truncateToWidth(str, size, availW, { color: DARK_GRAY });
+    this.dh.drawText(this.page, oneLine, this.x + this.bulletIndent, this.y, size, { color: DARK_GRAY });
+    this.y -= lineHeight;
   }
 
   // Anti-Collision Text Wrapper Engine to completely solve header text/date overlap visual bugs
@@ -353,7 +379,10 @@ const renderTimelineSection = (col, content, sizes, splitPipe = false) => {
     let trimmed = safeText(rawLine).trim();
     if (!trimmed) continue;
 
-    // Prefilter interceptor: strip bullets from project headers so they match the bold path perfectly
+    // Skip standalone orphaned metric lines like "40%." or "30%"
+    if (/^\d+%\.?$/.test(trimmed)) continue;
+
+    // Prefilter interceptor: strip bullets from project headers so they match the bold path
     if (splitPipe && trimmed.includes('|')) {
       trimmed = trimmed.replace(/^•\s*/, '');
     }
@@ -487,20 +516,25 @@ const renderSkillsSection = (col, dh, content, sizeSubtitle, sizeBody, lhSubtitl
   }
 };
 
-const resolveIdentity = (resumeText, fileName, opts) => ({
-  name:     extractNameFromFilename(fileName) || extractName(resumeText) || opts.userName || 'Applicant Name',
-  title:    extractJobTitle(resumeText) || opts.jobTitle || 'Software Engineer',
-  email:    extractEmail(resumeText) || opts.email || '',
-  phone:    extractPhoneNumber(resumeText) || opts.phone || '',
-  linkedin: extractLinkedIn(resumeText) || opts.linkedin || '',
-  github:   extractGitHub(resumeText) || '',
-});
+// Convert editedSections object {Experience: '...', Projects: '...'}
+// directly into the [{title, content}] format the PDF renderers expect,
+// so we skip the lossy text round-trip and the PDF mirrors the live editor exactly.
+const editedSectionsToSections = (editedSections) => {
+  const ORDER = ['Header', 'Summary', 'Experience', 'Projects', 'Skills', 'Education', 'Certifications', 'Languages'];
+  return ORDER
+    .filter(k => editedSections[k] && editedSections[k].trim())
+    .map(k => ({
+      title: k,
+      content: editedSections[k].split('\n').map(l => safeText(l)).filter(Boolean),
+    }));
+};
 
 // =====================================================================
 // SINGLE-COLUMN PDF GENERATION
 // =====================================================================
 async function generateSingleColumnPDF({
   resumeText,
+  editedSections = null,   // <-- direct sections object from live editor
   fileName = 'resume',
   jobTitle = null,
   email    = null,
@@ -512,7 +546,8 @@ async function generateSingleColumnPDF({
   sectionSpacing = 3,
 }) {
   const PRIMARY = hexToRgbColor(primaryColor);
-  const id = resolveIdentity(resumeText, fileName, { jobTitle, email, phone, linkedin, userName });
+  const headerText = editedSections?.Header || resumeText || '';
+  const id = resolveIdentity(resumeText || '', fileName, { jobTitle, email, phone, linkedin, userName, headerText });
 
   const marginX = Number(pageMargins) === 1 ? 24 : Number(pageMargins) === 2 ? 36 : 48;
   const marginTop = Number(pageMargins) === 1 ? 18 : Number(pageMargins) === 2 ? 24 : 32;
@@ -521,7 +556,11 @@ async function generateSingleColumnPDF({
   const dh  = await createFontKit(pdf);
   pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
 
-  const sections  = parseResumeSections(resumeText, { userName: id.name, email: id.email, phone: id.phone, linkedin: id.linkedin });
+  // Use editedSections directly if provided, otherwise fall back to text parsing
+  const sections = editedSections
+    ? editedSectionsToSections(editedSections)
+    : parseResumeSections(resumeText, { userName: id.name, email: id.email, phone: id.phone, linkedin: id.linkedin });
+
   const cleanFile = safeText(fileName).replace(/\.pdf$/i, '');
   const FULL_W    = PAGE_WIDTH - marginX * 2;
 
@@ -574,6 +613,7 @@ async function generateSingleColumnPDF({
 // =====================================================================
 export async function generateResumePDF({
   resumeText,
+  editedSections = null,   // <-- direct sections object from live editor
   fileName = 'resume',
   jobTitle = null,
   email    = null,
@@ -586,11 +626,12 @@ export async function generateResumePDF({
   sectionSpacing = 3,
 }) {
   if (templateType === 'single-column') {
-    return generateSingleColumnPDF({ resumeText, fileName, jobTitle, email, phone, linkedin, userName, primaryColor, pageMargins, sectionSpacing });
+    return generateSingleColumnPDF({ resumeText, editedSections, fileName, jobTitle, email, phone, linkedin, userName, primaryColor, pageMargins, sectionSpacing });
   }
 
   const PRIMARY = hexToRgbColor(primaryColor);
-  const id = resolveIdentity(resumeText, fileName, { jobTitle, email, phone, linkedin, userName });
+  const headerText = editedSections?.Header || resumeText || '';
+  const id = resolveIdentity(resumeText || '', fileName, { jobTitle, email, phone, linkedin, userName, headerText });
 
   const marginX = Number(pageMargins) === 1 ? 24 : Number(pageMargins) === 2 ? 36 : 48;
   const marginTop = Number(pageMargins) === 1 ? 18 : Number(pageMargins) === 2 ? 24 : 32;
@@ -599,7 +640,10 @@ export async function generateResumePDF({
   const dh  = await createFontKit(pdf);
   const p   = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
 
-  const sections  = parseResumeSections(resumeText, { userName: id.name, email: id.email, phone: id.phone, linkedin: id.linkedin });
+  // Use editedSections directly if provided, otherwise fall back to text parsing
+  const sections = editedSections
+    ? editedSectionsToSections(editedSections)
+    : parseResumeSections(resumeText, { userName: id.name, email: id.email, phone: id.phone, linkedin: id.linkedin });
   const cleanFile = safeText(fileName).replace(/\.pdf$/i, '');
 
   const skillsSec = sections.find(s => s.title.toLowerCase().includes('skill') || s.title.toLowerCase().includes('technolog'));
@@ -696,6 +740,42 @@ export async function generateResumePDF({
     
     targetCol.sectionHeader('Education', sizes.sizeSection, { gapBefore: 3, gapAfter: 6 });
     renderEducationSection(targetCol, eduSec.content, sizes);
+  }
+
+  const certSec = sections.find(s => s.title.toLowerCase().includes('certificat'));
+  if (certSec) {
+    const targetCol = hasSkills ? right : left;
+    if (!hasSkills) left.y -= sizes.secSpace;
+    else targetCol.y -= sizes.secSpace;
+    
+    targetCol.sectionHeader('Certifications', sizes.sizeSection, { gapBefore: 3, gapAfter: 6 });
+    for (const line of certSec.content) {
+      const trimmed = safeText(line).trim();
+      if (!trimmed) continue;
+      if (/^[•+\-]/.test(trimmed)) {
+        targetCol.wrapped(`•  ${trimmed.replace(/^[•+\-]\s*/, '')}`, sizes.sizeBody, sizes.lhBody, { color: DARK_GRAY });
+      } else {
+        targetCol.wrapped(trimmed, sizes.sizeBody, sizes.lhBody, { color: DARK_GRAY });
+      }
+    }
+  }
+
+  const langSec = sections.find(s => s.title.toLowerCase().includes('language'));
+  if (langSec) {
+    const targetCol = hasSkills ? right : left;
+    if (!hasSkills) left.y -= sizes.secSpace;
+    else targetCol.y -= sizes.secSpace;
+    
+    targetCol.sectionHeader('Languages', sizes.sizeSection, { gapBefore: 3, gapAfter: 6 });
+    for (const line of langSec.content) {
+      const trimmed = safeText(line).trim();
+      if (!trimmed) continue;
+      if (/^[•+\-]/.test(trimmed)) {
+        targetCol.wrapped(`•  ${trimmed.replace(/^[•+\-]\s*/, '')}`, sizes.sizeBody, sizes.lhBody, { color: DARK_GRAY });
+      } else {
+        targetCol.wrapped(trimmed, sizes.sizeBody, sizes.lhBody, { color: DARK_GRAY });
+      }
+    }
   }
 
   const pdfBytes = await pdf.save();

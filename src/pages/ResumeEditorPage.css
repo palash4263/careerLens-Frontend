@@ -586,6 +586,39 @@
   margin: 0;
 }
 
+/* Enhancv Entry Block Styling */
+.enhancv-entry-block {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 8px;
+}
+
+.enhancv-entry-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.enhancv-entry-title {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.enhancv-entry-date {
+  font-size: 0.64rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.enhancv-bullet-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 /* List with styled colored dots */
 .red-tmpl-experience-list {
   display: flex;

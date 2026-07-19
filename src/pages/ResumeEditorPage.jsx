@@ -11,6 +11,7 @@ import { getResumes } from "../services/resumeService";
 import { getJobDescriptions } from "../services/jobDescriptionService";
 import { optimizeSection } from "../services/resumeOptimizationService";
 import { generateResumePDF } from "../utils/pdfGenerator";
+import { parseSections } from "../utils/resumeOptimizer";
 import ScanCompletionModal from "../components/resume/ScanCompletionModal";
 import "../components/resume/ScanCompletionModal.css";
 import api from "../api/axiosConfig";
@@ -39,7 +40,6 @@ const SECTION_ICONS = {
   Skills: "🎯",
   Education: "🎓",
   Certifications: "🏆",
-  Languages: "🌐",
 };
 
 const sanitizeSections = (sectionsObj) => {
@@ -75,13 +75,22 @@ const sanitizeSections = (sectionsObj) => {
     cleaned.Education = validEduLines.join('\n').trim();
   }
 
-  // Sanitize all section keys: remove standalone section headers inside section content
+  // Sanitize all section keys: remove standalone section headers and merge orphaned metric lines
   for (const key of Object.keys(cleaned)) {
     if (cleaned[key] && typeof cleaned[key] === 'string') {
-      const lines = cleaned[key].split('\n');
+      let textVal = cleaned[key];
+      // Merge standalone percentage lines (e.g., "\n 40%.") back onto preceding line
+      textVal = textVal.replace(/\n\s*(\d+%\.?)\s*/g, ' $1\n')
+                       .replace(/,\s*,/g, ',')
+                       .replace(/,\s*\./g, '.');
+
+      const lines = textVal.split('\n');
       const filteredLines = lines.filter(line => {
         const trimmedLower = line.trim().toLowerCase().replace(/[:#\-_*]/g, '');
         if (SECTION_HEADER_KEYWORDS.includes(trimmedLower) && trimmedLower !== key.toLowerCase()) {
+          return false;
+        }
+        if (/^\s*\d+%\.?\s*$/.test(line.trim())) {
           return false;
         }
         return true;
@@ -115,7 +124,6 @@ export default function ResumeEditorPage() {
       Skills: '',
       Education: '',
       Certifications: '',
-      Languages: '',
     };
     return sanitizeSections(parsed);
   });
@@ -182,6 +190,20 @@ export default function ResumeEditorPage() {
         const jdResponse = await getJobDescriptions();
         setResumes(resumeResponse);
         setJobDescriptions(jdResponse);
+
+        // Auto-populate original resume sections if editedSections is empty
+        const isSectionsEmpty = !editedSections || Object.values(editedSections).every(v => !v || !v.trim());
+        if (isSectionsEmpty && resumeResponse && resumeResponse.length > 0) {
+          const targetId = selectedResume || localStorage.getItem("cl_selected_resume") || resumeResponse[0]?.id;
+          const targetResume = resumeResponse.find(r => String(r.id) === String(targetId)) || resumeResponse[0];
+
+          if (targetResume && targetResume.extracted_text) {
+            const parsed = parseSections(targetResume.extracted_text);
+            const sanitized = sanitizeSections(parsed);
+            setEditedSections(sanitized);
+            if (!selectedResume) setSelectedResume(String(targetResume.id));
+          }
+        }
       } catch (err) {
         console.error("Failed to load metadata inside full-page editor", err);
       }
@@ -190,26 +212,27 @@ export default function ResumeEditorPage() {
   }, []);
 
   const handleOptimizeSection = async (sectionName) => {
-    if (!selectedResume || !selectedJobDescription) {
-      alert("Please select a resume and a job description first.");
-      return;
-    }
-    
     setOptimizingSections(prev => ({ ...prev, [sectionName]: true }));
     try {
       const customPrompt = sectionPrompts[sectionName] || "";
+      const currentSectionContent = editedSections[sectionName] || "";
+
+      const resID = selectedResume || (resumes[0]?.id ? String(resumes[0].id) : "");
+      const jdID = selectedJobDescription || (jobDescriptions[0]?.id ? String(jobDescriptions[0].id) : "");
+
       const response = await optimizeSection(
-        Number(selectedResume),
+        resID,
         sectionName,
-        Number(selectedJobDescription),
-        customPrompt
+        jdID,
+        customPrompt,
+        currentSectionContent
       );
       
       let optimizedText = "";
       if (typeof response === "string") {
         optimizedText = response;
       } else if (response) {
-        optimizedText = response.optimized_text || response.text || response.content || response.optimizedSection || response.optimized_content || "";
+        optimizedText = response.optimizedText || response.optimized_text || response.text || response.content || response.optimizedSection || response.optimized_content || "";
       }
       
       if (optimizedText) {
@@ -239,16 +262,20 @@ export default function ResumeEditorPage() {
     try {
       setDownloading(true);
       const docName = resumes.find(r => r.id === Number(selectedResume))?.file_name || "optimized_resume";
-      const cleanedDocName = docName.replace(/\.[^/.]+$/, ""); // Strip file extension
-      
-      const fullText = reconstructResumeText(editedSections);
-      
+      const cleanedDocName = docName.replace(/\.[^/.]+$/, "");
+
+      // Pass editedSections DIRECTLY so PDF content exactly mirrors the live editor
+      // (no lossy text round-trip through parseResumeSections)
+      const headerLines = (editedSections.Header || '').split('\n').map(l => l.trim()).filter(Boolean);
+      const resolvedName = headerLines[0] || null;
+
       await generateResumePDF({
-        resumeText: fullText,
+        resumeText: '',           // not needed when editedSections is provided
+        editedSections,           // live editor sections go straight to PDF
         fileName: `${cleanedDocName}_optimized.pdf`,
         templateType: selectedTemplate,
         primaryColor: selectedColor,
-        userName: editedSections.Header.split("\n")[0] || null,
+        userName: resolvedName,
         pageMargins: pageMargins,
         sectionSpacing: sectionSpacing,
       });
@@ -313,6 +340,95 @@ export default function ResumeEditorPage() {
     return text.split(/[,\n]/)
       .map(s => s.trim())
       .filter(s => s.length > 0);
+  };
+
+  const renderTimelineEntries = (text, themeColor) => {
+    if (!text) return null;
+    const rawLines = text.split('\n').map(l => l.trim()).filter(Boolean);
+    const blocks = [];
+    let currentHeader = null;
+    let currentDate = null;
+    let currentSubtitle = null;
+    let currentBullets = [];
+
+    const flush = () => {
+      if (currentHeader || currentBullets.length > 0) {
+        blocks.push({
+          header: currentHeader || "",
+          date: currentDate || "",
+          subtitle: currentSubtitle || "",
+          bullets: currentBullets,
+        });
+        currentHeader = null;
+        currentDate = null;
+        currentSubtitle = null;
+        currentBullets = [];
+      }
+    };
+
+    const DATE_RE = /\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|\d{4})\b.*[-–—].*\b(Present|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|\d{4})\b/i;
+
+    for (const line of rawLines) {
+      if (/^\s*\d+%\.?\s*$/.test(line)) continue; // Ignore standalone orphaned metric lines
+      const isBullet = line.startsWith('•') || line.startsWith('-');
+      const dateMatch = line.match(DATE_RE);
+
+      if (!isBullet && (line.includes('|') || dateMatch || line.length < 55)) {
+        if (line.includes('|')) {
+          flush();
+          const parts = line.split('|').map(p => p.trim());
+          currentHeader = parts[0];
+          currentDate = parts.slice(1).join(' | ');
+        } else if (dateMatch) {
+          const dateStr = dateMatch[0].trim();
+          const labelStr = line.replace(dateMatch[0], '').trim();
+          if (labelStr && !currentHeader) {
+            currentHeader = labelStr;
+            currentDate = dateStr;
+          } else if (currentHeader && !currentDate) {
+            currentDate = dateStr;
+          } else {
+            flush();
+            currentHeader = labelStr || line;
+            currentDate = dateStr;
+          }
+        } else {
+          if (currentHeader && !currentSubtitle && currentBullets.length === 0) {
+            currentSubtitle = line;
+          } else {
+            flush();
+            currentHeader = line;
+          }
+        }
+      } else {
+        currentBullets.push(line.replace(/^[•\-\s]+/, ''));
+      }
+    }
+    flush();
+
+    return blocks.map((blk, idx) => (
+      <div key={idx} className="enhancv-entry-block">
+        {blk.header && (
+          <div className="enhancv-entry-header">
+            <span className="enhancv-entry-title">{blk.header}</span>
+            {blk.date && <span className="enhancv-entry-date" style={{ color: themeColor }}>{blk.date}</span>}
+          </div>
+        )}
+        {blk.subtitle && (
+          <div className="enhancv-entry-subtitle" style={{ color: '#475569', fontSize: '0.66rem', fontWeight: '600', marginBottom: '2px' }}>
+            {blk.subtitle}
+          </div>
+        )}
+        <div className="enhancv-bullet-list">
+          {blk.bullets.map((bullet, bIdx) => (
+            <div key={bIdx} className="red-tmpl-bullet-row">
+              <span className="red-tmpl-bullet-dot" style={{ backgroundColor: themeColor }} />
+              <span className="red-tmpl-bullet-text">{bullet}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    ));
   };
 
   const activeFontFamily = PREMIUM_FONTS.find(f => f.name === selectedFont)?.family || "sans-serif";
@@ -606,14 +722,7 @@ export default function ResumeEditorPage() {
                         <h3 className="red-tmpl-section-title" style={{ color: selectedColor, borderBottomColor: selectedColor }}>
                           Work Experience
                         </h3>
-                        <div className="red-tmpl-experience-list">
-                          {parseBulletPoints(editedSections.Experience).map((bullet, idx) => (
-                            <div key={idx} className="red-tmpl-bullet-row">
-                              <span className="red-tmpl-bullet-dot" style={{ backgroundColor: selectedColor }} />
-                              <span className="red-tmpl-bullet-text">{bullet}</span>
-                            </div>
-                          ))}
-                        </div>
+                        {renderTimelineEntries(editedSections.Experience, selectedColor)}
                       </div>
                     )}
 
@@ -623,14 +732,7 @@ export default function ResumeEditorPage() {
                         <h3 className="red-tmpl-section-title" style={{ color: selectedColor, borderBottomColor: selectedColor }}>
                           Personal Projects
                         </h3>
-                        <div className="red-tmpl-experience-list">
-                          {parseBulletPoints(editedSections.Projects).map((bullet, idx) => (
-                            <div key={idx} className="red-tmpl-bullet-row">
-                              <span className="red-tmpl-bullet-dot" style={{ backgroundColor: selectedColor }} />
-                              <span className="red-tmpl-bullet-text">{bullet}</span>
-                            </div>
-                          ))}
-                        </div>
+                        {renderTimelineEntries(editedSections.Projects, selectedColor)}
                       </div>
                     )}
                   </div>
@@ -680,18 +782,6 @@ export default function ResumeEditorPage() {
                         ))}
                       </div>
                     )}
-
-                    {/* Languages */}
-                    {editedSections.Languages && (
-                      <div className="red-tmpl-section">
-                        <h3 className="red-tmpl-section-title" style={{ color: selectedColor, borderBottomColor: selectedColor }}>
-                          Languages
-                        </h3>
-                        {parseBulletPoints(editedSections.Languages).map((line, idx) => (
-                          <p key={idx} className="red-tmpl-sidebar-item">{line}</p>
-                        ))}
-                      </div>
-                    )}
                   </div>
                 </div>
               ) : (
@@ -726,14 +816,7 @@ export default function ResumeEditorPage() {
                       <h3 className="red-tmpl-section-title centered" style={{ color: selectedColor }}>
                         Work Experience
                       </h3>
-                      <div className="red-tmpl-experience-list">
-                        {parseBulletPoints(editedSections.Experience).map((bullet, idx) => (
-                          <div key={idx} className="red-tmpl-bullet-row">
-                            <span className="red-tmpl-bullet-dot" style={{ backgroundColor: selectedColor }} />
-                            <span className="red-tmpl-bullet-text">{bullet}</span>
-                          </div>
-                        ))}
-                      </div>
+                      {renderTimelineEntries(editedSections.Experience, selectedColor)}
                     </div>
                   )}
 
@@ -743,14 +826,7 @@ export default function ResumeEditorPage() {
                       <h3 className="red-tmpl-section-title centered" style={{ color: selectedColor }}>
                         Personal Projects
                       </h3>
-                      <div className="red-tmpl-experience-list">
-                        {parseBulletPoints(editedSections.Projects).map((bullet, idx) => (
-                          <div key={idx} className="red-tmpl-bullet-row">
-                            <span className="red-tmpl-bullet-dot" style={{ backgroundColor: selectedColor }} />
-                            <span className="red-tmpl-bullet-text">{bullet}</span>
-                          </div>
-                        ))}
-                      </div>
+                      {renderTimelineEntries(editedSections.Projects, selectedColor)}
                     </div>
                   )}
 

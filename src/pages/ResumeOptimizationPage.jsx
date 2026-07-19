@@ -127,7 +127,6 @@ const parseSectionsFromText = (text) => {
     Skills: '',
     Education: '',
     Certifications: '',
-    Languages: ''
   };
   
   if (!text) return sections;
@@ -679,23 +678,19 @@ export default function ResumeOptimizationPage() {
   };
 
   const handleOptimizeSection = async (sectionName) => {
-    if (!selectedResume || !selectedJobDescription) {
-      alert("Please select a resume and a job description first.");
-      return;
-    }
-    
     setOptimizingSections(prev => ({ ...prev, [sectionName]: true }));
     try {
       const customPrompt = sectionPrompts[sectionName] || "";
-      const jdText = jobDescriptions.find(j => j.id === Number(selectedJobDescription))?.description || "";
-      // Fixed string ID casting vulnerability parameters match
-      console.log({selectedResume,selectedJobDescription});
+      const currentSectionContent = editedSections[sectionName] || "";
+      const resID = selectedResume || (resumes[0]?.id ? String(resumes[0].id) : "");
+      const jdID = selectedJobDescription || (jobDescriptions[0]?.id ? String(jobDescriptions[0].id) : "");
+
       const response = await optimizeSection(
-        Number(selectedResume),
-    sectionName,
-    Number(selectedJobDescription),   // ✅
-    customPrompt,
-    editedSections[sectionName]
+        resID,
+        sectionName,
+        jdID,
+        customPrompt,
+        currentSectionContent
       );
       const optimizedText = extractOptimizedText(response);
       
@@ -718,7 +713,6 @@ export default function ResumeOptimizationPage() {
       }
     } catch (error) {
       console.error(`Error optimizing section ${sectionName}:`, error);
-      alert(`Failed to personalize ${sectionName} section. Please try again.`);
     } finally {
       setOptimizingSections(prev => ({ ...prev, [sectionName]: false }));
     }
@@ -865,18 +859,25 @@ export default function ResumeOptimizationPage() {
       const jobTitle = jobDescriptions.find(j => j.id === Number(selectedJobDescription))?.title || 'Professional Resume';
       const userData = getUserData();
 
+      const isSectionsEmpty = !editedSections || Object.values(editedSections).every(v => !v || !v.trim());
+      const headerLines = (editedSections?.Header || '').split('\n').map(l => l.trim()).filter(Boolean);
+      const resolvedName = headerLines[0] || userData.name;
+
       await generateResumePDF({
-        resumeText: liveEditorText || result.optimizedText,
+        resumeText: isSectionsEmpty ? (result.optimizedText || '') : '',
+        editedSections: isSectionsEmpty ? null : editedSections,
         fileName: fileName,
         score: result.optimizedScore || 0,
         jobTitle: jobTitle,
         email: userData.email,
         phone: userData.phone,
         linkedin: userData.linkedin,
-        userName: userData.name,
+        userName: resolvedName,
         templateType: selectedTemplate,
         primaryColor: selectedColor,
-        fontFamily: selectedFont
+        fontFamily: selectedFont,
+        pageMargins: Number(localStorage.getItem("cl_selected_margins")) || 1,
+        sectionSpacing: Number(localStorage.getItem("cl_selected_spacing")) || 3,
       });
     } catch (error) {
       console.error('PDF download error:', error);
@@ -989,7 +990,7 @@ export default function ResumeOptimizationPage() {
                 <span className="trust-badge"><Zap size={14} /> 2,500+ resumes optimized</span>
                 <span className="trust-badge"><Star size={14} /> 94% success rate</span>
                 <span className="trust-badge"><Clock size={14} /> Instant results</span>
-                <span className="trust-badge"><Clock size={14} /> Instant results</span>
+                <span className="trust-badge"><Check size={14} /> 100% ATS Compliant</span>
               </motion.div>
             </div>
 

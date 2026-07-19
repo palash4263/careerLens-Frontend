@@ -207,7 +207,7 @@ export default function OptimizerShieldHero() {
       tex.minFilter = THREE.LinearFilter;
       const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false });
       const sprite = new THREE.Sprite(mat);
-      sprite.scale.set(1.95, 0.68, 1);
+      sprite.scale.set(1.75, 0.61, 1);
       return sprite;
     }
 
@@ -285,15 +285,15 @@ export default function OptimizerShieldHero() {
       rings[1].rotation.z = -t * 0.28;
 
       // orbiting chips
-      const orbitR = 3.3;
+      const orbitR = 3.2;
       chips.forEach((c, i) => {
         const speed = 0.2 + i * 0.05;
         const offset = (i / chips.length) * Math.PI * 2;
         const angle = t * speed + offset;
         c.position.set(
           Math.cos(angle) * orbitR,
-          Math.sin(angle * 0.75) * 1.4 + Math.sin(i * 2) * 0.25,
-          Math.sin(angle) * 1.7 - 0.4
+          Math.sin(angle * 0.75) * 1.3 + Math.sin(i * 2) * 0.2,
+          Math.sin(angle) * 1.6 - 0.3
         );
         const depth = (c.position.z + 2.1) / 4.2;
         c.material.opacity = THREE.MathUtils.clamp(0.35 + depth * 0.75, 0.25, 1);
@@ -335,7 +335,7 @@ export default function OptimizerShieldHero() {
   }, []);
 
   return (
-    <div style={{ width: "100%", height: "100%", minHeight: 480, position: "relative" }}>
+    <div style={{ width: "100%", height: "100%", minHeight: 380, position: "relative" }}>
       <div ref={mountRef} style={{ width: "100%", height: "100%" }} />
     </div>
   );

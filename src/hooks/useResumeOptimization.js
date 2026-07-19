@@ -130,8 +130,13 @@ export default function useResumeOptimization() {
           j => j.id === Number(selectedJobDescription)
         )?.title || "";
 
+      const saved = localStorage.getItem("cl_edited_sections");
+      const editedSections = saved ? JSON.parse(saved) : null;
+      const isSectionsEmpty = !editedSections || Object.values(editedSections).every(v => !v || !v.trim());
+
       await generateResumePDF({
-        resumeText: result.optimizedText,
+        resumeText: isSectionsEmpty ? result.optimizedText : '',
+        editedSections: isSectionsEmpty ? null : editedSections,
         fileName,
         score: result.optimizedScore,
         jobTitle,

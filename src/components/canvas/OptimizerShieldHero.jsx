@@ -255,6 +255,14 @@ export default function OptimizerShieldHero() {
       const w = mount.clientWidth;
       const h = mount.clientHeight;
       camera.aspect = w / h;
+      
+      // Make the 3D model significantly smaller on mobile by pulling the camera back
+      if (w < 768) {
+        camera.position.z = 13.5; 
+      } else {
+        camera.position.z = 7.5;
+      }
+      
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
     }

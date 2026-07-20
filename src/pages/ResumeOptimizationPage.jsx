@@ -995,8 +995,7 @@ export default function ResumeOptimizationPage() {
             </div>
 
        <motion.div className="optimizer-hero-right" variants={staggerItem}>
-  {/* Container wrapper ensuring the Three.js Canvas has a stable, bounded render space */}
-  <div style={{ width: "100%", height: "380px", minWidth: "300px", position: "relative" }}>
+  <div className="optimizer-hero-3d-wrapper">
     <OptimizerShieldHero  />
   </div>
 </motion.div>

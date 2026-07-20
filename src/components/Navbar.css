@@ -513,12 +513,13 @@
   cursor: pointer;
   padding: 0;
   z-index: 1010;
+  position: relative;
 }
 
 .nb-toggle-line {
   width: 100%;
   height: 2px;
-  background: var(--shell-nav-text);
+  background: #ffffff;
   border-radius: 99px;
   transition: transform 160ms ease, opacity 160ms ease;
   transform-origin: left center;
@@ -558,9 +559,9 @@
   bottom: 0;
   left: -280px;
   width: 280px;
-  background: var(--shell-nav-bg-scrolled);
+  background: #06060c; /* Solid dark background instead of transparent var */
   border-right: 1px solid var(--shell-nav-border);
-  box-shadow: var(--shell-nav-shadow-scrolled);
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
   z-index: 1006;
   display: flex;
   flex-direction: column;

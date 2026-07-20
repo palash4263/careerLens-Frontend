@@ -278,6 +278,13 @@ export default function ResumeSaas3DHero() {
           font-weight: bold;
           color: #64748b;
         }
+
+        /* Scale down the whole 3D visual on mobile devices */
+        @media (max-width: 768px) {
+          .hero-3d-scene {
+            transform: scale(0.7);
+          }
+        }
       `}</style>
 
       {/* 3D STAGE CONTAINER */}

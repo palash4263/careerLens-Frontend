@@ -609,12 +609,19 @@
   letter-spacing: 0.04em;
 }
 
-/* Responsive: stack with less overlap on small screens */
+/* Responsive: grid on small screens to prevent overflow */
 @media (max-width: 640px) {
+  .db-stats-circles {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    padding: 2rem 1rem;
+    justify-items: center;
+  }
   .stat-circle {
-    width: 130px;
-    height: 130px;
-    margin-left: -25px;
+    width: 140px;
+    height: 140px;
+    margin-left: 0; /* Remove overlap */
   }
 }
 
@@ -1600,12 +1607,23 @@
   .db-rings             { justify-content: center; gap: 1.5rem; }
   .db-stats-grid        { grid-template-columns: 1fr 1fr; }
   .db-features-grid    { grid-template-columns: 1fr; }
-  .db-insight          { grid-template-columns: 1fr; gap: 1.25rem; padding: 1.5rem; }
-  .db-insight-left     { text-align: center; display: flex; flex-direction: column; align-items: center; }
-  .db-insight-text     { font-size: 0.85rem; }
-  .db-insight-score    { order: -1; margin-bottom: 0.5rem; }
-  .db-insight-btn      { width: 100%; justify-content: center; }
-  .db-features         { padding: 1.75rem; }
+  .db-insight { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 1.5rem; 
+    padding: 1.75rem 1.25rem; 
+  }
+  .db-insight-left { 
+    text-align: center; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+  }
+  .db-insight-text { font-size: 0.9rem; }
+  .db-insight-score { order: unset; margin: 0.5rem 0; }
+  .db-insight-bar-wrap { width: 100%; margin-bottom: 0.5rem; }
+  .db-insight-btn { width: 100%; justify-content: center; margin-top: 0.5rem; }
+  .db-features { padding: 1.75rem; }
 }
 
 @media (max-width: 540px) {
@@ -1623,6 +1641,20 @@
   .db-hero-cta         { flex-direction: column; gap: 0.75rem; width: 100%; }
   .db-btn-primary,
   .db-btn-secondary    { width: 100%; text-align: center; justify-content: center; padding: 0.85rem 1.5rem; }
+  
+  /* Optimize Workspace & Widget for small phones */
+  .db-workspace { padding: 1.5rem 1rem; }
+  .db-workspace-item { padding: 0.75rem; gap: 0.6rem; }
+  .db-ws-icon { width: 32px; height: 32px; font-size: 0.85rem; }
+  .db-ws-text h4 { font-size: 0.8rem; white-space: normal; }
+  .db-ws-badge { font-size: 0.6rem; padding: 1px 5px; }
+  .db-ws-text p { font-size: 0.7rem; white-space: normal; line-height: 1.2; }
+  
+  .db-ws-activity { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+  
+  .db-widget { padding: 1.5rem 1rem; }
+  .db-wgt-time { font-size: 1.8rem; }
+  .db-wgt-btn { font-size: 0.75rem; padding: 0.5rem 0.75rem; }
 }
 
 /* ====== Scroll Reveal Utility classes ====== */

@@ -35,7 +35,8 @@ export default function OptimizerShieldHero() {
     const scene = new THREE.Scene();
 
     const camera = new THREE.PerspectiveCamera(42, initW / initH, 0.1, 100);
-    camera.position.set(0, 0.2, 7.5);
+    const isMobileView = initW < 768;
+    camera.position.set(0, 0.2, isMobileView ? 7.5 : 4.5);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -260,7 +261,7 @@ export default function OptimizerShieldHero() {
       if (w < 768) {
         camera.position.z = 13.5; 
       } else {
-        camera.position.z = 7.5;
+        camera.position.z = 4.2;
       }
       
       camera.updateProjectionMatrix();

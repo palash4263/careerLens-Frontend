@@ -3,9 +3,10 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  ArrowLeft, Copy, Check, Sparkles, Download, 
-  Trash2, LayoutGrid, CheckSquare,
-  FileText, Bold, Award, Globe, Briefcase, GraduationCap, ChevronRight
+  ArrowLeft, Copy, Check, Sparkles, Download, X, Sliders, Maximize2,
+  Trash2, LayoutGrid, CheckSquare, Plus, ArrowUp, ArrowDown, GripVertical,
+  FileText, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight,
+  Award, Globe, Briefcase, GraduationCap, ChevronRight, Undo2, Redo2, Type, Layers, Bot, Upload, Palette
 } from "lucide-react";
 import { getResumes } from "../services/resumeService";
 import { getJobDescriptions } from "../services/jobDescriptionService";
@@ -62,7 +63,7 @@ const sanitizeSections = (sectionsObj) => {
       const trimmed = line.trim();
       const lower = trimmed.toLowerCase().replace(/[:#\-_*]/g, '').trim();
 
-      if (SECTION_HEADER_KEYWORDS.includes(lower) && lower !== 'education' && lower !== 'academic background') {
+      if (SECTION_HEADER_KEYWORDS.includes(lower)) {
         foundSectionBreak = true;
         continue;
       }
@@ -87,7 +88,7 @@ const sanitizeSections = (sectionsObj) => {
       const lines = textVal.split('\n');
       const filteredLines = lines.filter(line => {
         const trimmedLower = line.trim().toLowerCase().replace(/[:#\-_*]/g, '');
-        if (SECTION_HEADER_KEYWORDS.includes(trimmedLower) && trimmedLower !== key.toLowerCase()) {
+        if (SECTION_HEADER_KEYWORDS.includes(trimmedLower)) {
           return false;
         }
         if (/^\s*\d+%\.?\s*$/.test(line.trim())) {
@@ -104,6 +105,7 @@ const sanitizeSections = (sectionsObj) => {
 
 export default function ResumeEditorPage() {
   const navigate = useNavigate();
+  const livePreviewRef = useRef(null);
   const [resumes, setResumes] = useState([]);
   const [jobDescriptions, setJobDescriptions] = useState([]);
   const [selectedResume, setSelectedResume] = useState(() => localStorage.getItem("cl_selected_resume") || "");
@@ -115,7 +117,9 @@ export default function ResumeEditorPage() {
   });
 
   const [editedSections, setEditedSections] = useState(() => {
-    const saved = localStorage.getItem("cl_edited_sections");
+    // Load sections keyed to the selected resume so different resumes don't share data
+    const resumeId = localStorage.getItem("cl_selected_resume") || "default";
+    const saved = localStorage.getItem(`cl_edited_sections_${resumeId}`);
     const parsed = saved ? JSON.parse(saved) : {
       Header: '',
       Summary: '',
@@ -133,6 +137,76 @@ export default function ResumeEditorPage() {
   const [selectedFont, setSelectedFont] = useState(() => localStorage.getItem("cl_selected_font") || 'Outfit');
   const [pageMargins, setPageMargins] = useState(() => Number(localStorage.getItem("cl_selected_margins")) || 1);
   const [sectionSpacing, setSectionSpacing] = useState(() => Number(localStorage.getItem("cl_selected_spacing")) || 3);
+  const [baseFontSize, setBaseFontSize] = useState(() => Number(localStorage.getItem("cl_selected_font_size")) || 3);
+  const [sectionFontSizes, setSectionFontSizes] = useState(() => JSON.parse(localStorage.getItem("cl_section_fonts")) || {});
+  const [pageCount, setPageCount] = useState(1);
+
+  // Drag and Drop Section Ordering State
+  const DEFAULT_MAIN_SECTIONS = ['Summary', 'Experience', 'Projects'];
+  const DEFAULT_SIDE_SECTIONS = ['Skills', 'Education', 'Certifications'];
+
+  const [mainSectionOrder, setMainSectionOrder] = useState(() => {
+    const saved = localStorage.getItem(`cl_main_order_${selectedResume}`);
+    return saved ? JSON.parse(saved) : DEFAULT_MAIN_SECTIONS;
+  });
+
+  const [sideSectionOrder, setSideSectionOrder] = useState(() => {
+    const saved = localStorage.getItem(`cl_side_order_${selectedResume}`);
+    return saved ? JSON.parse(saved) : DEFAULT_SIDE_SECTIONS;
+  });
+
+  const [draggedSectionKey, setDraggedSectionKey] = useState(null);
+
+  const handleDragStart = (e, sectionKey) => {
+    e.dataTransfer.setData("text/plain", sectionKey);
+    setDraggedSectionKey(sectionKey);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+  };
+
+  const handleSectionDrop = (e, targetSectionKey, isSidebar = false) => {
+    e.preventDefault();
+    if (!draggedSectionKey || draggedSectionKey === targetSectionKey) return;
+
+    const orderArray = isSidebar ? [...sideSectionOrder] : [...mainSectionOrder];
+    const setOrderFn = isSidebar ? setSideSectionOrder : setMainSectionOrder;
+    const storageKey = isSidebar ? `cl_side_order_${selectedResume}` : `cl_main_order_${selectedResume}`;
+
+    const fromIdx = orderArray.indexOf(draggedSectionKey);
+    const toIdx = orderArray.indexOf(targetSectionKey);
+
+    if (fromIdx !== -1 && toIdx !== -1) {
+      orderArray.splice(fromIdx, 1);
+      orderArray.splice(toIdx, 0, draggedSectionKey);
+      setOrderFn(orderArray);
+      localStorage.setItem(storageKey, JSON.stringify(orderArray));
+    } else {
+      // Cross-column movement (e.g. moving Skills from Sidebar to Main Body)
+      const fromArray = isSidebar ? [...mainSectionOrder] : [...sideSectionOrder];
+      const setFromArrayFn = isSidebar ? setMainSectionOrder : setSideSectionOrder;
+      const fromStorageKey = isSidebar ? `cl_main_order_${selectedResume}` : `cl_side_order_${selectedResume}`;
+
+      const remIdx = fromArray.indexOf(draggedSectionKey);
+      if (remIdx !== -1) {
+        fromArray.splice(remIdx, 1);
+        orderArray.splice(toIdx >= 0 ? toIdx : orderArray.length, 0, draggedSectionKey);
+
+        setFromArrayFn(fromArray);
+        setOrderFn(orderArray);
+
+        localStorage.setItem(fromStorageKey, JSON.stringify(fromArray));
+        localStorage.setItem(storageKey, JSON.stringify(orderArray));
+      }
+    }
+    setDraggedSectionKey(null);
+  };
+
+  const getSectionFontSize = (key) => ({
+    fontSize: `${1 + (sectionFontSizes[key] || 0) * 0.1}em`
+  });
 
   const [optimizingSections, setOptimizingSections] = useState({});
   const [sectionPrompts, setSectionPrompts] = useState({});
@@ -141,6 +215,74 @@ export default function ResumeEditorPage() {
   const [downloading, setDownloading] = useState(false);
   const [activeSection, setActiveSection] = useState("Header");
   const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [activeRailTab, setActiveRailTab] = useState("content");
+
+  // History stack for Undo / Redo
+  const [history, setHistory] = useState([editedSections]);
+  const [historyIdx, setHistoryIdx] = useState(0);
+
+  const updateSectionsWithHistory = (newSections) => {
+    const updated = typeof newSections === 'function' ? newSections(editedSections) : newSections;
+    const sanitized = sanitizeSections(updated);
+    setEditedSections(sanitized);
+    
+    // Append to history
+    const nextHist = history.slice(0, historyIdx + 1);
+    nextHist.push(sanitized);
+    setHistory(nextHist);
+    setHistoryIdx(nextHist.length - 1);
+  };
+
+  const handleUndo = () => {
+    if (historyIdx > 0) {
+      setHistoryIdx(historyIdx - 1);
+      setEditedSections(history[historyIdx - 1]);
+    }
+  };
+
+  const handleRedo = () => {
+    if (historyIdx < history.length - 1) {
+      setHistoryIdx(historyIdx + 1);
+      setEditedSections(history[historyIdx + 1]);
+    }
+  };
+
+  // Manipulate entry blocks inside timeline sections (Experience / Projects / Education)
+  const addBlockToSection = (sectionKey) => {
+    const existing = editedSections[sectionKey] || '';
+    let newEntry = '';
+    if (sectionKey === 'Experience') {
+      newEntry = '\n\nNew Company | Software Engineer | 2026 - Present\n• Developed and delivered scalable cloud applications.';
+    } else if (sectionKey === 'Projects') {
+      newEntry = '\n\nNew Project | React, Node.js | 2026\n• Built an intuitive user web interface for automated analytics.';
+    } else if (sectionKey === 'Education') {
+      newEntry = '\n\nUniversity Name\nDegree / Specialization 2022 - 2026';
+    } else {
+      newEntry = '\n• New Item Detail';
+    }
+    updateSectionsWithHistory({ ...editedSections, [sectionKey]: existing + newEntry });
+  };
+
+  const deleteBlockFromSection = (sectionKey, blockIdx) => {
+    const text = editedSections[sectionKey] || '';
+    const rawBlocks = text.split('\n\n').filter(b => b.trim());
+    if (blockIdx >= 0 && blockIdx < rawBlocks.length) {
+      rawBlocks.splice(blockIdx, 1);
+      updateSectionsWithHistory({ ...editedSections, [sectionKey]: rawBlocks.join('\n\n') });
+    }
+  };
+
+  const moveBlockInSection = (sectionKey, blockIdx, direction) => {
+    const text = editedSections[sectionKey] || '';
+    const rawBlocks = text.split('\n\n').filter(b => b.trim());
+    const targetIdx = blockIdx + direction;
+    if (blockIdx >= 0 && targetIdx >= 0 && targetIdx < rawBlocks.length) {
+      const temp = rawBlocks[blockIdx];
+      rawBlocks[blockIdx] = rawBlocks[targetIdx];
+      rawBlocks[targetIdx] = temp;
+      updateSectionsWithHistory({ ...editedSections, [sectionKey]: rawBlocks.join('\n\n') });
+    }
+  };
 
   // Sync state values to localStorage
   useEffect(() => {
@@ -172,6 +314,102 @@ export default function ResumeEditorPage() {
   }, [sectionSpacing]);
 
   useEffect(() => {
+    localStorage.setItem("cl_selected_font_size", baseFontSize);
+  }, [baseFontSize]);
+
+  useEffect(() => {
+    localStorage.setItem("cl_section_fonts", JSON.stringify(sectionFontSizes));
+  }, [sectionFontSizes]);
+
+  // Generalized smart page breaking: ensures no section or entry block gets cut across an A4 page boundary.
+  useEffect(() => {
+    const applySmartBreaks = () => {
+      const canvas = livePreviewRef.current;
+      if (!canvas) return;
+
+      const A4_PAGE_PX = 842;
+
+      // 1. Reset any previously applied margins and remove old visual page break indicators
+      canvas.querySelectorAll('.pdf-auto-page-break-label').forEach(el => el.remove());
+      const sections = canvas.querySelectorAll('.ecv-section');
+      const items = canvas.querySelectorAll('.enhancv-entry-block, .ecv-body-text, .ecv-skill-group, .ecv-sidebar-line');
+      
+      [...sections, ...items].forEach(el => {
+        el.style.marginTop = '0px';
+      });
+
+      const getOffsetTopToCanvas = (el) => {
+        let anchorOffset = 0;
+        let curr = el;
+        while (curr && curr !== canvas) {
+          anchorOffset += curr.offsetTop;
+          curr = curr.offsetParent;
+        }
+        return anchorOffset;
+      };
+
+      const addBreakIndicator = (gapTopPx, gapPx, pageNum) => {
+        const indicator = document.createElement('div');
+        indicator.className = 'pdf-auto-page-break-label';
+        indicator.style.top = `${gapTopPx}px`;
+        indicator.style.height = `${gapPx}px`;
+        indicator.setAttribute('data-html2canvas-ignore', 'true'); // Prevents html2canvas from rendering this into the PDF
+        indicator.innerHTML = `
+          <div class="pdf-page-break-divider">
+            <div class="pdf-page-break-shadow-top"></div>
+            <div class="pdf-page-break-gap">
+              <span class="pdf-page-break-badge">PAGE ${pageNum} (A4 BREAK)</span>
+            </div>
+            <div class="pdf-page-break-shadow-bottom"></div>
+          </div>
+        `;
+        canvas.appendChild(indicator);
+      };
+
+      // 2. Iterate .ecv-section elements first. 
+      // Only push a whole section down if its own HEADER would be orphaned at the bottom of the page.
+      sections.forEach(section => {
+        const header = section.querySelector('.ecv-section-header');
+        if (header) {
+          const offsetTop = getOffsetTopToCanvas(header);
+          const usedOnPage = offsetTop % A4_PAGE_PX;
+          const remainingOnPage = A4_PAGE_PX - usedOnPage;
+          
+          // If there's very little space left for the header and first entry (e.g. < 70px)
+          if (remainingOnPage < 70) {
+            section.style.marginTop = `${remainingOnPage}px`;
+            const pageNum = Math.floor((offsetTop + remainingOnPage) / A4_PAGE_PX) + 1;
+            addBreakIndicator(offsetTop, remainingOnPage, pageNum);
+          }
+        }
+      });
+
+      // 3. Iterate all content items (.enhancv-entry-block, .ecv-body-text, .ecv-skill-group, .ecv-sidebar-line)
+      items.forEach(el => {
+        const offsetTop = getOffsetTopToCanvas(el);
+        const usedOnPage = offsetTop % A4_PAGE_PX;
+        const remainingOnPage = A4_PAGE_PX - usedOnPage;
+        const elHeight = el.offsetHeight;
+
+        // Push if element's height with buffer crosses the page boundary
+        if ((elHeight + 8) > remainingOnPage && elHeight < A4_PAGE_PX) {
+          el.style.marginTop = `${remainingOnPage}px`;
+          const pageNum = Math.floor((offsetTop + remainingOnPage) / A4_PAGE_PX) + 1;
+          addBreakIndicator(offsetTop, remainingOnPage, pageNum);
+        }
+      });
+
+      // Calculate total A4 page count for live editor
+      const totalPages = Math.max(1, Math.ceil((canvas.scrollHeight - 15) / A4_PAGE_PX));
+      setPageCount(totalPages);
+    };
+
+    const raf = requestAnimationFrame(applySmartBreaks);
+    return () => cancelAnimationFrame(raf);
+  }, [editedSections, selectedTemplate, pageMargins, sectionSpacing, baseFontSize, sectionFontSizes]);
+
+
+  useEffect(() => {
     if (result) {
       localStorage.setItem("cl_optimization_result", JSON.stringify(result));
     } else {
@@ -180,8 +418,31 @@ export default function ResumeEditorPage() {
   }, [result]);
 
   useEffect(() => {
-    localStorage.setItem("cl_edited_sections", JSON.stringify(editedSections));
-  }, [editedSections]);
+    if (!selectedResume) return;
+    // Save sections under a per-resume key so switching resumes never leaks data
+    localStorage.setItem(`cl_edited_sections_${selectedResume}`, JSON.stringify(editedSections));
+  }, [editedSections, selectedResume]);
+
+  // When the user picks a different resume, load (or parse) its sections
+  useEffect(() => {
+    if (!selectedResume || resumes.length === 0) return;
+    const resumeId = String(selectedResume);
+    const cached = localStorage.getItem(`cl_edited_sections_${resumeId}`);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      const hasContent = Object.values(parsed).some(v => v && v.trim());
+      if (hasContent) {
+        setEditedSections(sanitizeSections(parsed));
+        return;
+      }
+    }
+    // No cache — parse from the resume's extracted_text
+    const resume = resumes.find(r => String(r.id) === resumeId);
+    if (resume && resume.extracted_text) {
+      const parsed = parseSections(resume.extracted_text);
+      setEditedSections(sanitizeSections(parsed));
+    }
+  }, [selectedResume, resumes]);
 
   useEffect(() => {
     const fetchMetadata = async () => {
@@ -191,17 +452,18 @@ export default function ResumeEditorPage() {
         setResumes(resumeResponse);
         setJobDescriptions(jdResponse);
 
-        // Auto-populate original resume sections if editedSections is empty
-        const isSectionsEmpty = !editedSections || Object.values(editedSections).every(v => !v || !v.trim());
-        if (isSectionsEmpty && resumeResponse && resumeResponse.length > 0) {
-          const targetId = selectedResume || localStorage.getItem("cl_selected_resume") || resumeResponse[0]?.id;
-          const targetResume = resumeResponse.find(r => String(r.id) === String(targetId)) || resumeResponse[0];
+        // Determine the active resume
+        const targetId = selectedResume || localStorage.getItem("cl_selected_resume") || String(resumeResponse[0]?.id);
+        if (!selectedResume && targetId) setSelectedResume(targetId);
 
+        // Only populate sections from raw text if there is no cached data for this resume
+        const cached = localStorage.getItem(`cl_edited_sections_${targetId}`);
+        const hasCachedContent = cached && Object.values(JSON.parse(cached)).some(v => v && v.trim());
+        if (!hasCachedContent) {
+          const targetResume = resumeResponse.find(r => String(r.id) === String(targetId)) || resumeResponse[0];
           if (targetResume && targetResume.extracted_text) {
             const parsed = parseSections(targetResume.extracted_text);
-            const sanitized = sanitizeSections(parsed);
-            setEditedSections(sanitized);
-            if (!selectedResume) setSelectedResume(String(targetResume.id));
+            setEditedSections(sanitizeSections(parsed));
           }
         }
       } catch (err) {
@@ -220,11 +482,16 @@ export default function ResumeEditorPage() {
       const resID = selectedResume || (resumes[0]?.id ? String(resumes[0].id) : "");
       const jdID = selectedJobDescription || (jobDescriptions[0]?.id ? String(jobDescriptions[0].id) : "");
 
+      let effectivePrompt = customPrompt;
+      if (sectionName === "Skills") {
+        effectivePrompt = `${customPrompt} (IMPORTANT: Keep skills concise and relevant. Group into 3-5 clean categories like 'Languages: ...', 'Frameworks: ...', 'Tools: ...'. Limit to max 20 top relevant skills.)`;
+      }
+
       const response = await optimizeSection(
         resID,
         sectionName,
         jdID,
-        customPrompt,
+        effectivePrompt,
         currentSectionContent
       );
       
@@ -264,26 +531,26 @@ export default function ResumeEditorPage() {
       const docName = resumes.find(r => r.id === Number(selectedResume))?.file_name || "optimized_resume";
       const cleanedDocName = docName.replace(/\.[^/.]+$/, "");
 
-      // Pass editedSections DIRECTLY so PDF content exactly mirrors the live editor
-      // (no lossy text round-trip through parseResumeSections)
-      const headerLines = (editedSections.Header || '').split('\n').map(l => l.trim()).filter(Boolean);
-      const resolvedName = headerLines[0] || null;
-
+      // Use the text-based PDF generator (pdfGenerator.js) which correctly
+      // calculates block boundaries BEFORE rendering, ensuring no line is ever
+      // split mid-content. The old html2canvas approach sliced the page at a
+      // fixed 842px pixel boundary, cutting text wherever it happened to fall.
       await generateResumePDF({
-        resumeText: '',           // not needed when editedSections is provided
-        editedSections,           // live editor sections go straight to PDF
-        fileName: `${cleanedDocName}_optimized.pdf`,
-        templateType: selectedTemplate,
+        editedSections,                   // Pass sections directly — mirrors live editor exactly
+        fileName: cleanedDocName,
+        templateType: selectedTemplate,   // 'two-column' or 'single-column'
         primaryColor: selectedColor,
-        userName: resolvedName,
-        pageMargins: pageMargins,
-        sectionSpacing: sectionSpacing,
+        pageMargins,
+        sectionSpacing,
+        baseFontSize,                     // Scale font size dynamically to fit 1 page
+        mainSectionOrder,
+        sideSectionOrder,
       });
 
       setShowCompletionModal(true);
     } catch (err) {
       console.error("Failed to download PDF in full-page editor:", err);
-      alert("Failed to build PDF. Please check your text formats.");
+      alert("Failed to build PDF. Please try again.");
     } finally {
       setDownloading(false);
     }
@@ -342,7 +609,69 @@ export default function ResumeEditorPage() {
       .filter(s => s.length > 0);
   };
 
-  const renderTimelineEntries = (text, themeColor) => {
+  const renderSkillsSection = (text, themeColor) => {
+    if (!text) return null;
+    const rawLines = text.split('\n').map(l => l.trim()).filter(Boolean);
+    const validLines = rawLines.filter(l => l.toLowerCase() !== 'skills');
+
+    // Parse categories (e.g. Category Name followed by items or Category: items)
+    const categories = [];
+    let currentCat = null;
+    let currentItems = [];
+
+    for (let i = 0; i < validLines.length; i++) {
+      const line = validLines[i];
+      if (line.includes(':')) {
+        if (currentCat && currentItems.length > 0) {
+          categories.push({ cat: currentCat, items: currentItems });
+        }
+        const [cat, val] = line.split(':');
+        currentCat = cat.trim();
+        currentItems = val.split(',').map(s => s.trim()).filter(Boolean);
+      } else if (!line.includes(',') && line.length < 40 && i + 1 < validLines.length && validLines[i + 1].includes(',')) {
+        if (currentCat && currentItems.length > 0) {
+          categories.push({ cat: currentCat, items: currentItems });
+        }
+        currentCat = line;
+        currentItems = [];
+      } else {
+        const items = line.split(',').map(s => s.trim()).filter(Boolean);
+        currentItems.push(...items);
+      }
+    }
+    if (currentCat && currentItems.length > 0) {
+      categories.push({ cat: currentCat, items: currentItems });
+    }
+
+    // Render formatted category groups if found
+    if (categories.length > 0) {
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+          {categories.slice(0, 8).map((group, idx) => (
+            <div key={idx} className="ecv-skill-group" style={{ fontSize: '0.62em', lineHeight: 1.4, color: themeColor === '#ffffff' ? 'rgba(255,255,255,0.9)' : '#334155' }}>
+              <strong style={{ color: themeColor === '#ffffff' ? '#ffffff' : '#0f172a', marginRight: '5px' }}>{group.cat}:</strong>
+              <span>{group.items.join(', ')}</span>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    // Fallback: render clean flex tags (max 24)
+    const allSkills = text.split(/[,\n]/).map(s => s.trim()).filter(Boolean).filter(s => s.toLowerCase() !== 'skills');
+    return (
+      <div className="ecv-skills-wrap">
+        {allSkills.slice(0, 24).map((skill, i) => (
+          <div key={i} className="ecv-skill-item">
+            <span className="ecv-skill-dot" style={{ backgroundColor: themeColor || 'currentColor' }} />
+            <span className="ecv-skill-label" style={{ color: themeColor === '#ffffff' ? 'rgba(255,255,255,0.88)' : '#334155' }}>{skill}</span>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const renderTimelineEntries = (text, themeColor, sectionKey = 'Experience') => {
     if (!text) return null;
     const rawLines = text.split('\n').map(l => l.trim()).filter(Boolean);
     const blocks = [];
@@ -407,15 +736,38 @@ export default function ResumeEditorPage() {
     flush();
 
     return blocks.map((blk, idx) => (
-      <div key={idx} className="enhancv-entry-block">
+      <div key={idx} className="nvo-entry-block-wrapper enhancv-entry-block">
+        {/* Novoresume Hover Action Handles */}
+        <div className="nvo-block-action-bar">
+          <button className="nvo-action-btn" title="Add entry block" onClick={() => addBlockToSection(sectionKey)}>
+            <Plus size={12} />
+          </button>
+          {idx > 0 && (
+            <button className="nvo-action-btn" title="Move entry up" onClick={() => moveBlockInSection(sectionKey, idx, -1)}>
+              <ArrowUp size={12} />
+            </button>
+          )}
+          {idx < blocks.length - 1 && (
+            <button className="nvo-action-btn" title="Move entry down" onClick={() => moveBlockInSection(sectionKey, idx, 1)}>
+              <ArrowDown size={12} />
+            </button>
+          )}
+          <button className="nvo-action-btn btn-ai" title="AI Personalize entry" onClick={() => handleOptimizeSection(sectionKey)}>
+            <Sparkles size={12} />
+          </button>
+          <button className="nvo-action-btn btn-del" title="Delete entry block" onClick={() => deleteBlockFromSection(sectionKey, idx)}>
+            <Trash2 size={12} />
+          </button>
+        </div>
+
         {blk.header && (
           <div className="enhancv-entry-header">
-            <span className="enhancv-entry-title">{blk.header}</span>
-            {blk.date && <span className="enhancv-entry-date" style={{ color: themeColor }}>{blk.date}</span>}
+            <span className="enhancv-entry-title nvo-editable-text" contentEditable suppressContentEditableWarning>{blk.header}</span>
+            {blk.date && <span className="enhancv-entry-date nvo-editable-text" contentEditable suppressContentEditableWarning style={{ color: themeColor }}>{blk.date}</span>}
           </div>
         )}
         {blk.subtitle && (
-          <div className="enhancv-entry-subtitle" style={{ color: '#475569', fontSize: '0.66rem', fontWeight: '600', marginBottom: '2px' }}>
+          <div className="enhancv-entry-subtitle nvo-editable-text" contentEditable suppressContentEditableWarning style={{ color: '#475569', fontSize: '0.66rem', fontWeight: '600', marginBottom: '2px' }}>
             {blk.subtitle}
           </div>
         )}
@@ -423,7 +775,7 @@ export default function ResumeEditorPage() {
           {blk.bullets.map((bullet, bIdx) => (
             <div key={bIdx} className="red-tmpl-bullet-row">
               <span className="red-tmpl-bullet-dot" style={{ backgroundColor: themeColor }} />
-              <span className="red-tmpl-bullet-text">{bullet}</span>
+              <span className="red-tmpl-bullet-text nvo-editable-text" contentEditable suppressContentEditableWarning>{bullet}</span>
             </div>
           ))}
         </div>
@@ -431,238 +783,515 @@ export default function ResumeEditorPage() {
     ));
   };
 
+  const renderSectionByKey = (sectionKey, isSidebar = false) => {
+    const content = editedSections[sectionKey];
+    if (!content || !content.trim()) return null;
+
+    const dragProps = {
+      draggable: true,
+      onDragStart: (e) => handleDragStart(e, sectionKey),
+      onDragOver: handleDragOver,
+      onDrop: (e) => handleSectionDrop(e, sectionKey, isSidebar),
+      className: `${isSidebar ? 'ecv-sidebar-section' : 'ecv-section'} nvo-section-draggable ${draggedSectionKey === sectionKey ? 'dragging' : ''}`,
+      style: getSectionFontSize(sectionKey),
+    };
+
+    if (sectionKey === 'Summary') {
+      return (
+        <div key={sectionKey} {...dragProps}>
+          <div className="ecv-section-header" style={{ color: selectedColor }}>
+            <span className="nvo-drag-handle" title="Drag & drop section"><GripVertical size={14} /></span>
+            <span className="ecv-section-icon">◈</span>
+            <span className="ecv-section-title">PROFESSIONAL SUMMARY</span>
+            <div className="ecv-section-rule" style={{ backgroundColor: selectedColor }} />
+          </div>
+          <p 
+            className="ecv-body-text nvo-editable-text"
+            contentEditable
+            suppressContentEditableWarning
+            onBlur={(e) => updateSectionsWithHistory({ ...editedSections, Summary: e.target.innerText })}
+          >{editedSections.Summary}</p>
+        </div>
+      );
+    }
+
+    if (sectionKey === 'Experience') {
+      return (
+        <div key={sectionKey} {...dragProps}>
+          <div className="ecv-section-header" style={{ color: selectedColor }}>
+            <span className="nvo-drag-handle" title="Drag & drop section"><GripVertical size={14} /></span>
+            <span className="ecv-section-icon">◈</span>
+            <span className="ecv-section-title">WORK EXPERIENCE</span>
+            <div className="ecv-section-rule" style={{ backgroundColor: selectedColor }} />
+          </div>
+          {renderTimelineEntries(editedSections.Experience, selectedColor, 'Experience')}
+        </div>
+      );
+    }
+
+    if (sectionKey === 'Projects') {
+      return (
+        <div key={sectionKey} {...dragProps}>
+          <div className="ecv-section-header" style={{ color: selectedColor }}>
+            <span className="nvo-drag-handle" title="Drag & drop section"><GripVertical size={14} /></span>
+            <span className="ecv-section-icon">◈</span>
+            <span className="ecv-section-title">PERSONAL PROJECTS</span>
+            <div className="ecv-section-rule" style={{ backgroundColor: selectedColor }} />
+          </div>
+          {renderTimelineEntries(editedSections.Projects, selectedColor, 'Projects')}
+        </div>
+      );
+    }
+
+    if (sectionKey === 'Skills') {
+      return (
+        <div key={sectionKey} {...dragProps}>
+          <div className={isSidebar ? "ecv-sidebar-heading" : "ecv-section-header"} style={isSidebar ? {} : { color: selectedColor }}>
+            <span className="nvo-drag-handle" title="Drag & drop section"><GripVertical size={14} /></span>
+            {isSidebar ? 'SKILLS' : (
+              <>
+                <span className="ecv-section-icon">◈</span>
+                <span className="ecv-section-title">SKILLS</span>
+                <div className="ecv-section-rule" style={{ backgroundColor: selectedColor }} />
+              </>
+            )}
+          </div>
+          <div 
+            className="nvo-editable-text"
+            contentEditable
+            suppressContentEditableWarning
+            onBlur={(e) => updateSectionsWithHistory({ ...editedSections, Skills: e.target.innerText })}
+          >
+            {renderSkillsSection(editedSections.Skills, isSidebar ? '#ffffff' : selectedColor)}
+          </div>
+        </div>
+      );
+    }
+
+    if (sectionKey === 'Education') {
+      return (
+        <div key={sectionKey} {...dragProps}>
+          <div className={isSidebar ? "ecv-sidebar-heading" : "ecv-section-header"} style={isSidebar ? {} : { color: selectedColor }}>
+            <span className="nvo-drag-handle" title="Drag & drop section"><GripVertical size={14} /></span>
+            {isSidebar ? 'EDUCATION' : (
+              <>
+                <span className="ecv-section-icon">◈</span>
+                <span className="ecv-section-title">EDUCATION</span>
+                <div className="ecv-section-rule" style={{ backgroundColor: selectedColor }} />
+              </>
+            )}
+          </div>
+          <div 
+            className="nvo-editable-text"
+            contentEditable
+            suppressContentEditableWarning
+            onBlur={(e) => updateSectionsWithHistory({ ...editedSections, Education: e.target.innerText })}
+          >
+            {parseBulletPoints(editedSections.Education).map((line, i) => (
+              <p key={i} className={isSidebar ? "ecv-sidebar-line" : "ecv-body-text"}>{line}</p>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    if (sectionKey === 'Certifications') {
+      return (
+        <div key={sectionKey} {...dragProps}>
+          <div className={isSidebar ? "ecv-sidebar-heading" : "ecv-section-header"} style={isSidebar ? {} : { color: selectedColor }}>
+            <span className="nvo-drag-handle" title="Drag & drop section"><GripVertical size={14} /></span>
+            {isSidebar ? 'CERTIFICATIONS' : (
+              <>
+                <span className="ecv-section-icon">◈</span>
+                <span className="ecv-section-title">CERTIFICATIONS</span>
+                <div className="ecv-section-rule" style={{ backgroundColor: selectedColor }} />
+              </>
+            )}
+          </div>
+          <div 
+            className="nvo-editable-text"
+            contentEditable
+            suppressContentEditableWarning
+            onBlur={(e) => updateSectionsWithHistory({ ...editedSections, Certifications: e.target.innerText })}
+          >
+            {parseBulletPoints(editedSections.Certifications).map((line, i) => (
+              <p key={i} className={isSidebar ? "ecv-sidebar-line" : "ecv-body-text"}>{line}</p>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
   const activeFontFamily = PREMIUM_FONTS.find(f => f.name === selectedFont)?.family || "sans-serif";
 
   return (
-    <div className="red-wrapper" style={{ fontFamily: activeFontFamily }}>
-      {/* ── STICKY TOP NAV ── */}
-      <header className="red-topbar">
-        <div className="red-topbar-left">
-          <button className="red-back-btn" onClick={() => navigate("/resume-optimizer")} title="Back to Optimizer">
-            <ArrowLeft size={16} />
-            <span>Back</span>
-          </button>
-          <div className="red-topbar-divider" />
-          <div className="red-meta-info">
-            <span className="red-meta-title" style={{ fontFamily: "'DM Serif Display', Georgia, serif", fontSize: "1.1rem", fontWeight: 400 }}>Live Resume Editor</span>
-            {result && (
-              <span className="red-score-badge" style={{ fontFamily: "'Fira Code', monospace", background: "rgba(163, 230, 53, 0.1)", borderColor: "rgba(163, 230, 53, 0.25)", color: "#a3e635" }}>
-                🎯 Est. Score: {result.estimated_new_score || 85}%
-              </span>
-            )}
-          </div>
+    <div className="nvo-editor-shell" style={{ fontFamily: activeFontFamily }}>
+      {/* ── NOVORESUME LEFT SIDEBAR RAIL ── */}
+      <aside className="nvo-sidebar-rail">
+        <div className="nvo-brand-logo" onClick={() => navigate("/resume-optimizer")} title="Back to Optimizer">
+          <ArrowLeft size={16} />
+          <span>CareerLens</span>
         </div>
 
-        {/* Dynamic Theme Selectors inside Top Nav */}
-        <div className="red-topbar-mid">
-          {/* Template Toggle */}
-          <div className="red-control-group">
-            <LayoutGrid size={14} className="control-icon" />
+        <button 
+          className={`nvo-rail-btn ${activeRailTab === 'ai' ? 'active' : ''}`}
+          onClick={() => setActiveRailTab(activeRailTab === 'ai' ? null : 'ai')}
+        >
+          <Bot size={18} />
+          <span>AI Assistant</span>
+        </button>
+
+        <button 
+          className={`nvo-rail-btn ${activeRailTab === 'content' ? 'active' : ''}`}
+          onClick={() => setActiveRailTab(activeRailTab === 'content' ? null : 'content')}
+        >
+          <FileText size={18} />
+          <span>My Content</span>
+        </button>
+
+        <button 
+          className={`nvo-rail-btn ${activeRailTab === 'templates' ? 'active' : ''}`}
+          onClick={() => setActiveRailTab(activeRailTab === 'templates' ? null : 'templates')}
+        >
+          <Layers size={18} />
+          <span>Templates</span>
+        </button>
+
+        <button 
+          className="nvo-rail-btn"
+          onClick={() => navigate("/resume-optimizer")}
+        >
+          <Upload size={18} />
+          <span>Import PDF</span>
+        </button>
+      </aside>
+
+      {/* ── SIDE DRAWER PANELS ── */}
+      <AnimatePresence>
+        {activeRailTab === 'ai' && (
+          <motion.div 
+            className="nvo-drawer-panel"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+          >
+            <div className="nvo-drawer-header">
+              <div className="nvo-drawer-title">
+                <Bot size={18} />
+                <span>AI Career Assistant</span>
+              </div>
+              <button className="nvo-drawer-close" onClick={() => setActiveRailTab(null)}>
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="nvo-drawer-body">
+              {/* ATS Score Card */}
+              <div className="nvo-ai-card" style={{ background: 'rgba(56, 189, 248, 0.06)', borderColor: 'rgba(56, 189, 248, 0.2)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span className="nvo-ai-card-title">ATS Match Score</span>
+                  <span style={{ color: '#38bdf8', fontWeight: 800, fontSize: '0.9rem', fontFamily: "'Fira Code', monospace" }}>
+                    🎯 {result?.estimated_new_score || 88}%
+                  </span>
+                </div>
+                <p style={{ fontSize: '0.74rem', color: '#94a3b8', margin: 0, lineHeight: 1.4 }}>
+                  Your resume is highly optimized for target tech roles.
+                </p>
+              </div>
+
+              {/* Quick AI One-Click Personalize Prompts */}
+              <div className="nvo-ai-card">
+                <span className="nvo-ai-card-title">⚡ Quick AI Personalization</span>
+                
+                <button className="nvo-ai-action-btn" onClick={() => handleOptimizeSection('Experience')}>
+                  <Sparkles size={14} style={{ color: '#a855f7' }} />
+                  <span>Quantify Impact & Metrics (% & $)</span>
+                </button>
+
+                <button className="nvo-ai-action-btn" onClick={() => handleOptimizeSection('Summary')}>
+                  <Sparkles size={14} style={{ color: '#38bdf8' }} />
+                  <span>Tailor Summary for Target Role</span>
+                </button>
+
+                <button className="nvo-ai-action-btn" onClick={() => handleOptimizeSection('Projects')}>
+                  <Sparkles size={14} style={{ color: '#0f9f6e' }} />
+                  <span>Enhance Projects Tech Stack</span>
+                </button>
+
+                <button className="nvo-ai-action-btn" onClick={() => handleOptimizeSection('Skills')}>
+                  <Sparkles size={14} style={{ color: '#d97706' }} />
+                  <span>Group Skills into ATS Categories</span>
+                </button>
+              </div>
+
+              {/* Custom AI Instruction Box */}
+              <div className="nvo-ai-card">
+                <span className="nvo-ai-card-title">📝 Custom AI Instructions</span>
+                <select 
+                  className="nvo-ai-input" 
+                  value={activeSection} 
+                  onChange={(e) => setActiveSection(e.target.value)}
+                >
+                  {Object.keys(editedSections).map(sec => (
+                    <option key={sec} value={sec}>{sec} Section</option>
+                  ))}
+                </select>
+                <input 
+                  type="text" 
+                  className="nvo-ai-input" 
+                  placeholder={`Instruct AI for ${activeSection}...`}
+                  value={sectionPrompts[activeSection] || ''}
+                  onChange={(e) => setSectionPrompts(prev => ({ ...prev, [activeSection]: e.target.value }))}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleOptimizeSection(activeSection);
+                  }}
+                />
+                <button 
+                  className="nvo-ai-action-btn" 
+                  style={{ background: '#38bdf8', color: '#0f172a', fontWeight: 800, justifyContent: 'center' }}
+                  onClick={() => handleOptimizeSection(activeSection)}
+                  disabled={optimizingSections[activeSection]}
+                >
+                  <span>{optimizingSections[activeSection] ? 'Optimizing...' : 'Run AI Optimization'}</span>
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {activeRailTab === 'content' && (
+          <motion.div 
+            className="nvo-drawer-panel"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+          >
+            <div className="nvo-drawer-header">
+              <div className="nvo-drawer-title">
+                <FileText size={18} />
+                <span>My Content Sections</span>
+              </div>
+              <button className="nvo-drawer-close" onClick={() => setActiveRailTab(null)}>
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="nvo-drawer-body">
+              <div className="nvo-ai-card">
+                <span className="nvo-ai-card-title">Jump to Section</span>
+                {Object.keys(editedSections).map(key => (
+                  <button 
+                    key={key} 
+                    className="nvo-ai-action-btn"
+                    onClick={() => {
+                      document.getElementById(`editor-card-${key}`)?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                  >
+                    <span>{SECTION_ICONS[key] || "📝"} {key} Section</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {activeRailTab === 'templates' && (
+          <motion.div 
+            className="nvo-drawer-panel"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+          >
+            <div className="nvo-drawer-header">
+              <div className="nvo-drawer-title">
+                <Layers size={18} />
+                <span>Templates & Layouts</span>
+              </div>
+              <button className="nvo-drawer-close" onClick={() => setActiveRailTab(null)}>
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="nvo-drawer-body">
+              <div className="nvo-ai-card">
+                <span className="nvo-ai-card-title">Choose Layout</span>
+                <button 
+                  className={`nvo-ai-action-btn ${selectedTemplate === 'two-column' ? 'active' : ''}`}
+                  onClick={() => setSelectedTemplate('two-column')}
+                >
+                  <LayoutGrid size={16} />
+                  <span>Double Column (Modern Tech)</span>
+                </button>
+                <button 
+                  className={`nvo-ai-action-btn ${selectedTemplate === 'single-column' ? 'active' : ''}`}
+                  onClick={() => setSelectedTemplate('single-column')}
+                >
+                  <FileText size={16} />
+                  <span>Single Column (Classic Executive)</span>
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── NOVORESUME WORKSPACE CANVAS ── */}
+      <main className="nvo-workspace">
+        {/* ── TOP FLOATING HEADER TOOLBAR ── */}
+        <header className="nvo-top-floating-bar">
+          {/* Undo / Redo */}
+          <div className="nvo-bar-group">
+            <button className="nvo-bar-btn" title="Undo (Ctrl+Z)" onClick={handleUndo} disabled={historyIdx <= 0}>
+              <Undo2 size={15} style={{ opacity: historyIdx <= 0 ? 0.4 : 1 }} />
+            </button>
+            <button className="nvo-bar-btn" title="Redo (Ctrl+Y)" onClick={handleRedo} disabled={historyIdx >= history.length - 1}>
+              <Redo2 size={15} style={{ opacity: historyIdx >= history.length - 1 ? 0.4 : 1 }} />
+            </button>
+          </div>
+
+          <div className="nvo-bar-divider" />
+
+          {/* Layout Selector */}
+          <div className="nvo-bar-group">
+            <LayoutGrid size={14} style={{ color: '#38bdf8' }} />
             <select 
               value={selectedTemplate} 
               onChange={(e) => setSelectedTemplate(e.target.value)} 
               className="red-select"
             >
-              <option value="two-column">Two Column Layout</option>
-              <option value="single-column">Single Column Layout</option>
+              <option value="two-column">Double Column</option>
+              <option value="single-column">Single Column</option>
             </select>
           </div>
 
-          {/* Color Dot Selector */}
-          <div className="red-control-group">
+          {/* Fonts Dropdown */}
+          <div className="nvo-bar-group">
+            <Type size={14} style={{ color: '#38bdf8' }} />
+            <select 
+              value={selectedFont} 
+              onChange={(e) => {
+                setSelectedFont(e.target.value);
+                localStorage.setItem("cl_selected_font", e.target.value);
+              }} 
+              className="red-select font-selector"
+              title="Change Font Family"
+            >
+              {PREMIUM_FONTS.map(f => (
+                <option key={f.name} value={f.name}>{f.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Font Size Selector */}
+          <div className="nvo-bar-group">
+            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#38bdf8' }}>A±</span>
+            <select 
+              value={baseFontSize} 
+              onChange={(e) => {
+                const val = Number(e.target.value);
+                setBaseFontSize(val);
+                localStorage.setItem("cl_selected_font_size", val);
+              }} 
+              className="red-select"
+              title="Adjust Font Size"
+            >
+              <option value={0.5}>Size: 6.5pt (Ultra Micro — Fits 1 Page)</option>
+              <option value={0.7}>Size: 7.0pt (Micro — Single Page Guarantee)</option>
+              <option value={0.85}>Size: 7.5pt (Very Compact)</option>
+              <option value={1}>Size: 8.0pt (Compact)</option>
+              <option value={1.5}>Size: 8.5pt (Small Compact)</option>
+              <option value={2}>Size: 9.0pt (Small)</option>
+              <option value={3}>Size: 10.0pt (Normal)</option>
+              <option value={4}>Size: 11.0pt (Large)</option>
+            </select>
+          </div>
+
+          {/* Page Margins Selector */}
+          <div className="nvo-bar-group">
+            <Maximize2 size={13} style={{ color: '#38bdf8' }} />
+            <select 
+              value={pageMargins} 
+              onChange={(e) => {
+                const val = Number(e.target.value);
+                setPageMargins(val);
+                localStorage.setItem("cl_selected_margins", val);
+              }} 
+              className="red-select"
+              title="Adjust Page Margins"
+            >
+              <option value={1}>Margin: Compact (0.3 in)</option>
+              <option value={2}>Margin: Normal (0.5 in)</option>
+              <option value={3}>Margin: Spacious (0.75 in)</option>
+            </select>
+          </div>
+
+          {/* Section Spacing Selector */}
+          <div className="nvo-bar-group">
+            <Sliders size={13} style={{ color: '#38bdf8' }} />
+            <select 
+              value={sectionSpacing} 
+              onChange={(e) => {
+                const val = Number(e.target.value);
+                setSectionSpacing(val);
+                localStorage.setItem("cl_selected_spacing", val);
+              }} 
+              className="red-select"
+              title="Adjust Section Spacing"
+            >
+              <option value={1}>Spacing: Tight</option>
+              <option value={3}>Spacing: Normal</option>
+              <option value={5}>Spacing: Relaxed</option>
+            </select>
+          </div>
+
+          {/* Color Themes */}
+          <div className="nvo-bar-group">
+            <Palette size={14} style={{ color: '#38bdf8' }} />
             <div className="red-color-circles">
               {PREMIUM_THEMES.map((theme) => (
                 <button
                   key={theme.hex}
                   className={`red-color-dot ${selectedColor === theme.hex ? 'active' : ''}`}
                   style={{ backgroundColor: theme.hex }}
-                  onClick={() => setSelectedColor(theme.hex)}
+                  onClick={() => {
+                    setSelectedColor(theme.hex);
+                    localStorage.setItem("cl_selected_color", theme.hex);
+                  }}
                   title={theme.name}
                 />
               ))}
             </div>
           </div>
 
-          {/* Font Selector */}
-          <div className="red-control-group">
-            <select 
-              value={selectedFont} 
-              onChange={(e) => setSelectedFont(e.target.value)} 
-              className="red-select font-selector"
-            >
-              {PREMIUM_FONTS.map(f => (
-                <option key={f.name} value={f.name}>{f.name} Font</option>
-              ))}
-            </select>
-          </div>
-        </div>
+          <div className="nvo-bar-divider" />
 
-        <div className="red-topbar-right">
-          <button className={`red-btn-primary ${downloading ? 'loading' : ''}`} onClick={handleDownloadPDF} disabled={downloading}>
+          {/* Download PDF Button */}
+          <button className={`nvo-bar-btn nvo-btn-download ${downloading ? 'loading' : ''}`} onClick={handleDownloadPDF} disabled={downloading}>
             {downloading ? <span className="red-spinner" /> : <Download size={14} />}
-            <span>{downloading ? 'Downloading...' : 'Download PDF'}</span>
-          </button>
-          
-          <button className={`red-btn-secondary ${copySuccess ? 'copied' : ''}`} onClick={copyToClipboard}>
-            {copySuccess ? <Check size={14} /> : <Copy size={14} />}
-            <span>{copySuccess ? 'Copied!' : 'Copy Text'}</span>
+            <span>{downloading ? 'Exporting...' : 'Download PDF'}</span>
           </button>
 
-          <button className="red-btn-danger" onClick={handleResetSession} title="Reset optimization session">
-            <Trash2 size={14} />
-          </button>
-        </div>
-      </header>
-
-      {/* ── EDITOR BODY GRID ── */}
-      <main className="red-body">
-        
-        {/* LEFT COLUMN: Section Editor Cards */}
-        <section className="red-editor-col">
-          {/* Document Layout Adjuster Panel */}
-          <div className="red-formatting-panel" style={{
-            padding: '16px 20px',
-            display: 'flex',
-            gap: '24px',
-            background: 'rgba(0, 0, 0, 0.2)',
-            borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
-            flexShrink: 0,
-            alignItems: 'center'
+          {/* Page Counter Badge */}
+          <span style={{ 
+            fontFamily: "'Fira Code', monospace", 
+            fontSize: "0.7rem", 
+            fontWeight: 700, 
+            color: pageCount > 1 ? "#38bdf8" : "#94a3b8",
+            background: pageCount > 1 ? "rgba(56, 189, 248, 0.12)" : "rgba(255, 255, 255, 0.05)",
+            border: pageCount > 1 ? "1px solid rgba(56, 189, 248, 0.3)" : "1px solid rgba(255, 255, 255, 0.08)",
+            padding: "3px 10px",
+            borderRadius: "99px",
+            marginLeft: "4px"
           }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.74rem', fontWeight: 'bold', color: '#94a3b8', fontFamily: "'Fira Code', monospace", letterSpacing: '0.04em' }}>
-                <span>PAGE MARGINS</span>
-                <span style={{ color: '#a3e635' }}>{pageMargins === 1 ? 'Narrow (24px)' : pageMargins === 2 ? 'Normal (36px)' : 'Wide (48px)'}</span>
-              </div>
-              <input 
-                type="range" 
-                min="1" 
-                max="3" 
-                value={pageMargins} 
-                onChange={(e) => setPageMargins(Number(e.target.value))}
-                style={{ width: '100%', height: '4px', accentColor: '#a3e635', cursor: 'pointer' }}
-              />
-            </div>
+            📄 {pageCount} {pageCount === 1 ? 'Page' : 'Pages'} (A4)
+          </span>
+        </header>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.74rem', fontWeight: 'bold', color: '#94a3b8', fontFamily: "'Fira Code', monospace", letterSpacing: '0.04em' }}>
-                <span>SECTION SPACING</span>
-                <span style={{ color: '#a3e635' }}>Level {sectionSpacing} ({sectionSpacing * 6}px)</span>
-              </div>
-              <input 
-                type="range" 
-                min="1" 
-                max="5" 
-                value={sectionSpacing} 
-                onChange={(e) => setSectionSpacing(Number(e.target.value))}
-                style={{ width: '100%', height: '4px', accentColor: '#a3e635', cursor: 'pointer' }}
-              />
-            </div>
-          </div>
-
-          <div className="red-section-nav">
-            {Object.keys(editedSections).map(key => {
-              const isPrimary = ['Header', 'Summary', 'Experience', 'Projects', 'Skills', 'Education'].includes(key);
-              const content = editedSections[key];
-              if (!isPrimary && (!content || !content.trim())) return null;
-
-              return (
-                <button 
-                  key={key} 
-                  className={`red-nav-pill ${activeSection === key ? 'active' : ''}`}
-                  onClick={() => {
-                    setActiveSection(key);
-                    document.getElementById(`editor-card-${key}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                  }}
-                >
-                  <span className="red-nav-icon">{SECTION_ICONS[key] || "📝"}</span>
-                  <span>{key}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="red-editor-cards-container">
-            {Object.keys(editedSections).map(sectionKey => {
-              const sectionContent = editedSections[sectionKey];
-              const isPrimary = ['Header', 'Summary', 'Experience', 'Projects', 'Skills', 'Education'].includes(sectionKey);
-              if (!isPrimary && (!sectionContent || !sectionContent.trim())) return null;
-
-              return (
-                <div 
-                  key={sectionKey}
-                  id={`editor-card-${sectionKey}`}
-                  className={`red-editor-card ${activeSection === sectionKey ? 'active' : ''}`}
-                  onFocus={() => setActiveSection(sectionKey)}
-                >
-                  {/* Loading overlay for section optimization */}
-                  {optimizingSections[sectionKey] && (
-                    <div className="red-loading-overlay">
-                      <span className="red-spinner-lg" />
-                      <span>Optimizing with AI...</span>
-                    </div>
-                  )}
-
-                  <div className="red-card-header">
-                    <div className="red-card-title">
-                      <span>{SECTION_ICONS[sectionKey]}</span>
-                      <h4>{sectionKey} Section</h4>
-                    </div>
-                    <button
-                      className={`red-ai-opt-btn ${showPromptInput[sectionKey] ? 'active' : ''}`}
-                      onClick={() => setShowPromptInput(prev => ({ ...prev, [sectionKey]: !prev[sectionKey] }))}
-                    >
-                      <Sparkles size={12} />
-                      <span>AI Personalize</span>
-                    </button>
-                  </div>
-
-                  {/* AI Prompt box */}
-                  <AnimatePresence>
-                    {showPromptInput[sectionKey] && (
-                      <motion.div
-                        className="red-prompt-box"
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                      >
-                        <input
-                          type="text"
-                          value={sectionPrompts[sectionKey] || ""}
-                          onChange={(e) => setSectionPrompts(prev => ({ ...prev, [sectionKey]: e.target.value }))}
-                          placeholder="E.g., highlight leadership skills, sound more technical, quantify metrics..."
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') handleOptimizeSection(sectionKey);
-                          }}
-                        />
-                        <button onClick={() => handleOptimizeSection(sectionKey)} disabled={optimizingSections[sectionKey]}>
-                          Apply AI
-                        </button>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  <textarea
-                    value={sectionContent}
-                    onChange={(e) => setEditedSections(prev => ({ ...prev, [sectionKey]: e.target.value }))}
-                    placeholder={`Enter details for ${sectionKey}...`}
-                    rows={Math.max(4, sectionContent.split('\n').length + 1)}
-                  />
-                </div>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* RIGHT COLUMN: Live Document Preview */}
-        <section className="red-preview-col">
-          <div className="red-preview-header">
-            <h3>🖨️ Real-Time Layout Simulator</h3>
-            <span className="red-preview-badge" style={{ backgroundColor: selectedColor }}>
-              {selectedTemplate === 'two-column' ? 'Double Column' : 'Single Column'}
-            </span>
-          </div>
-
+        {/* ── CENTERED CANVAS VIEWPORT ── */}
+        <div className="nvo-canvas-viewport">
           <div className="red-canvas-container">
             <style>{`
               .red-page-canvas {
@@ -679,208 +1308,148 @@ export default function ResumeEditorPage() {
               }
             `}</style>
             <div 
+              ref={livePreviewRef}
               className="red-page-canvas" 
               style={{ 
                 fontFamily: activeFontFamily,
+                fontSize: `${0.5 + (baseFontSize * 0.1)}rem`,
                 '--page-padding': pageMargins === 1 ? '24px 20px' : pageMargins === 2 ? '36px 30px' : '48px 40px',
                 '--section-margin': `${sectionSpacing * 6}px`,
                 '--list-gap': `${sectionSpacing * 2.5}px`,
                 '--bullet-margin': `${sectionSpacing * 1.2}px`,
               }}
             >
-              <div className="red-canvas-top-accent" style={{ backgroundColor: selectedColor }} />
-
-              {/* TWO COLUMN LIVE RENDER TEMPLATE */}
+              {/* ENHANCV-STYLE TWO-COLUMN */}
               {selectedTemplate === 'two-column' ? (
-                <div className="red-tmpl-twocol">
-                  {/* Left Column (Main Information) */}
-                  <div className="red-tmpl-main">
-                    {/* Header Details */}
-                    <div className="red-tmpl-header-block">
-                      <h2 className="red-tmpl-name">{editedSections.Header.split("\n")[0] || "Your Name"}</h2>
-                      <h4 className="red-tmpl-title" style={{ color: selectedColor }}>
-                        {editedSections.Header.split("\n")[1] || "Target Professional Role"}
-                      </h4>
-                      <p className="red-tmpl-contacts">
-                        {editedSections.Header.split("\n").slice(2).join(" | ")}
-                      </p>
+                <div className="ecv-layout">
+
+                  {/* ── DARK SIDEBAR ── */}
+                  <div className="ecv-sidebar" style={{ backgroundColor: selectedColor }}>
+                    {/* Avatar / initials */}
+                    <div className="ecv-avatar" style={{ borderColor: 'rgba(255,255,255,0.3)' }}>
+                      <span className="ecv-avatar-initials">
+                        {(() => {
+                          const headerLines = (editedSections.Header || '').split('\n');
+                          const nameLine = headerLines.find(l => {
+                            const t = l.trim();
+                            return t && !t.startsWith('+') && !t.includes('@') && !t.includes('http') && !t.includes('linkedin') && !t.includes('github') && !/^\d/.test(t);
+                          }) || 'U';
+                          return nameLine.trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+                        })()}
+                      </span>
                     </div>
 
-                    {/* Summary */}
-                    {editedSections.Summary && (
-                      <div className="red-tmpl-section">
-                        <h3 className="red-tmpl-section-title" style={{ color: selectedColor, borderBottomColor: selectedColor }}>
-                          Professional Summary
-                        </h3>
-                        <p className="red-tmpl-body-text">{editedSections.Summary}</p>
-                      </div>
-                    )}
+                    {/* Name + title in sidebar */}
+                    <div className="ecv-sidebar-identity" style={getSectionFontSize('Header')}>
+                      <h2 
+                        className="ecv-sidebar-name nvo-editable-text" 
+                        contentEditable 
+                        suppressContentEditableWarning
+                        onBlur={(e) => {
+                          const lines = (editedSections.Header || '').split('\n');
+                          lines[0] = e.target.innerText;
+                          updateSectionsWithHistory({ ...editedSections, Header: lines.join('\n') });
+                        }}
+                      >{editedSections.Header.split('\n')[0] || 'Your Name'}</h2>
+                      <p 
+                        className="ecv-sidebar-role nvo-editable-text" 
+                        contentEditable 
+                        suppressContentEditableWarning
+                        onBlur={(e) => {
+                          const lines = (editedSections.Header || '').split('\n');
+                          lines[1] = e.target.innerText;
+                          updateSectionsWithHistory({ ...editedSections, Header: lines.join('\n') });
+                        }}
+                      >{editedSections.Header.split('\n')[1] || 'Professional Role'}</p>
+                    </div>
 
-                    {/* Experience */}
-                    {editedSections.Experience && (
-                      <div className="red-tmpl-section">
-                        <h3 className="red-tmpl-section-title" style={{ color: selectedColor, borderBottomColor: selectedColor }}>
-                          Work Experience
-                        </h3>
-                        {renderTimelineEntries(editedSections.Experience, selectedColor)}
+                    {/* Contact */}
+                    <div className="ecv-sidebar-section" style={getSectionFontSize('Header')}>
+                      <div className="ecv-sidebar-heading">CONTACT</div>
+                      <div 
+                        className="nvo-editable-text"
+                        contentEditable
+                        suppressContentEditableWarning
+                        onBlur={(e) => {
+                          const topLines = (editedSections.Header || '').split('\n').slice(0, 2);
+                          const contactText = e.target.innerText;
+                          updateSectionsWithHistory({ ...editedSections, Header: topLines.join('\n') + '\n' + contactText });
+                        }}
+                      >
+                        {editedSections.Header.split('\n').slice(2).map((line, i) => (
+                          <p key={i} className="ecv-sidebar-line">{line}</p>
+                        ))}
                       </div>
-                    )}
+                    </div>
 
-                    {/* Projects */}
-                    {editedSections.Projects && (
-                      <div className="red-tmpl-section">
-                        <h3 className="red-tmpl-section-title" style={{ color: selectedColor, borderBottomColor: selectedColor }}>
-                          Personal Projects
-                        </h3>
-                        {renderTimelineEntries(editedSections.Projects, selectedColor)}
-                      </div>
-                    )}
+                    {/* Dynamic Sidebar Sections (Drag & Drop Reorderable) */}
+                    {sideSectionOrder.map(key => renderSectionByKey(key, true))}
                   </div>
 
-                  {/* Right Column (Sidebar details) */}
-                  <div className="red-tmpl-sidebar" style={{ borderLeftColor: `${selectedColor}1A` }}>
-                    {/* Skills */}
-                    {editedSections.Skills && (
-                      <div className="red-tmpl-section">
-                        <h3 className="red-tmpl-section-title" style={{ color: selectedColor, borderBottomColor: selectedColor }}>
-                          Core Skills
-                        </h3>
-                        <div className="red-tmpl-skills-grid">
-                          {parseSkills(editedSections.Skills).map(skill => (
-                            <span 
-                              key={skill} 
-                              className="red-tmpl-skill-chip" 
-                              style={{ backgroundColor: `${selectedColor}12`, color: selectedColor, border: `1px solid ${selectedColor}22` }}
-                            >
-                              {skill}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Education */}
-                    {editedSections.Education && (
-                      <div className="red-tmpl-section">
-                        <h3 className="red-tmpl-section-title" style={{ color: selectedColor, borderBottomColor: selectedColor }}>
-                          Education
-                        </h3>
-                        {parseBulletPoints(editedSections.Education).map((line, idx) => (
-                          <p key={idx} className="red-tmpl-sidebar-item">{line}</p>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Certifications */}
-                    {editedSections.Certifications && (
-                      <div className="red-tmpl-section">
-                        <h3 className="red-tmpl-section-title" style={{ color: selectedColor, borderBottomColor: selectedColor }}>
-                          Certifications
-                        </h3>
-                        {parseBulletPoints(editedSections.Certifications).map((line, idx) => (
-                          <p key={idx} className="red-tmpl-sidebar-item">{line}</p>
-                        ))}
-                      </div>
-                    )}
+                  {/* ── MAIN CONTENT ── */}
+                  <div 
+                    className="ecv-main"
+                    onDragOver={handleDragOver}
+                    onDrop={(e) => handleSectionDrop(e, mainSectionOrder[mainSectionOrder.length - 1], false)}
+                  >
+                    {/* Dynamic Main Body Sections (Drag & Drop Reorderable) */}
+                    {mainSectionOrder.map(key => renderSectionByKey(key, false))}
                   </div>
                 </div>
+
               ) : (
-                /* SINGLE COLUMN LIVE RENDER TEMPLATE */
-                <div className="red-tmpl-single">
-                  {/* Header */}
-                  <div className="red-tmpl-header-centered">
-                    <h2 className="red-tmpl-name">{editedSections.Header.split("\n")[0] || "Your Name"}</h2>
-                    <h4 className="red-tmpl-title" style={{ color: selectedColor }}>
-                      {editedSections.Header.split("\n")[1] || "Target Professional Role"}
-                    </h4>
-                    <p className="red-tmpl-contacts">
-                      {editedSections.Header.split("\n").slice(2).join(" | ")}
-                    </p>
+                /* ── ENHANCV-STYLE SINGLE COLUMN ── */
+                <div className="ecv-single">
+
+                  {/* Bold header band */}
+                  <div className="ecv-single-header" style={{ backgroundColor: selectedColor, ...getSectionFontSize('Header') }}>
+                    <div className="ecv-single-avatar">
+                      <span className="ecv-avatar-initials" style={{ fontSize: '1.1rem' }}>
+                        {(editedSections.Header.split('\n')[0] || 'U').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase()}
+                      </span>
+                    </div>
+                    <div>
+                      <h2 
+                        className="ecv-single-name nvo-editable-text"
+                        contentEditable
+                        suppressContentEditableWarning
+                        onBlur={(e) => {
+                          const lines = (editedSections.Header || '').split('\n');
+                          lines[0] = e.target.innerText;
+                          updateSectionsWithHistory({ ...editedSections, Header: lines.join('\n') });
+                        }}
+                      >{editedSections.Header.split('\n')[0] || 'Your Name'}</h2>
+                      <p 
+                        className="ecv-single-role nvo-editable-text"
+                        contentEditable
+                        suppressContentEditableWarning
+                        onBlur={(e) => {
+                          const lines = (editedSections.Header || '').split('\n');
+                          lines[1] = e.target.innerText;
+                          updateSectionsWithHistory({ ...editedSections, Header: lines.join('\n') });
+                        }}
+                      >{editedSections.Header.split('\n')[1] || 'Professional Role'}</p>
+                      <p 
+                        className="ecv-single-contacts nvo-editable-text"
+                        contentEditable
+                        suppressContentEditableWarning
+                        onBlur={(e) => {
+                          const topLines = (editedSections.Header || '').split('\n').slice(0, 2);
+                          updateSectionsWithHistory({ ...editedSections, Header: topLines.join('\n') + '\n' + e.target.innerText });
+                        }}
+                      >{editedSections.Header.split('\n').slice(2).join('  •  ')}</p>
+                    </div>
                   </div>
 
-                  <div className="red-tmpl-centered-divider" style={{ backgroundColor: selectedColor }} />
-
-                  {/* Summary */}
-                  {editedSections.Summary && (
-                    <div className="red-tmpl-section">
-                      <h3 className="red-tmpl-section-title centered" style={{ color: selectedColor }}>
-                        Professional Summary
-                      </h3>
-                      <p className="red-tmpl-body-text centered">{editedSections.Summary}</p>
-                    </div>
-                  )}
-
-                  {/* Experience */}
-                  {editedSections.Experience && (
-                    <div className="red-tmpl-section">
-                      <h3 className="red-tmpl-section-title centered" style={{ color: selectedColor }}>
-                        Work Experience
-                      </h3>
-                      {renderTimelineEntries(editedSections.Experience, selectedColor)}
-                    </div>
-                  )}
-
-                  {/* Projects */}
-                  {editedSections.Projects && (
-                    <div className="red-tmpl-section">
-                      <h3 className="red-tmpl-section-title centered" style={{ color: selectedColor }}>
-                        Personal Projects
-                      </h3>
-                      {renderTimelineEntries(editedSections.Projects, selectedColor)}
-                    </div>
-                  )}
-
-                  {/* Skills */}
-                  {editedSections.Skills && (
-                    <div className="red-tmpl-section">
-                      <h3 className="red-tmpl-section-title centered" style={{ color: selectedColor }}>
-                        Skills & Expertise
-                      </h3>
-                      <div className="red-tmpl-skills-centered">
-                        {parseSkills(editedSections.Skills).map(skill => (
-                          <span 
-                            key={skill} 
-                            className="red-tmpl-skill-chip" 
-                            style={{ backgroundColor: `${selectedColor}12`, color: selectedColor, border: `1px solid ${selectedColor}22` }}
-                          >
-                            {skill}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Education / Certifications grid */}
-                  <div className="red-tmpl-bottom-grid">
-                    {/* Education */}
-                    {editedSections.Education && (
-                      <div className="red-tmpl-section">
-                        <h3 className="red-tmpl-section-title" style={{ color: selectedColor, borderBottomColor: selectedColor }}>
-                          Education
-                        </h3>
-                        {parseBulletPoints(editedSections.Education).map((line, idx) => (
-                          <p key={idx} className="red-tmpl-body-text">{line}</p>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Certifications */}
-                    {editedSections.Certifications && (
-                      <div className="red-tmpl-section">
-                        <h3 className="red-tmpl-section-title" style={{ color: selectedColor, borderBottomColor: selectedColor }}>
-                          Certifications
-                        </h3>
-                        {parseBulletPoints(editedSections.Certifications).map((line, idx) => (
-                          <p key={idx} className="red-tmpl-body-text">{line}</p>
-                        ))}
-                      </div>
-                    )}
+                  <div className="ecv-single-body">
+                    {/* Dynamic Single-Column Sections (Drag & Drop Reorderable) */}
+                    {[...mainSectionOrder, ...sideSectionOrder].map(key => renderSectionByKey(key, false))}
                   </div>
                 </div>
               )}
             </div>
           </div>
-        </section>
+        </div>
 
       </main>
 

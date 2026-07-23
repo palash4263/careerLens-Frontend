@@ -7,6 +7,7 @@ import {
   parseSections,
   reconstructResume,
 } from "../utils/resumeOptimizer";
+import { groqOptimizeSection } from "./groqService";
 import api from "../api/axiosConfig";
 
 /**
@@ -60,45 +61,8 @@ export const optimizeSection = async (
   customPrompt = "",
   sectionTextOverride = ""
 ) => {
-  // 1. Try backend endpoint first
-  if (resumeId && jobDescriptionId && !isNaN(Number(resumeId)) && !isNaN(Number(jobDescriptionId))) {
-    try {
-      const response = await api.post("/optimization/optimize-section", null, {
-        params: {
-          resume_id: Number(resumeId),
-          section_name: sectionName,
-          job_description_id: Number(jobDescriptionId),
-          prompt: customPrompt,
-        },
-      });
-
-      if (response.data) {
-        const text =
-          typeof response.data === "string"
-            ? response.data
-            : response.data.optimized_text ||
-              response.data.optimizedText ||
-              response.data.text ||
-              response.data.content ||
-              response.data.optimizedSection ||
-              "";
-        if (text) {
-          return {
-            optimizedText: text,
-            optimized_content: text,
-            text,
-          };
-        }
-      }
-    } catch (err) {
-      console.warn("Backend section optimization API unavailable/failed, executing client AI optimizer:", err);
-    }
-  }
-
-  // 2. Client-side fallback AI optimizer
+  // Resolve job description text for Groq context
   let jobDescriptionText = "";
-  let currentSectionText = sectionTextOverride || "";
-
   if (jobDescriptionId) {
     try {
       const jobs = await getJobDescriptions();
@@ -109,6 +73,8 @@ export const optimizeSection = async (
     }
   }
 
+  // Resolve current section text
+  let currentSectionText = sectionTextOverride || "";
   if (!currentSectionText && resumeId) {
     try {
       const resumes = await getResumes();
@@ -123,6 +89,40 @@ export const optimizeSection = async (
     }
   }
 
+  // ── 1. GROQ AI (primary) ──────────────────────────────────────────────────
+  try {
+    const groqText = await groqOptimizeSection(sectionName, currentSectionText, jobDescriptionText, customPrompt);
+    if (groqText) {
+      return { optimizedText: groqText, optimized_content: groqText, text: groqText };
+    }
+  } catch (groqErr) {
+    console.warn("Groq AI unavailable, falling back to backend:", groqErr.message);
+  }
+
+  // ── 2. Backend endpoint (secondary) ──────────────────────────────────────
+  if (resumeId && jobDescriptionId && !isNaN(Number(resumeId)) && !isNaN(Number(jobDescriptionId))) {
+    try {
+      const response = await api.post("/optimization/optimize-section", null, {
+        params: {
+          resume_id: Number(resumeId),
+          section_name: sectionName,
+          job_description_id: Number(jobDescriptionId),
+          prompt: customPrompt,
+        },
+      });
+      if (response.data) {
+        const text =
+          typeof response.data === "string"
+            ? response.data
+            : response.data.optimized_text || response.data.optimizedText || response.data.text || response.data.content || "";
+        if (text) return { optimizedText: text, optimized_content: text, text };
+      }
+    } catch (err) {
+      console.warn("Backend section optimization failed, falling back to local engine:", err);
+    }
+  }
+
+  // ── 3. Local rule-engine (final fallback) ─────────────────────────────────
   const result = optimizeSectionClient(sectionName, currentSectionText, jobDescriptionText || customPrompt, customPrompt);
   return result;
 };

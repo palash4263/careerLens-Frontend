@@ -262,8 +262,8 @@
 /* Section Nav Pills at Top of Left Col */
 .red-section-nav {
   display: flex;
-  gap: 6px;
-  padding: 14px 20px;
+  gap: 5px;
+  padding: 8px 16px;
   overflow-x: auto;
   background: rgba(0, 0, 0, 0.15);
   border-bottom: 1px solid rgba(255, 255, 255, 0.04);
@@ -277,13 +277,13 @@
 .red-nav-pill {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 99px;
-  padding: 6px 14px;
+  padding: 4px 11px;
   color: #94a3b8;
-  font-size: 0.76rem;
+  font-size: 0.7rem;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
@@ -309,21 +309,21 @@
 .red-editor-cards-container {
   flex: 1;
   overflow-y: auto;
-  padding: 24px;
+  padding: 14px 16px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 12px;
 }
 
 .red-editor-card {
   position: relative;
   background: rgba(30, 41, 59, 0.4);
   border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
-  padding: 20px;
+  border-radius: 10px;
+  padding: 12px 14px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 8px;
   transition: all 0.3s ease;
 }
 
@@ -366,7 +366,7 @@
 .red-card-title h4 {
   font-family: 'DM Serif Display', Georgia, serif;
   margin: 0;
-  font-size: 1.05rem;
+  font-size: 0.88rem;
   font-weight: 400;
   color: #f8fafc;
 }
@@ -379,9 +379,9 @@
   border: 1px solid rgba(163, 230, 53, 0.25);
   color: #a3e635;
   font-family: 'Fira Code', monospace;
-  font-size: 0.72rem;
+  font-size: 0.67rem;
   font-weight: 600;
-  padding: 4px 10px;
+  padding: 3px 8px;
   border-radius: 99px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -438,10 +438,11 @@
   border: none;
   color: #cbd5e1;
   font-family: inherit;
-  font-size: 0.84rem;
-  line-height: 1.6;
+  font-size: 0.78rem;
+  line-height: 1.5;
   outline: none;
   resize: vertical;
+  min-height: 56px;
 }
 
 /* RIGHT COLUMN: Live Document Preview */
@@ -500,224 +501,370 @@
   padding: 36px 32px;
   border-radius: 4px;
   transition: all 0.3s ease;
+  overflow: visible;
+}
+
+/* Auto Page Break Indicator (visible in editor, but doesn't affect layout) */
+.pdf-auto-page-break-label {
+  position: absolute;
+  left: -36px;
+  right: -36px;
+  pointer-events: none;
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+}
+
+.pdf-page-break-divider {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.pdf-page-break-shadow-top {
+  height: 10px;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.2), transparent);
+  border-bottom: 1px dashed rgba(163, 230, 53, 0.4);
+}
+
+.pdf-page-break-gap {
+  flex: 1;
+  min-height: 24px;
+  background: #0b0f19;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  box-shadow: inset 0 8px 16px -6px rgba(0,0,0,0.8), inset 0 -8px 16px -6px rgba(0,0,0,0.8);
+}
+
+.pdf-page-break-shadow-bottom {
+  height: 10px;
+  background: linear-gradient(to top, rgba(0,0,0,0.2), transparent);
+  border-top: 1px dashed rgba(163, 230, 53, 0.4);
+}
+
+.pdf-page-break-badge {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: #a3e635;
+  background: #1e293b;
+  border: 1px solid rgba(163, 230, 53, 0.4);
+  padding: 4px 14px;
+  border-radius: 99px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+  font-family: 'Fira Code', monospace;
+  text-transform: uppercase;
+}
+
+/* ════════════════════════════════════════════════
+   ENHANCV-STYLE TEMPLATES
+   ════════════════════════════════════════════════ */
+
+/* ── TWO-COLUMN (sidebar + main) ── */
+.ecv-layout {
+  display: flex;
+  min-height: 770px;
+  margin: -36px -32px; /* bleed to canvas edges */
+}
+
+/* Dark sidebar */
+.ecv-sidebar {
+  width: 200px;
+  flex-shrink: 0;
+  padding: 32px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
   overflow: hidden;
 }
 
-.red-canvas-top-accent {
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 4px;
-}
-
-/* ── DOUBLE COLUMN LIVE RENDER TEMPLATE ── */
-.red-tmpl-twocol {
+.ecv-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 3px solid rgba(255,255,255,0.35);
+  background: rgba(255,255,255,0.15);
   display: flex;
-  gap: 20px;
-  height: 100%;
-  min-height: 770px;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 4px;
+  flex-shrink: 0;
 }
 
-.red-tmpl-main {
-  flex: 1.6;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.red-tmpl-sidebar {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  border-left: 1px solid rgba(0, 0, 0, 0.05);
-  padding-left: 16px;
-}
-
-/* Header detail */
-.red-tmpl-header-block {
-  margin-bottom: 6px;
-}
-
-.red-tmpl-name {
-  font-size: 1.35rem;
+.ecv-avatar-initials {
+  font-size: 1.3em;
   font-weight: 800;
-  color: #0f172a;
+  color: #fff;
   letter-spacing: -0.02em;
-  margin: 0;
-  line-height: 1.1;
 }
 
-.red-tmpl-title {
-  font-size: 0.8rem;
-  font-weight: 700;
-  margin: 2px 0 6px 0;
+.ecv-sidebar-identity {
+  text-align: center;
+  border-bottom: 1px solid rgba(255,255,255,0.18);
+  padding-bottom: 16px;
+}
+
+.ecv-sidebar-name {
+  font-size: 0.95em;
+  font-weight: 800;
+  color: #fff;
+  margin: 0 0 3px;
+  line-height: 1.2;
+}
+
+.ecv-sidebar-role {
+  font-size: 0.6em;
+  font-weight: 600;
+  color: rgba(255,255,255,0.75);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.red-tmpl-contacts {
-  font-size: 0.64rem;
-  color: #64748b;
+  letter-spacing: 0.07em;
   margin: 0;
-  line-height: 1.4;
 }
 
-/* Section elements styling */
-.red-tmpl-section {
+.ecv-sidebar-section {
   display: flex;
   flex-direction: column;
+  gap: 5px;
+}
+
+.ecv-sidebar-heading {
+  font-size: 0.55em;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  color: rgba(255,255,255,0.5);
+  text-transform: uppercase;
+  border-bottom: 1px solid rgba(255,255,255,0.15);
+  padding-bottom: 6px;
+  margin-bottom: 10px;
+}
+
+.ecv-sidebar-line {
+  font-size: 0.6em;
+  line-height: 1.45;
+  color: rgba(255,255,255,0.88);
+  margin: 0;
+  word-break: break-word;
+}
+
+.ecv-sidebar-skills {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ecv-skill-item {
+  display: flex;
+  align-items: center;
   gap: 6px;
 }
 
-.red-tmpl-section-title {
-  font-size: 0.72rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  border-bottom: 1px solid #e2e8f0;
-  padding-bottom: 3px;
-  margin: 0 0 2px 0;
+.ecv-skill-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.6);
+  flex-shrink: 0;
 }
 
-.red-tmpl-body-text {
-  font-size: 0.68rem;
-  line-height: 1.6;
-  color: #334155;
+.ecv-skill-label {
+  font-size: 0.6em;
+  color: rgba(255,255,255,0.88);
+  line-height: 1.3;
+}
+
+/* Main content area */
+.ecv-main {
+  flex: 1;
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow: visible;
+}
+
+/* Section anatomy */
+.ecv-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ecv-section-header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 8px;
+}
+
+.ecv-section-icon {
+  font-size: 0.65em;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.ecv-section-title {
+  font-size: 0.6em;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+}
+
+.ecv-section-rule {
+  flex: 1;
+  height: 1.5px;
+  opacity: 0.35;
+  border-radius: 2px;
+}
+
+.ecv-body-text {
+  font-size: 0.67em;
+  line-height: 1.65;
+  color: #374151;
   margin: 0;
 }
 
-/* Enhancv Entry Block Styling */
+/* Entry blocks (experience / projects) */
 .enhancv-entry-block {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
   margin-bottom: 8px;
+  padding-left: 10px;
+  border-left: 2px solid #e5e7eb;
+  position: relative;
+}
+
+.enhancv-entry-block::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  position: absolute;
+  left: -5px;
+  top: 4px;
+  border: 1px solid #fff;
+  box-shadow: 0 0 0 1px currentColor;
 }
 
 .enhancv-entry-header {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  width: 100%;
+  gap: 8px;
 }
 
 .enhancv-entry-title {
-  font-size: 0.76rem;
+  font-size: 0.72em;
   font-weight: 700;
-  color: #0f172a;
+  color: #111827;
 }
 
 .enhancv-entry-date {
-  font-size: 0.64rem;
+  font-size: 0.58em;
   font-weight: 600;
   white-space: nowrap;
+  opacity: 0.8;
 }
 
 .enhancv-bullet-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
-/* List with styled colored dots */
-.red-tmpl-experience-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
+/* Bullet rows */
 .red-tmpl-bullet-row {
   display: flex;
   align-items: flex-start;
-  gap: 6px;
+  gap: 5px;
 }
 
 .red-tmpl-bullet-dot {
-  width: 4px;
-  height: 4px;
+  width: 3px;
+  height: 3px;
   border-radius: 50%;
-  margin-top: 5px;
+  margin-top: 6px;
   flex-shrink: 0;
 }
 
 .red-tmpl-bullet-text {
-  font-size: 0.66rem;
-  line-height: 1.5;
-  color: #334155;
+  font-size: 0.63em;
+  line-height: 1.55;
+  color: #374151;
 }
 
-/* Skills Chip design */
-.red-tmpl-skills-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 2px;
-}
-
-.red-tmpl-skill-chip {
-  font-size: 0.58rem;
-  font-weight: 700;
-  padding: 3px 6px;
-  border-radius: 4px;
-}
-
-.red-tmpl-sidebar-item {
-  font-size: 0.64rem;
-  line-height: 1.4;
-  color: #475569;
-  margin: 0;
-}
-
-/* ── SINGLE COLUMN LIVE RENDER TEMPLATE ── */
-.red-tmpl-single {
+/* ── SINGLE COLUMN ── */
+.ecv-single {
+  margin: -36px -32px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
   min-height: 770px;
 }
 
-.red-tmpl-header-centered {
+.ecv-single-header {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 24px 28px;
+}
+
+.ecv-single-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.18);
+  border: 2px solid rgba(255,255,255,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ecv-single-name {
+  font-size: 1.2em;
+  font-weight: 800;
+  color: #fff;
+  margin: 0 0 2px;
+  line-height: 1.1;
+}
+
+.ecv-single-role {
+  font-size: 0.68em;
+  font-weight: 600;
+  color: rgba(255,255,255,0.8);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin: 0 0 4px;
+}
+
+.ecv-single-contacts {
+  font-size: 0.58em;
+  color: rgba(255,255,255,0.7);
+  margin: 0;
+}
+
+.ecv-single-body {
+  flex: 1;
+  padding: 20px 28px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
-  margin-bottom: 4px;
+  gap: 14px;
 }
 
-.red-tmpl-header-centered .red-tmpl-contacts {
-  margin-top: 4px;
-}
-
-.red-tmpl-centered-divider {
-  height: 1px;
-  width: 100%;
-  margin-top: -8px;
-  margin-bottom: 4px;
-}
-
-.red-tmpl-section-title.centered {
-  text-align: center;
-  border-bottom: none;
-  padding-bottom: 0;
-  margin-bottom: 4px;
-}
-
-.red-tmpl-body-text.centered {
-  text-align: center;
-}
-
-.red-tmpl-skills-centered {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 4px;
-  margin-top: 2px;
-}
-
-.red-tmpl-bottom-grid {
+.ecv-single-bottom {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
+}
+
+.ecv-skills-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
 }
 
 @media (max-width: 1024px) {
@@ -725,10 +872,441 @@
     flex-direction: column;
     overflow-y: auto;
   }
-  
+
   .red-editor-col, .red-preview-col {
     width: 100%;
     height: auto;
     overflow: visible;
   }
+
+  .ecv-layout, .ecv-single {
+    margin: -24px -20px;
+  }
 }
+
+/* ═════════════════════════════════════════════════════════════════════
+   NOVORESUME IN-CONTEXT LIVE CANVAS EDITOR STYLING
+   ═════════════════════════════════════════════════════════════════════ */
+
+.nvo-editor-shell {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  background: #0e121a;
+  color: #f1f5f9;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Left Tool Rail */
+.nvo-sidebar-rail {
+  width: 130px;
+  background: #141a26;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 8px;
+  gap: 12px;
+  flex-shrink: 0;
+  z-index: 80;
+}
+
+.nvo-brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #38bdf8;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 800;
+  font-size: 0.95rem;
+  margin-bottom: 12px;
+  cursor: pointer;
+}
+
+.nvo-rail-btn {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 6px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  color: #94a3b8;
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nvo-rail-btn:hover {
+  background: rgba(56, 189, 248, 0.12);
+  border-color: rgba(56, 189, 248, 0.3);
+  color: #38bdf8;
+  transform: translateY(-1px);
+}
+
+.nvo-rail-btn.active {
+  background: rgba(56, 189, 248, 0.18);
+  border-color: #38bdf8;
+  color: #38bdf8;
+}
+
+/* Central Workspace Area */
+.nvo-workspace {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 20%, #172030 0%, #0b0f17 100%);
+}
+
+/* Novoresume Top Floating Bar */
+.nvo-top-floating-bar {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(20, 26, 38, 0.88);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  padding: 6px 14px;
+  border-radius: 99px;
+}
+
+.nvo-bar-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nvo-bar-divider {
+  width: 1px;
+  height: 18px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.nvo-bar-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  border: none;
+  color: #cbd5e1;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nvo-bar-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.nvo-btn-download {
+  background: #38bdf8;
+  color: #0f172a;
+  font-weight: 700;
+  padding: 6px 16px;
+  border-radius: 99px;
+  box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3);
+}
+
+.nvo-btn-download:hover {
+  background: #7dd3fc;
+  box-shadow: 0 6px 18px rgba(56, 189, 248, 0.45);
+  color: #0f172a;
+}
+
+/* Floating Formatting Tooltip (Text selection formatting bar) */
+.nvo-text-format-popover {
+  position: absolute;
+  top: 68px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 95;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 4px 8px;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+}
+
+.nvo-fmt-btn {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.nvo-fmt-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.nvo-fmt-btn.active {
+  background: #38bdf8;
+  color: #0f172a;
+}
+
+/* Centered Canvas Container */
+.nvo-canvas-viewport {
+  flex: 1;
+  overflow-y: auto;
+  padding: 80px 20px 40px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+/* Direct Editable Block Hover Action Handles */
+.nvo-entry-block-wrapper {
+  position: relative;
+  transition: all 0.2s ease;
+  border-radius: 6px;
+}
+
+.nvo-entry-block-wrapper:hover {
+  outline: 1.5px dashed rgba(56, 189, 248, 0.4);
+  background: rgba(56, 189, 248, 0.02);
+}
+
+.nvo-block-action-bar {
+  position: absolute;
+  left: -42px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 60;
+}
+
+.nvo-entry-block-wrapper:hover .nvo-block-action-bar {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.nvo-action-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #cbd5e1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  transition: all 0.15s ease;
+}
+
+.nvo-action-btn:hover {
+  background: #38bdf8;
+  color: #0f172a;
+  transform: scale(1.1);
+}
+
+.nvo-action-btn.btn-del:hover {
+  background: #ef4444;
+  color: #fff;
+}
+
+.nvo-action-btn.btn-ai {
+  background: linear-gradient(135deg, #a855f7, #7c3aed);
+  color: #fff;
+  border: none;
+}
+
+/* Direct Inline Content Editable Field Styling */
+.nvo-editable-text {
+  outline: none;
+  border-radius: 3px;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.nvo-editable-text:hover {
+  background: rgba(56, 189, 248, 0.06);
+}
+
+.nvo-editable-text:focus {
+  background: rgba(56, 189, 248, 0.12);
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.5);
+}
+
+/* Section Drag and Drop Handles */
+.nvo-section-draggable {
+  position: relative;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.nvo-section-draggable.dragging {
+  opacity: 0.5;
+  transform: scale(0.98);
+}
+
+.nvo-drag-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  color: #94a3b8;
+  padding: 2px 4px;
+  border-radius: 4px;
+  margin-right: 6px;
+  opacity: 0.6;
+  transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+.nvo-drag-handle:active {
+  cursor: grabbing;
+}
+
+.ecv-section:hover .nvo-drag-handle,
+.ecv-sidebar-section:hover .nvo-drag-handle {
+  opacity: 1;
+  color: #38bdf8;
+}
+
+/* AI Assistant Side Drawer Panel */
+.nvo-drawer-panel {
+  width: 320px;
+  background: #141a26;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  z-index: 75;
+  flex-shrink: 0;
+  box-shadow: 10px 0 30px rgba(0, 0, 0, 0.4);
+}
+
+.nvo-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.nvo-drawer-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #38bdf8;
+}
+
+.nvo-drawer-close {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.nvo-drawer-close:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.nvo-drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.nvo-ai-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.nvo-ai-card-title {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #cbd5e1;
+  letter-spacing: 0.04em;
+  font-family: 'Fira Code', monospace;
+  text-transform: uppercase;
+}
+
+.nvo-ai-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(56, 189, 248, 0.08);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #f1f5f9;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+}
+
+.nvo-ai-action-btn:hover {
+  background: rgba(56, 189, 248, 0.18);
+  border-color: #38bdf8;
+  color: #38bdf8;
+  transform: translateY(-1px);
+}
+
+.nvo-ai-input {
+  width: 100%;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: #fff;
+  font-size: 0.8rem;
+  outline: none;
+  font-family: inherit;
+}
+
+.nvo-ai-input:focus {
+  border-color: #38bdf8;
+}
+

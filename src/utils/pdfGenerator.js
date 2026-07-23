@@ -38,7 +38,6 @@ const stripMarkdown = (text) => {
     .replace(/__(.+?)__/g,         '$1')
     .replace(/\*(.+?)\*/g,         '$1')
     .replace(/_(.+?)_/g,           '$1')
-    .replace(/^\*+\s*/gm, '')
     .replace(/^\#+\s*/gm, '')
     .replace(/\*+$/gm, '')
     .trim();
@@ -47,6 +46,12 @@ const stripMarkdown = (text) => {
 const safeText = (value) => {
   if (value === null || value === undefined || Number.isNaN(value) || value === 'NaN') return '';
   return stripMarkdown(String(value));
+};
+
+const parseBulletPoints = (text) => {
+  if (!text) return [];
+  if (Array.isArray(text)) return text;
+  return String(text).split('\n').map(l => l.trim()).filter(Boolean);
 };
 
 const extractPhoneNumber = (text) => {
@@ -274,19 +279,16 @@ async function createFontKit(pdf) {
 }
 
 class Column {
-  constructor(pdf, dh, PRIMARY, { x, width, y, accentBar = false, pageMode = 'strict-one-page', minGap = 8, bulletIndent = 10, bulletSizeAdd = 0.5 }) {
+  constructor(pdf, dh, PRIMARY, { x, width, y, accentBar = false, pageMode = 'multi-page', minGap = 8, bulletIndent = 10, bulletSizeAdd = 0.5 }) {
     Object.assign(this, { pdf, dh, PRIMARY, x, width, y, accentBar, pageMode, minGap, bulletIndent, bulletSizeAdd });
     this.page = pdf.getPages()[0];
   }
 
-  ensure(minGap = this.minGap) {
-    if (this.y >= MARGIN_BOTTOM + minGap) return;
-    
-    if (this.pageMode === 'strict-one-page') {
-      this.y = MARGIN_BOTTOM + 1; 
-      return;
-    }
+  // Ensure at least `neededPx` of vertical space remains. If not, move to a new page.
+  ensure(neededPx = this.minGap) {
+    if (this.y >= MARGIN_BOTTOM + neededPx) return;
 
+    // Always paginate — never silently clamp
     const pages = this.pdf.getPages();
     const curIdx = pages.indexOf(this.page);
     if (curIdx === pages.length - 1) {
@@ -305,31 +307,41 @@ class Column {
     this.dh.drawText(this.page, str, x, this.y, size, opts);
   }
 
+  // Pre-measure the entire wrapped block and ensure it fits atomically before drawing.
   wrapped(str, size, lineHeight, opts = {}, minGap = this.minGap) {
-    for (const line of this.dh.wrapText(str, this.width, size, opts)) {
-      this.ensure(minGap);
-      this.dh.drawText(this.page, line, this.x, this.y, size, opts);
-      this.y -= lineHeight;
+    const lines = this.dh.wrapText(str, this.width, size, opts);
+    if (lines.length === 0) return;
+    // Pre-check: if the whole block fits in remaining space, keep it together.
+    const blockH = lines.length * lineHeight;
+    if (blockH <= this.y - MARGIN_BOTTOM && blockH < PAGE_HEIGHT - MARGIN_TOP - MARGIN_BOTTOM) {
+      // It fits — draw without page break mid-block
+      for (const line of lines) {
+        this.dh.drawText(this.page, line, this.x, this.y, size, opts);
+        this.y -= lineHeight;
+      }
+    } else {
+      // Too tall or near boundary — draw line-by-line with individual ensure checks
+      for (const line of lines) {
+        this.ensure(lineHeight + minGap);
+        this.dh.drawText(this.page, line, this.x, this.y, size, opts);
+        this.y -= lineHeight;
+      }
     }
   }
 
   // Truncate text to fit within maxWidth, appending '…' if needed
   truncateToWidth(str, size, maxWidth, opts = {}) {
-    const useFont = this.dh._pickFont ? this.dh._pickFont(opts) : null;
     const s = str.trim();
     const full = this.dh.wrapText(s, maxWidth, size, opts);
     if (full.length === 0) return s;
-    // Return the first wrapped line — wrapText already word-breaks at maxWidth
-    const firstLine = full[0];
-    // If text had to wrap (more than 1 line), add ellipsis
-    if (full.length > 1) {
-      return `${firstLine.trimEnd()}…`;
-    }
-    return firstLine;
+    if (full.length > 1) return `${full[0].trimEnd()}…`;
+    return full[0];
   }
 
+  // Render a bullet point — pre-checks that enough space exists BEFORE writing dot+text.
   bullet(str, size, lineHeight) {
-    this.ensure(this.minGap);
+    // Ensure space for the bullet line BEFORE drawing (not after)
+    this.ensure(lineHeight + this.minGap);
     this.dh.drawText(this.page, '•', this.x + 2, this.y, size + this.bulletSizeAdd, { color: this.PRIMARY });
     const availW = this.width - this.bulletIndent;
     const oneLine = this.truncateToWidth(str, size, availW, { color: DARK_GRAY });
@@ -363,13 +375,13 @@ class Column {
     this.y -= lhEntryHeader;
   }
 
-  sectionHeader(title, size, { gapBefore = 5, gapAfter = 6, minGap = 12, lineThickness = 0.75, lineColor = this.PRIMARY } = {}) {
+  sectionHeader(title, size, { gapBefore = 6, gapAfter = 12, minGap = 14, lineThickness = 0.75, lineColor = this.PRIMARY } = {}) {
     this.y -= gapBefore;
     this.ensure(minGap);
     this.text(title.toUpperCase(), this.x, size, { bold: true, color: this.PRIMARY });
-    this.y -= 3; 
+    this.y -= 5; 
     this.page.drawLine({ start: { x: this.x, y: this.y }, end: { x: this.x + this.width, y: this.y }, thickness: lineThickness, color: lineColor });
-    this.y -= gapAfter; 
+    this.y -= (gapAfter + 4); 
   }
 }
 
@@ -387,8 +399,11 @@ const renderTimelineSection = (col, content, sizes, splitPipe = false) => {
       trimmed = trimmed.replace(/^•\s*/, '');
     }
 
-    const isBullet = trimmed.startsWith('•');
-    const bulletTxt = isBullet ? trimmed.replace(/^•\s*/, '') : '';
+    // Normalize bullets from text areas
+    const isExplicitBullet = trimmed.startsWith('•') || trimmed.startsWith('-') || trimmed.startsWith('*');
+    // Align with Live Editor Simulator: treat long description lines as bullets even if unmarked
+    const isBullet = isExplicitBullet || (!trimmed.includes('|') && !/\d{4}/.test(trimmed) && trimmed.length >= 55);
+    const bulletTxt = isBullet ? trimmed.replace(/^[•+\-\*]\s*/, '') : '';
 
     if (splitPipe && trimmed.includes('|')) {
       const parts = trimmed.split('|').map(pt => safeText(pt).trim());
@@ -441,35 +456,47 @@ const renderEducationSection = (col, content, sizes) => {
 };
 
 const renderSkillBadges = (col, dh, skillsList, sizeBody) => {
-  let badgeX = col.x;
   const badgeHeight = sizeBody + 5;
   const rowGap = 4;
-  
-  for (const skill of skillsList) {
-    if (!skill) continue;
-    if (skill.length > 25 || (skill.match(/\s/g) || []).length > 3) continue;
 
-    const badgeWidth = dh.tw(skill, sizeBody) + 10;
-    
-    if (badgeX + badgeWidth > col.x + col.width) {
-      badgeX = col.x;
-      col.y -= (badgeHeight + rowGap);
+  // Pre-compute which skills fit, and lay them out row-by-row.
+  // Crucially: we check BEFORE starting each new row whether space remains.
+  const validSkills = skillsList.filter(s => s && s.length <= 25 && (s.match(/\s/g) || []).length <= 3);
+  if (validSkills.length === 0) return;
+
+  // Build rows first so we know how many there are
+  const rows = [];
+  let curRow = [];
+  let curRowW = 0;
+  for (const skill of validSkills) {
+    const bw = dh.tw(skill, sizeBody) + 10 + 5; // badge width + gap
+    if (curRowW + bw > col.width && curRow.length > 0) {
+      rows.push(curRow);
+      curRow = [skill];
+      curRowW = bw;
+    } else {
+      curRow.push(skill);
+      curRowW += bw;
     }
-    col.ensure(badgeHeight + 1);
-
-    col.page.drawRectangle({ 
-      x: badgeX, 
-      y: col.y - 2, 
-      width: badgeWidth, 
-      height: badgeHeight, 
-      color: LIGHT_GRAY 
-    });
-    
-    dh.drawText(col.page, skill, badgeX + 5, col.y + 1, sizeBody, { color: BLACK });
-    badgeX += badgeWidth + 5;
   }
-  
-  if (badgeX > col.x) {
+  if (curRow.length > 0) rows.push(curRow);
+
+  for (const row of rows) {
+    // Ensure the ENTIRE row fits before drawing any badge in it
+    col.ensure(badgeHeight + rowGap + col.minGap);
+    let badgeX = col.x;
+    for (const skill of row) {
+      const badgeWidth = dh.tw(skill, sizeBody) + 10;
+      col.page.drawRectangle({ 
+        x: badgeX, 
+        y: col.y - 2, 
+        width: badgeWidth, 
+        height: badgeHeight, 
+        color: LIGHT_GRAY 
+      });
+      dh.drawText(col.page, skill, badgeX + 5, col.y + 1, sizeBody, { color: BLACK });
+      badgeX += badgeWidth + 5;
+    }
     col.y -= (badgeHeight + rowGap);
   }
 };
@@ -479,7 +506,8 @@ const renderSkillsSection = (col, dh, content, sizeSubtitle, sizeBody, lhSubtitl
     let trimmed = safeText(rawLine).trim();
     if (!trimmed) continue;
 
-    trimmed = trimmed.replace(/^[\text{•}\-\*\s]+/, '');
+    trimmed = trimmed.replace(/^[•\-\*\s]+/, '');
+    if (!trimmed) continue;
 
     if (trimmed.includes(':')) {
       const colon = trimmed.indexOf(':');
@@ -487,29 +515,30 @@ const renderSkillsSection = (col, dh, content, sizeSubtitle, sizeBody, lhSubtitl
       const value = trimmed.slice(colon + 1).trim();
       
       const fragments = value.split(',').map(s => s.trim()).filter(Boolean);
-      const validSkills = fragments.filter(f => !(f.length > 25 || (f.match(/\s/g) || []).length > 3));
+      const validSkills = fragments.filter(f => f.length <= 25 && (f.match(/\s/g) || []).length <= 3);
       
       if (validSkills.length > 0) {
-        col.y -= 6;
-        col.ensure(14);
+        // Pre-check: ensure label + at least one badge row fit before committing
+        const groupHeight = lhSubtitle + 4 + (sizeBody + 5 + 4) + 6 + col.minGap;
+        col.ensure(groupHeight);
         col.text(category, col.x, sizeSubtitle, { bold: true, color: BLACK });
-        col.y -= (lhSubtitle + 3);
+        col.y -= (lhSubtitle + 4);
         renderSkillBadges(col, dh, validSkills, sizeBody);
+        col.y -= 4;
       }
     } else {
       const isHeading = /(tools|technolog|database|framework|devops|version|platform|cloud|languages)/i.test(trimmed) && trimmed.length < 30;
       
       if (isHeading) {
-        col.y -= 6;
-        col.ensure(14);
+        col.ensure(lhSubtitle + 6 + col.minGap);
         col.text(trimmed, col.x, sizeSubtitle, { bold: true, color: BLACK });
-        col.y -= (lhSubtitle + 3);
+        col.y -= (lhSubtitle + 4);
       } else {
         const fragments = trimmed.split(',').map(s => s.trim()).filter(Boolean);
-        const validSkills = fragments.filter(f => !(f.length > 25 || (f.match(/\s/g) || []).length > 3));
-        
+        const validSkills = fragments.filter(f => f.length <= 25 && (f.match(/\s/g) || []).length <= 3);
         if (validSkills.length > 0) {
           renderSkillBadges(col, dh, validSkills, sizeBody);
+          col.y -= 4;
         }
       }
     }
@@ -525,7 +554,13 @@ const editedSectionsToSections = (editedSections) => {
     .filter(k => editedSections[k] && editedSections[k].trim())
     .map(k => ({
       title: k,
-      content: editedSections[k].split('\n').map(l => safeText(l)).filter(Boolean),
+      content: editedSections[k].split('\n').map(l => {
+        let txt = safeText(l);
+        if (/^[*\-]\s+/.test(txt)) {
+          txt = txt.replace(/^[*\-]\s+/, '• ');
+        }
+        return txt;
+      }).filter(Boolean),
     }));
 };
 
@@ -564,7 +599,7 @@ async function generateSingleColumnPDF({
   const cleanFile = safeText(fileName).replace(/\.pdf$/i, '');
   const FULL_W    = PAGE_WIDTH - marginX * 2;
 
-  const col = new Column(pdf, dh, PRIMARY, { x: marginX, width: FULL_W, y: PAGE_HEIGHT - marginTop, pageMode: 'strict-one-page' });
+  const col = new Column(pdf, dh, PRIMARY, { x: marginX, width: FULL_W, y: PAGE_HEIGHT - marginTop, pageMode: 'multi-page' });
 
   const nameSize = 16;
   col.text(id.name, (PAGE_WIDTH - dh.tw(id.name, nameSize, { bold: true })) / 2, nameSize, { bold: true, color: PRIMARY });
@@ -609,7 +644,7 @@ async function generateSingleColumnPDF({
 }
 
 // =====================================================================
-// MAIN TWO-COLUMN PDF GENERATION
+// MAIN TWO-COLUMN & SINGLE-COLUMN PDF GENERATION
 // =====================================================================
 export async function generateResumePDF({
   resumeText,
@@ -624,157 +659,205 @@ export async function generateResumePDF({
   primaryColor = '#1761c7',
   pageMargins = 1,
   sectionSpacing = 3,
+  baseFontSize = 3,
+  mainSectionOrder = ['Summary', 'Experience', 'Projects'],
+  sideSectionOrder = ['Skills', 'Education', 'Certifications'],
 }) {
-  if (templateType === 'single-column') {
-    return generateSingleColumnPDF({ resumeText, editedSections, fileName, jobTitle, email, phone, linkedin, userName, primaryColor, pageMargins, sectionSpacing });
-  }
-
   const PRIMARY = hexToRgbColor(primaryColor);
+  const WHITE   = rgb(1, 1, 1);
+  const LIGHT_TEXT = rgb(0.92, 0.94, 0.97);
+
   const headerText = editedSections?.Header || resumeText || '';
   const id = resolveIdentity(resumeText || '', fileName, { jobTitle, email, phone, linkedin, userName, headerText });
-
-  const marginX = Number(pageMargins) === 1 ? 24 : Number(pageMargins) === 2 ? 36 : 48;
-  const marginTop = Number(pageMargins) === 1 ? 18 : Number(pageMargins) === 2 ? 24 : 32;
 
   const pdf = await PDFDocument.create();
   const dh  = await createFontKit(pdf);
   const p   = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
 
-  // Use editedSections directly if provided, otherwise fall back to text parsing
-  const sections = editedSections
-    ? editedSectionsToSections(editedSections)
-    : parseResumeSections(resumeText, { userName: id.name, email: id.email, phone: id.phone, linkedin: id.linkedin });
   const cleanFile = safeText(fileName).replace(/\.pdf$/i, '');
 
-  const skillsSec = sections.find(s => s.title.toLowerCase().includes('skill') || s.title.toLowerCase().includes('technolog'));
-  
-  let hasSkills = false;
-  if (skillsSec && skillsSec.content && skillsSec.content.length > 0) {
-    const validFragments = skillsSec.content.some(line => {
-      const cleanLine = safeText(line).replace(/^[\text{•}\-\*\s]+/, '');
-      if (cleanLine.includes(':')) return true;
-      const frags = cleanLine.split(',').map(s => s.trim()).filter(Boolean);
-      return frags.length > 0 && frags.every(f => f.length < 25 && (f.match(/\s/g) || []).length <= 3);
-    });
-    if (validFragments) hasSkills = true;
-  }
-
-  const COL_GAP     = 16;
-  const FULL_W      = PAGE_WIDTH - marginX * 2;
-  
-  const LEFT_COL_W  = hasSkills ? Math.floor(FULL_W * 0.58) : FULL_W;
-  const RIGHT_COL_W = hasSkills ? (FULL_W - LEFT_COL_W - COL_GAP) : 0;
-  const LEFT_COL_X  = marginX;
-  const RIGHT_COL_X = marginX + LEFT_COL_W + COL_GAP;
+  const fontScale = Number(baseFontSize) > 0 ? (0.7 + (Number(baseFontSize) * 0.1)) : 1.0;
 
   const sizes = {
-    sizeName: 18, 
-    sizeTitle: 9.5, 
-    sizeContact: 7.5,
-    sizeSection: 9.0, 
-    sizeEntryHeader: 8.5, 
-    sizeSubtitle: 8.0, 
-    sizeBody: 7.8, 
-    lhBody: 10.5, 
-    lhEntryHeader: 11.5,
-    lhSubtitle: 11.0, 
-    secSpace: Number(sectionSpacing) * 1.5, 
-    entrySpace: Number(sectionSpacing) * 0.6,
+    sizeName: Math.max(12, 16 * fontScale), 
+    sizeTitle: Math.max(7.5, 9.0 * fontScale), 
+    sizeContact: Math.max(5.8, 7.2 * fontScale),
+    sizeSection: Math.max(7.2, 9.0 * fontScale), 
+    sizeEntryHeader: Math.max(6.8, 8.5 * fontScale), 
+    sizeSubtitle: Math.max(6.2, 8.0 * fontScale), 
+    sizeBody: Math.max(5.8, 7.6 * fontScale), 
+    lhBody: Math.max(7.6, 10.5 * fontScale), 
+    lhEntryHeader: Math.max(8.8, 11.5 * fontScale),
+    lhSubtitle: Math.max(8.2, 11.0 * fontScale), 
+    secSpace: Math.max(5, Number(sectionSpacing) * 1.5 * fontScale), 
+    entrySpace: Number(sectionSpacing) * 0.6 * fontScale,
   };
 
-  let cursorY = PAGE_HEIGHT - marginTop;
+  if (templateType === 'two-column') {
+    const SIDEBAR_W = 165;
+    const MAIN_X = 182;
+    const MAIN_W = PAGE_WIDTH - MAIN_X - 20;
 
-  p.drawRectangle({ x: 0, y: PAGE_HEIGHT - 5, width: PAGE_WIDTH, height: 5, fill: PRIMARY });
+    // Dark sleek sidebar background (#121722)
+    const SIDEBAR_BG = rgb(0.07, 0.09, 0.13);
+    p.drawRectangle({ x: 0, y: 0, width: SIDEBAR_W, height: PAGE_HEIGHT, fill: SIDEBAR_BG });
 
-  dh.drawText(p, id.name.toUpperCase(), marginX, cursorY, sizes.sizeName, { bold: true, color: BLACK });
-  cursorY -= sizes.sizeName + 12; 
+    // Accent line on sidebar right border
+    p.drawLine({ start: { x: SIDEBAR_W, y: 0 }, end: { x: SIDEBAR_W, y: PAGE_HEIGHT }, thickness: 1, color: PRIMARY });
 
-  const contactStr = [
-    id.phone ? `Phone: ${id.phone}` : '',
-    id.email ? `Email: ${id.email}` : '',
-    id.linkedin ? `LinkedIn: ${id.linkedin.replace(/^https?:\/\/(www\.)?/, '')}` : '',
-    id.github ? `GitHub: ${id.github.replace(/^https?:\/\/(www\.)?/, '')}` : '',
-  ].filter(Boolean).join('   •   ');
+    let sideY = PAGE_HEIGHT - 32;
 
-  const bannerH = 18; 
-  p.drawRectangle({ x: marginX, y: cursorY - 4, width: FULL_W, height: bannerH, color: rgb(0.95, 0.96, 0.98) });
-  const contactW = dh.tw(contactStr, sizes.sizeContact);
-  dh.drawText(p, contactStr, marginX + (FULL_W - contactW) / 2, cursorY - 1, sizes.sizeContact, { color: DARK_GRAY });
-  cursorY -= bannerH + 18; 
+    // Compact Avatar Badge [ PM ]
+    const initials = (id.name || 'U').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    const avatarBoxW = 42;
+    const avatarBoxH = 26;
+    const avatarX = (SIDEBAR_W - avatarBoxW) / 2;
 
-  const colOpts = { pageMode: 'strict-one-page', accentBar: true, minGap: 10, bulletIndent: 10, bulletSizeAdd: 0 };
-  const left  = new Column(pdf, dh, PRIMARY, { x: LEFT_COL_X,  width: LEFT_COL_W,  y: cursorY, ...colOpts });
-  const right = new Column(pdf, dh, PRIMARY, { x: RIGHT_COL_X, width: RIGHT_COL_W, y: cursorY, ...colOpts });
-  left.page = right.page = p;
+    p.drawRectangle({
+      x: avatarX,
+      y: sideY - avatarBoxH,
+      width: avatarBoxW,
+      height: avatarBoxH,
+      color: PRIMARY,
+    });
 
-  const summarySec = sections.find(s => s.title.toLowerCase() === 'summary');
-  if (summarySec) {
-    left.sectionHeader('Summary', sizes.sizeSection, { gapBefore: 3, gapAfter: 6 });
-    for (const line of summarySec.content) { left.wrapped(safeText(line).trim(), sizes.sizeBody, sizes.lhBody, { color: DARK_GRAY }); }
-    left.y -= sizes.secSpace;
-  }
+    const initW = dh.tw(initials, 11);
+    dh.drawText(p, initials, avatarX + (avatarBoxW - initW) / 2, sideY - 17, 11, { bold: true, color: WHITE });
+    sideY -= avatarBoxH + 20;
 
-  const expSec = sections.find(s => s.title.toLowerCase().includes('experience'));
-  if (expSec) {
-    left.sectionHeader('Experience', sizes.sizeSection, { gapBefore: 3, gapAfter: 6 });
-    renderTimelineSection(left, expSec.content, sizes, false);
-    left.y -= sizes.secSpace;
-  }
+    // Sidebar Name
+    const nameLines = id.name.split(' ');
+    const firstName = nameLines[0] || '';
+    const lastName = nameLines.slice(1).join(' ') || '';
 
-  const projSec = sections.find(s => s.title.toLowerCase().includes('project'));
-  if (projSec) {
-    left.sectionHeader('Projects', sizes.sizeSection, { gapBefore: 3, gapAfter: 6 });
-    renderTimelineSection(left, projSec.content, sizes, true);
-  }
+    const fnW = dh.tw(firstName.toUpperCase(), 12);
+    dh.drawText(p, firstName.toUpperCase(), (SIDEBAR_W - fnW) / 2, sideY, 12, { bold: true, color: WHITE });
+    sideY -= 14;
 
-  if (hasSkills) {
-    right.sectionHeader('Skills', sizes.sizeSection, { gapBefore: 3, gapAfter: 6 });
-    renderSkillsSection(right, dh, skillsSec.content, sizes.sizeSubtitle, sizes.sizeBody, sizes.lhSubtitle, sizes.lhBody);
-    right.y -= 4;
-  }
-
-  const eduSec = sections.find(s => s.title.toLowerCase().includes('education'));
-  if (eduSec) {
-    const targetCol = hasSkills ? right : left;
-    if (!hasSkills) left.y -= sizes.secSpace;
-    
-    targetCol.sectionHeader('Education', sizes.sizeSection, { gapBefore: 3, gapAfter: 6 });
-    renderEducationSection(targetCol, eduSec.content, sizes);
-  }
-
-  const certSec = sections.find(s => s.title.toLowerCase().includes('certificat'));
-  if (certSec) {
-    const targetCol = hasSkills ? right : left;
-    if (!hasSkills) left.y -= sizes.secSpace;
-    else targetCol.y -= sizes.secSpace;
-    
-    targetCol.sectionHeader('Certifications', sizes.sizeSection, { gapBefore: 3, gapAfter: 6 });
-    for (const line of certSec.content) {
-      const trimmed = safeText(line).trim();
-      if (!trimmed) continue;
-      if (/^[•+\-]/.test(trimmed)) {
-        targetCol.wrapped(`•  ${trimmed.replace(/^[•+\-]\s*/, '')}`, sizes.sizeBody, sizes.lhBody, { color: DARK_GRAY });
-      } else {
-        targetCol.wrapped(trimmed, sizes.sizeBody, sizes.lhBody, { color: DARK_GRAY });
-      }
+    if (lastName) {
+      const lnW = dh.tw(lastName.toUpperCase(), 12);
+      dh.drawText(p, lastName.toUpperCase(), (SIDEBAR_W - lnW) / 2, sideY, 12, { bold: true, color: WHITE });
+      sideY -= 18;
     }
-  }
 
-  const langSec = sections.find(s => s.title.toLowerCase().includes('language'));
-  if (langSec) {
-    const targetCol = hasSkills ? right : left;
-    if (!hasSkills) left.y -= sizes.secSpace;
-    else targetCol.y -= sizes.secSpace;
-    
-    targetCol.sectionHeader('Languages', sizes.sizeSection, { gapBefore: 3, gapAfter: 6 });
-    for (const line of langSec.content) {
-      const trimmed = safeText(line).trim();
-      if (!trimmed) continue;
-      if (/^[•+\-]/.test(trimmed)) {
-        targetCol.wrapped(`•  ${trimmed.replace(/^[•+\-]\s*/, '')}`, sizes.sizeBody, sizes.lhBody, { color: DARK_GRAY });
-      } else {
-        targetCol.wrapped(trimmed, sizes.sizeBody, sizes.lhBody, { color: DARK_GRAY });
+    if (id.role) {
+      const roleStr = id.role.toUpperCase();
+      const rW = dh.tw(roleStr, 7.0);
+      dh.drawText(p, roleStr, (SIDEBAR_W - rW) / 2, sideY, 7.0, { bold: true, color: PRIMARY });
+      sideY -= 20;
+    }
+
+    // Sidebar Contact Details
+    const contactLines = [id.phone, id.email, id.linkedin, id.github].filter(Boolean);
+    if (contactLines.length > 0) {
+      dh.drawText(p, 'CONTACT', 14, sideY, 8.0, { bold: true, color: PRIMARY });
+      p.drawLine({ start: { x: 14, y: sideY - 3 }, end: { x: SIDEBAR_W - 14, y: sideY - 3 }, thickness: 0.6, color: PRIMARY });
+      sideY -= 14;
+
+      for (const line of contactLines) {
+        const clean = safeText(line).replace(/^https?:\/\/(www\.)?/, '');
+        dh.drawText(p, clean.length > 25 ? clean.slice(0, 24) + '…' : clean, 14, sideY, 6.5, { color: LIGHT_TEXT });
+        sideY -= 11;
       }
+      sideY -= 10;
+    }
+
+    // Left Sidebar Column for Skills, Education, Certifications
+    const sideCol = new Column(pdf, dh, WHITE, { x: 14, width: SIDEBAR_W - 28, y: sideY, pageMode: 'multi-page' });
+    sideCol.page = p;
+
+    // Render Side Sections
+    for (const secKey of sideSectionOrder) {
+      const secText = editedSections?.[secKey];
+      if (!secText || !secText.trim()) continue;
+
+      sideCol.sectionHeader(secKey.toUpperCase(), 8.5, { gapBefore: 6, gapAfter: 10 });
+
+      if (secKey === 'Skills') {
+        const lines = secText.split('\n').filter(Boolean);
+        for (const line of lines) {
+          const cleanLine = safeText(line).trim();
+          if (!cleanLine) continue;
+          if (cleanLine.includes(':')) {
+            const [cat, val] = cleanLine.split(':');
+            sideCol.wrapped(cat.trim() + ':', 7.0, 9.5, { color: PRIMARY });
+            sideCol.wrapped(val.trim(), 6.5, 9.0, { color: LIGHT_TEXT });
+          } else {
+            sideCol.wrapped(`• ${cleanLine}`, 6.5, 9.0, { color: LIGHT_TEXT });
+          }
+        }
+      } else {
+        const lines = parseBulletPoints(secText);
+        for (const line of lines) {
+          const trimmed = safeText(line).trim();
+          if (!trimmed) continue;
+          sideCol.wrapped(`• ${trimmed.replace(/^[•+\-]\s*/, '')}`, 6.5, 9.0, { color: LIGHT_TEXT });
+        }
+      }
+      sideCol.y -= sizes.secSpace;
+    }
+
+    // Main Right Column for Summary, Experience, Projects
+    let mainY = PAGE_HEIGHT - 36;
+    const mainCol = new Column(pdf, dh, PRIMARY, { x: MAIN_X, width: MAIN_W, y: mainY, pageMode: 'multi-page', accentBar: true });
+    mainCol.page = p;
+
+    for (const secKey of mainSectionOrder) {
+      const secText = editedSections?.[secKey];
+      if (!secText || !secText.trim()) continue;
+
+      mainCol.sectionHeader(secKey === 'Summary' ? 'PROFESSIONAL SUMMARY' : secKey === 'Experience' ? 'WORK EXPERIENCE' : secKey.toUpperCase(), sizes.sizeSection, { gapBefore: 6, gapAfter: 10 });
+
+      if (secKey === 'Summary') {
+        mainCol.wrapped(safeText(secText).trim(), sizes.sizeBody, sizes.lhBody, { color: DARK_GRAY });
+      } else {
+        const lines = secText.split('\n').filter(Boolean);
+        renderTimelineSection(mainCol, lines, sizes, secKey === 'Projects');
+      }
+      mainCol.y -= sizes.secSpace;
+    }
+
+  } else {
+    // SINGLE-COLUMN LAYOUT
+    let cursorY = PAGE_HEIGHT - 40;
+    p.drawRectangle({ x: 0, y: cursorY - 10, width: PAGE_WIDTH, height: 60, fill: PRIMARY });
+
+    dh.drawText(p, id.name.toUpperCase(), 36, cursorY + 22, 16, { bold: true, color: WHITE });
+    if (id.role) {
+      dh.drawText(p, id.role.toUpperCase(), 36, cursorY + 8, 8.0, { color: LIGHT_TEXT });
+    }
+
+    const contactStr = [id.phone, id.email, id.linkedin, id.github].filter(Boolean).join('   •   ');
+    if (contactStr) {
+      dh.drawText(p, contactStr, 36, cursorY - 4, 7.2, { color: LIGHT_TEXT });
+    }
+    cursorY -= 36;
+
+    const singleCol = new Column(pdf, dh, PRIMARY, { x: 36, width: PAGE_WIDTH - 72, y: cursorY, pageMode: 'multi-page', accentBar: true });
+    singleCol.page = p;
+
+    const allSectionsOrder = [...mainSectionOrder, ...sideSectionOrder];
+    for (const secKey of allSectionsOrder) {
+      const secText = editedSections?.[secKey];
+      if (!secText || !secText.trim()) continue;
+
+      singleCol.sectionHeader(secKey.toUpperCase(), sizes.sizeSection, { gapBefore: 4, gapAfter: 6 });
+
+      if (secKey === 'Summary') {
+        singleCol.wrapped(safeText(secText).trim(), sizes.sizeBody, sizes.lhBody, { color: DARK_GRAY });
+      } else if (secKey === 'Skills') {
+        const skillsLines = secText.split('\n').filter(Boolean);
+        renderSkillsSection(singleCol, dh, skillsLines, sizes.sizeSubtitle, sizes.sizeBody, sizes.lhSubtitle, sizes.lhBody);
+      } else if (secKey === 'Experience' || secKey === 'Projects') {
+        const lines = secText.split('\n').filter(Boolean);
+        renderTimelineSection(singleCol, lines, sizes, secKey === 'Projects');
+      } else {
+        const lines = parseBulletPoints(secText);
+        for (const line of lines) {
+          singleCol.wrapped(`•  ${safeText(line).replace(/^[•+\-]\s*/, '')}`, sizes.sizeBody, sizes.lhBody, { color: DARK_GRAY });
+        }
+      }
+      singleCol.y -= sizes.secSpace;
     }
   }
 

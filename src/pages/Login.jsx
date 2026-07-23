@@ -10,33 +10,35 @@ import "./Login.css";
 const LOGIN_STEPS = [
   "Initialising secure handshake…",
   "Verifying credentials…",
-  "Decoding quantum identity token…",
   "Calibrating career intelligence core…",
-  "Synchronising your career graph…",
   "Launching Career Lens…",
 ];
 
 function LoginOverlay() {
   const [step, setStep]       = useState(0);
   const [progress, setProgress] = useState(0);
+  const [isColdStart, setIsColdStart] = useState(false);
   const canvasRef             = useRef(null);
   const rafRef                = useRef(null);
 
-  // Cycle through steps
+  // Cycle through steps faster (300ms per step)
   useEffect(() => {
     const total = LOGIN_STEPS.length;
     const interval = setInterval(() => {
       setStep(s => Math.min(s + 1, total - 1));
-    }, 600);
+    }, 300);
     return () => clearInterval(interval);
   }, []);
 
-  // Animate progress bar 0 → 95 % while waiting
+  // Animate progress bar 0 → 95 % while waiting for backend promise
   useEffect(() => {
     let v = 0;
     const tick = () => {
-      v = Math.min(v + 0.55, 95);
+      v = Math.min(v + 1.2, 95);
       setProgress(v);
+      if (v >= 95) {
+        setIsColdStart(true);
+      }
       if (v < 95) rafRef.current = requestAnimationFrame(tick);
     };
     rafRef.current = requestAnimationFrame(tick);
@@ -138,7 +140,7 @@ function LoginOverlay() {
 
         {/* Status label */}
         <p className="login-overlay__step" key={step}>
-          {LOGIN_STEPS[step]}
+          {isColdStart ? "⚡ Cloud backend server starting (Render free tier wake-up)… Almost there!" : LOGIN_STEPS[step]}
         </p>
 
         {/* Progress bar */}

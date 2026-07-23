@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import {
   BrowserRouter,
   Routes,
@@ -19,6 +20,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import TemplatesPage from "./pages/TemplatesPage";
 import AtsScoreCalculatorPage from "./pages/AtsScoreCalculatorPage";
+import api from "./api/axiosConfig";
 
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem("token");
@@ -159,6 +161,13 @@ function Layout() {
 }
 
 function App() {
+  // Wake up Render free tier backend container early on page load
+  useEffect(() => {
+    api.get("/health").catch(() => {
+      // Silent catch — pinging just to wake server from sleep
+    });
+  }, []);
+
   return (
     <BrowserRouter>
       <Layout />

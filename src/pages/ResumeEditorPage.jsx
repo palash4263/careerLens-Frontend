@@ -7,7 +7,7 @@ import {
   Trash2, LayoutGrid, CheckSquare, Plus, ArrowUp, ArrowDown, GripVertical,
   FileText, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight,
   Award, Globe, Briefcase, GraduationCap, ChevronRight, Undo2, Redo2, Type, Layers, Bot, Upload, Palette,
-  Eye, EyeOff
+  Eye, EyeOff, User, Lightbulb, Save
 } from "lucide-react";
 import { getResumes } from "../services/resumeService";
 import { getJobDescriptions } from "../services/jobDescriptionService";
@@ -219,6 +219,18 @@ export default function ResumeEditorPage() {
   const [activeRailTab, setActiveRailTab] = useState("content");
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [mobileSelectedSection, setMobileSelectedSection] = useState("Summary");
+  const [isMobileView, setIsMobileView] = useState(() => window.innerWidth <= 768);
+  const [mobileActiveTab, setMobileActiveTab] = useState("edit"); // "edit" or "preview"
+  const [mobileEditingSection, setMobileEditingSection] = useState(null); // null or sectionKey
+  const [previewSubTab, setPreviewSubTab] = useState("preview"); // "preview" or "ats"
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobileView(window.innerWidth <= 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // History stack for Undo / Redo
   const [history, setHistory] = useState([editedSections]);
@@ -934,6 +946,398 @@ export default function ResumeEditorPage() {
 
   const activeFontFamily = PREMIUM_FONTS.find(f => f.name === selectedFont)?.family || "sans-serif";
 
+  if (isMobileView) {
+    if (mobileEditingSection) {
+      const sectionName = mobileEditingSection;
+      const sectionValue = editedSections[sectionName] || "";
+      const wordCount = sectionValue.split(/\s+/).filter(Boolean).length;
+      const charCount = sectionValue.length;
+
+      // Section info mapping helper for high-fidelity titles & descriptions
+      const SECTION_META_MAP = {
+        Summary: { title: "Professional Summary", desc: "Write a brief summary of your professional background", icon: <FileText className="nvo-mobile-editor-card-icon" size={18} /> },
+        Experience: { title: "Work Experience", desc: "Your professional experience and achievements", icon: <Briefcase className="nvo-mobile-editor-card-icon" size={18} /> },
+        Education: { title: "Education", desc: "Your educational background", icon: <GraduationCap className="nvo-mobile-editor-card-icon" size={18} /> },
+        Skills: { title: "Skills", desc: "Technical and soft skills", icon: <Sliders className="nvo-mobile-editor-card-icon" size={18} /> },
+        Projects: { title: "Projects", desc: "Notable projects you've worked on", icon: <Globe className="nvo-mobile-editor-card-icon" size={18} /> },
+        Certifications: { title: "Certifications", desc: "Professional certifications and courses", icon: <Award className="nvo-mobile-editor-card-icon" size={18} /> },
+        Header: { title: "Personal Information", desc: "Contact and personal details", icon: <User className="nvo-mobile-editor-card-icon" size={18} /> }
+      };
+
+      const meta = SECTION_META_MAP[sectionName] || { title: sectionName, desc: `Edit your ${sectionName} section content`, icon: <FileText className="nvo-mobile-editor-card-icon" size={18} /> };
+
+      return (
+        <div className="nvo-mobile-editor-screen">
+          {/* Header */}
+          <div className="nvo-mobile-header">
+            <div className="nvo-mobile-header-left">
+              <ArrowLeft 
+                className="nvo-mobile-back-arrow" 
+                size={20} 
+                onClick={() => setMobileEditingSection(null)} 
+              />
+              <div className="nvo-mobile-title-container">
+                <span className="nvo-mobile-title">Edit {sectionName === 'Header' ? 'Personal Info' : sectionName}</span>
+                <span className="nvo-mobile-subtitle">{wordCount} words • {charCount} characters</span>
+              </div>
+            </div>
+            <button 
+              className="nvo-mobile-done-btn" 
+              onClick={() => setMobileEditingSection(null)}
+            >
+              <Check size={14} />
+              <span>Done</span>
+            </button>
+          </div>
+
+          <div className="nvo-mobile-editor-body" style={{ overflowY: 'auto', paddingBottom: '30px' }}>
+            {/* AI Suggestion Card */}
+            <div className="nvo-mobile-ai-suggest-card">
+              <div className="nvo-mobile-ai-suggest-left">
+                <div className="nvo-mobile-ai-suggest-stars">
+                  <Sparkles size={16} />
+                </div>
+                <div className="nvo-mobile-ai-suggest-text">
+                  <span className="nvo-mobile-ai-suggest-title">AI Suggestion</span>
+                  <span className="nvo-mobile-ai-suggest-desc">
+                    Well written! Consider highlighting your key achievements or specific technologies.
+                  </span>
+                </div>
+              </div>
+              <ChevronRight className="nvo-mobile-item-chevron" size={16} />
+            </div>
+
+            {/* Editor Textarea Card */}
+            <div className="nvo-mobile-editor-card">
+              <div className="nvo-mobile-editor-card-header">
+                <div className="nvo-mobile-editor-card-info">
+                  {meta.icon}
+                  <div className="nvo-mobile-editor-card-titles">
+                    <span className="nvo-mobile-editor-card-title">{meta.title}</span>
+                    <span className="nvo-mobile-editor-card-desc">{meta.desc}</span>
+                  </div>
+                </div>
+                <div className="nvo-mobile-editor-card-meta">
+                  <span className="nvo-mobile-words-badge">{wordCount} words</span>
+                  <Save className="nvo-mobile-edit-pencil" size={14} style={{ opacity: 0.6 }} />
+                </div>
+              </div>
+
+              <div className="nvo-mobile-textarea-container">
+                <textarea
+                  className="nvo-mobile-textarea-field"
+                  value={sectionValue}
+                  onChange={(e) => updateSectionsWithHistory({ ...editedSections, [sectionName]: e.target.value })}
+                  placeholder={`Write content for your ${sectionName} section...`}
+                  maxLength={1000}
+                />
+                <span className="nvo-mobile-char-count-fraction">
+                  {charCount} / 1000
+                </span>
+              </div>
+            </div>
+
+            {/* Tips to Improve Card */}
+            <div className="nvo-mobile-tips-card">
+              <div className="nvo-mobile-tips-header">
+                <div className="nvo-mobile-tips-icon-circle">
+                  <Lightbulb size={15} />
+                </div>
+                <span className="nvo-mobile-tips-title">Tips to improve</span>
+              </div>
+              <div className="nvo-mobile-tips-list">
+                <div className="nvo-mobile-tips-item">
+                  <span className="nvo-mobile-tips-check">✓</span>
+                  <span>Start with your role and years of experience</span>
+                </div>
+                <div className="nvo-mobile-tips-item">
+                  <span className="nvo-mobile-tips-check">✓</span>
+                  <span>Mention key skills and technologies</span>
+                </div>
+                <div className="nvo-mobile-tips-item">
+                  <span className="nvo-mobile-tips-check">✓</span>
+                  <span>Add a notable achievement or impact</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Actions Buttons */}
+            <div className="nvo-mobile-bottom-actions-container">
+              <button 
+                className="nvo-mobile-editor-gradient-btn"
+                onClick={async () => {
+                  await handleOptimizeSection(sectionName);
+                }}
+                disabled={optimizingSections[sectionName]}
+              >
+                <Sparkles size={16} />
+                <span>{optimizingSections[sectionName] ? "AI Personalizing..." : "Optimize with AI"}</span>
+              </button>
+
+              <button className="nvo-mobile-editor-save-btn" onClick={() => setMobileEditingSection(null)}>
+                <Save size={16} />
+                <span>Save & Back</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="nvo-mobile-screen">
+        {/* Header */}
+        <div className="nvo-mobile-header">
+          <div className="nvo-mobile-header-left">
+            <ArrowLeft 
+              className="nvo-mobile-back-arrow" 
+              size={20} 
+              onClick={() => navigate("/dashboard")} 
+            />
+            <div className="nvo-mobile-title-container">
+              <span className="nvo-mobile-title">
+                {mobileActiveTab === 'edit' ? "My Content Sections" : "Resume Preview"}
+              </span>
+              <span className="nvo-mobile-subtitle">
+                {mobileActiveTab === 'edit' ? "Manage and optimize your resume content" : "See how your resume looks"}
+              </span>
+            </div>
+          </div>
+          
+          {mobileActiveTab === 'edit' ? (
+            <button 
+              className="nvo-mobile-header-btn" 
+              onClick={() => setMobileActiveTab("preview")}
+            >
+              <Eye size={14} />
+              <span>Preview</span>
+            </button>
+          ) : (
+            <button 
+              className="nvo-mobile-header-btn" 
+              onClick={() => setMobileActiveTab("edit")}
+            >
+              <FileText size={14} />
+              <span>Edit</span>
+            </button>
+          )}
+        </div>
+
+        {/* Tab-Specific Content */}
+        {mobileActiveTab === 'edit' ? (
+          <>
+            {/* AI Banner Card */}
+            <div className="nvo-mobile-ai-active-card">
+              <div className="nvo-mobile-ai-bulb-circle">
+                <Sparkles size={18} />
+              </div>
+              <div className="nvo-mobile-ai-text">
+                <span className="nvo-mobile-ai-title">AI Enhancement Active</span>
+                <span className="nvo-mobile-ai-desc">
+                  We're optimizing your content for maximum impact and ATS compatibility.
+                </span>
+              </div>
+            </div>
+
+            {/* List of sections */}
+            <div className="nvo-mobile-section-list">
+              {[
+                { key: 'Summary', title: 'Professional Summary', desc: 'Compelling summary about your expertise', color: '#10b981', icon: <FileText size={16} />, stats: `${(editedSections.Summary || "").split(/\s+/).filter(Boolean).length} words`, badge: true },
+                { key: 'Experience', title: 'Work Experience', desc: 'Your professional experience and achievements', color: '#8b5cf6', icon: <Briefcase size={16} />, stats: `${(editedSections.Experience || "").split(/\s+/).filter(Boolean).length} words` },
+                { key: 'Education', title: 'Education', desc: 'Your educational background', color: '#3b82f6', icon: <GraduationCap size={16} />, stats: `${(editedSections.Education || "").split(/\s+/).filter(Boolean).length} words` },
+                { key: 'Skills', title: 'Skills', desc: 'Technical and soft skills', color: '#f59e0b', icon: <Sliders size={16} />, stats: `${(editedSections.Skills || "").split(/[,\n]/).map(s => s.trim()).filter(Boolean).length} skills` },
+                { key: 'Projects', title: 'Projects', desc: 'Notable projects you\'ve worked on', color: '#ec4899', icon: <Globe size={16} />, stats: `${(editedSections.Projects || "").split('\n\n').filter(Boolean).length} projects` },
+                { key: 'Certifications', title: 'Certifications', desc: 'Professional certifications and courses', color: '#0d9488', icon: <Award size={16} />, stats: `${parseBulletPoints(editedSections.Certifications).length} items` },
+                { key: 'Header', title: 'Personal Information', desc: 'Contact and personal details', color: '#a855f7', icon: <User size={16} />, stats: 'Updated' },
+              ].map(sec => (
+                <div 
+                  key={sec.key} 
+                  className="nvo-mobile-section-item"
+                  onClick={() => setMobileEditingSection(sec.key)}
+                >
+                  <div className="nvo-mobile-item-left">
+                    <div className="nvo-mobile-icon-wrapper" style={{ backgroundColor: sec.color }}>
+                      {sec.icon}
+                    </div>
+                    <div className="nvo-mobile-item-details">
+                      <div className="nvo-mobile-item-title-row">
+                        <span className="nvo-mobile-item-title">{sec.title}</span>
+                        {sec.badge && <span className="nvo-mobile-enhanced-badge">AI Enhanced</span>}
+                      </div>
+                      <span className="nvo-mobile-item-subtitle">{sec.desc}</span>
+                    </div>
+                  </div>
+                  <div className="nvo-mobile-item-right">
+                    <span className="nvo-mobile-item-stats">{sec.stats}</span>
+                    <ChevronRight className="nvo-mobile-item-chevron" size={16} />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <button className="nvo-mobile-add-btn">
+              <Plus size={16} />
+              <span>Add New Section</span>
+            </button>
+          </>
+        ) : (
+          <>
+            {/* Capsule Tabs for Preview vs ATS Score */}
+            <div className="nvo-mobile-tab-capsule">
+              <button 
+                className={`nvo-mobile-tab-btn ${previewSubTab === 'preview' ? 'active' : ''}`}
+                onClick={() => setPreviewSubTab("preview")}
+              >
+                Preview
+              </button>
+              <button 
+                className={`nvo-mobile-tab-btn ${previewSubTab === 'ats' ? 'active' : ''}`}
+                onClick={() => setPreviewSubTab("ats")}
+              >
+                ATS Score
+              </button>
+            </div>
+
+            {/* Sub-Tab Content */}
+            {previewSubTab === 'preview' ? (
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', paddingBottom: '30px' }}>
+                <div className="nvo-canvas-viewport" style={{ padding: '0 10px', height: 'auto', overflow: 'visible' }}>
+                  <div className="red-canvas-container" style={{ padding: '0' }}>
+                    <div 
+                      className="red-page-canvas" 
+                      style={{ 
+                        fontFamily: activeFontFamily,
+                        fontSize: `${0.5 + (baseFontSize * 0.1)}rem`,
+                        '--page-padding': pageMargins === 1 ? '24px 20px' : pageMargins === 2 ? '36px 30px' : '48px 40px',
+                        '--section-margin': `${sectionSpacing * 6}px`,
+                        '--list-gap': `${sectionSpacing * 2.5}px`,
+                        '--bullet-margin': `${sectionSpacing * 1.2}px`,
+                      }}
+                    >
+                      {selectedTemplate === 'two-column' ? (
+                        <div className="ecv-layout">
+                          <div className="ecv-sidebar" style={{ backgroundColor: selectedColor }}>
+                            <div className="ecv-avatar" style={{ borderColor: 'rgba(255,255,255,0.3)' }}>
+                              <span className="ecv-avatar-initials">
+                                {(() => {
+                                  const headerLines = (editedSections.Header || '').split('\n');
+                                  const nameLine = headerLines.find(l => {
+                                    const t = l.trim();
+                                    return t && !t.startsWith('+') && !t.includes('@') && !t.includes('http') && !t.includes('linkedin') && !t.includes('github') && !/^\d/.test(t);
+                                  }) || 'U';
+                                  return nameLine.trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+                                })()}
+                              </span>
+                            </div>
+                            <div className="ecv-sidebar-identity" style={getSectionFontSize('Header')}>
+                              <h2 className="ecv-sidebar-name">{editedSections.Header.split('\n')[0] || 'Your Name'}</h2>
+                              <p className="ecv-sidebar-role">{editedSections.Header.split('\n')[1] || 'Professional Role'}</p>
+                            </div>
+                            <div className="ecv-sidebar-section" style={getSectionFontSize('Header')}>
+                              <div className="ecv-sidebar-heading">CONTACT</div>
+                              <div>
+                                {editedSections.Header.split('\n').slice(2).map((line, i) => (
+                                  <p key={i} className="ecv-sidebar-line">{line}</p>
+                                ))}
+                              </div>
+                            </div>
+                            {sideSectionOrder.map(key => renderSectionByKey(key, true))}
+                          </div>
+                          <div className="ecv-main">
+                            {mainSectionOrder.map(key => renderSectionByKey(key, false))}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="ecv-single">
+                          <div className="ecv-single-header" style={{ backgroundColor: selectedColor, ...getSectionFontSize('Header') }}>
+                            <div className="ecv-single-avatar">
+                              <span className="ecv-avatar-initials" style={{ fontSize: '1.1rem' }}>
+                                {(editedSections.Header.split('\n')[0] || 'U').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase()}
+                              </span>
+                            </div>
+                            <div>
+                              <h2 className="ecv-single-name">{editedSections.Header.split('\n')[0] || 'Your Name'}</h2>
+                              <p className="ecv-single-role">{editedSections.Header.split('\n')[1] || 'Professional Role'}</p>
+                              <p className="ecv-single-contacts">{editedSections.Header.split('\n').slice(2).join('  •  ')}</p>
+                            </div>
+                          </div>
+                          <div className="ecv-single-body">
+                            {[...mainSectionOrder, ...sideSectionOrder].map(key => renderSectionByKey(key, false))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                {/* Dots indicator */}
+                <div style={{ display: 'flex', gap: '8px', marginTop: '24px' }}>
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#00f2fe' }}></span>
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.2)' }}></span>
+                </div>
+              </div>
+            ) : (
+              <div style={{ flex: 1, padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '20px' }}>
+                <div style={{ position: 'relative', width: '120px', height: '120px', display: 'flex', alignItems: 'center', justifyItems: 'center' }}>
+                  <svg viewBox="0 0 36 36" style={{ transform: 'rotate(-90deg)', width: '100%', height: '100%' }}>
+                    <path
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                      fill="none"
+                      stroke="rgba(255,255,255,0.06)"
+                      strokeWidth="2.5"
+                    />
+                    <path
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                      fill="none"
+                      stroke="#00f2fe"
+                      strokeWidth="2.8"
+                      strokeDasharray={`${result?.estimated_new_score || 88}, 100`}
+                    />
+                  </svg>
+                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                    <span style={{ fontSize: '1.8rem', fontWeight: 800, color: '#ffffff' }}>{result?.estimated_new_score || 88}%</span>
+                    <span style={{ fontSize: '0.62rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>ATS Score</span>
+                  </div>
+                </div>
+                <div className="nvo-ai-card" style={{ width: '100%', background: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.05)' }}>
+                  <span className="nvo-ai-card-title">Keyword Match Analysis</span>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '10px' }}>
+                    {(result?.matched_keywords || ['React', 'Node.js', 'FastAPI', 'AWS', 'Docker', 'REST APIs', 'SQL']).map(kw => (
+                      <span key={kw} style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.2)', padding: '4px 10px', borderRadius: '6px', fontSize: '0.72rem' }}>
+                        ✓ {kw}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Bottom Actions Menu Bar */}
+            <div className="nvo-mobile-bottom-bar">
+              <button className="nvo-mobile-action-card-btn" onClick={handleDownloadPDF}>
+                <Download size={18} style={{ color: '#00f2fe' }} />
+                <span>Download PDF</span>
+              </button>
+              <button 
+                className="nvo-mobile-action-card-btn" 
+                onClick={() => {
+                  setSelectedTemplate(selectedTemplate === 'two-column' ? 'single-column' : 'two-column');
+                  localStorage.setItem("cl_selected_template", selectedTemplate === 'two-column' ? 'single-column' : 'two-column');
+                }}
+              >
+                <Layers size={18} style={{ color: '#00f2fe' }} />
+                <span>Change Template</span>
+              </button>
+              <button className="nvo-mobile-action-card-btn" onClick={copyToClipboard}>
+                <Copy size={18} style={{ color: '#00f2fe' }} />
+                <span>Share Resume</span>
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className={`nvo-editor-shell ${isPreviewMode ? 'is-preview' : ''}`} style={{ fontFamily: activeFontFamily }}>
       {/* ── NOVORESUME LEFT SIDEBAR RAIL ── */}
@@ -1150,23 +1554,105 @@ export default function ResumeEditorPage() {
               </button>
             </div>
 
-            <div className="nvo-drawer-body">
+            <div className="nvo-drawer-body" style={{ display: 'flex', flexDirection: 'column', gap: '14px', overflowY: 'auto' }}>
+              {/* Choose Layout */}
               <div className="nvo-ai-card">
                 <span className="nvo-ai-card-title">Choose Layout</span>
                 <button 
                   className={`nvo-ai-action-btn ${selectedTemplate === 'two-column' ? 'active' : ''}`}
-                  onClick={() => setSelectedTemplate('two-column')}
+                  onClick={() => {
+                    setSelectedTemplate('two-column');
+                    localStorage.setItem("cl_selected_template", 'two-column');
+                  }}
                 >
                   <LayoutGrid size={16} />
                   <span>Double Column (Modern Tech)</span>
                 </button>
                 <button 
                   className={`nvo-ai-action-btn ${selectedTemplate === 'single-column' ? 'active' : ''}`}
-                  onClick={() => setSelectedTemplate('single-column')}
+                  onClick={() => {
+                    setSelectedTemplate('single-column');
+                    localStorage.setItem("cl_selected_template", 'single-column');
+                  }}
                 >
                   <FileText size={16} />
                   <span>Single Column (Classic Executive)</span>
                 </button>
+              </div>
+
+              {/* Color Themes */}
+              <div className="nvo-ai-card">
+                <span className="nvo-ai-card-title">Theme Color</span>
+                <div className="red-color-circles" style={{ justifyContent: 'flex-start', gap: '8px', padding: '4px 0' }}>
+                  {PREMIUM_THEMES.map((theme) => (
+                    <button
+                      key={theme.hex}
+                      className={`red-color-dot ${selectedColor === theme.hex ? 'active' : ''}`}
+                      style={{ backgroundColor: theme.hex, width: '28px', height: '28px' }}
+                      onClick={() => {
+                        setSelectedColor(theme.hex);
+                        localStorage.setItem("cl_selected_color", theme.hex);
+                      }}
+                      title={theme.name}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Typography / Font */}
+              <div className="nvo-ai-card">
+                <span className="nvo-ai-card-title">Typography</span>
+                <select 
+                  value={selectedFont} 
+                  onChange={(e) => {
+                    setSelectedFont(e.target.value);
+                    localStorage.setItem("cl_selected_font", e.target.value);
+                  }} 
+                  className="nvo-ai-input"
+                  style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(255,255,255,0.08)' }}
+                >
+                  {PREMIUM_FONTS.map(f => (
+                    <option key={f.name} value={f.name}>{f.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Margins */}
+              <div className="nvo-ai-card">
+                <span className="nvo-ai-card-title">Page Margins</span>
+                <select 
+                  value={pageMargins} 
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    setPageMargins(val);
+                    localStorage.setItem("cl_selected_margins", val);
+                  }} 
+                  className="nvo-ai-input"
+                  style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(255,255,255,0.08)' }}
+                >
+                  <option value={1}>Compact (0.3 in)</option>
+                  <option value={2}>Normal (0.5 in)</option>
+                  <option value={3}>Spacious (0.75 in)</option>
+                </select>
+              </div>
+
+              {/* Section Spacing */}
+              <div className="nvo-ai-card">
+                <span className="nvo-ai-card-title">Section Spacing</span>
+                <select 
+                  value={sectionSpacing} 
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    setSectionSpacing(val);
+                    localStorage.setItem("cl_selected_spacing", val);
+                  }} 
+                  className="nvo-ai-input"
+                  style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(255,255,255,0.08)' }}
+                >
+                  <option value={1}>Tight</option>
+                  <option value={3}>Normal</option>
+                  <option value={5}>Relaxed</option>
+                </select>
               </div>
             </div>
           </motion.div>
@@ -1189,38 +1675,7 @@ export default function ResumeEditorPage() {
 
           <div className="nvo-bar-divider" />
 
-          {/* Layout Selector */}
-          <div className="nvo-bar-group">
-            <LayoutGrid size={14} style={{ color: '#38bdf8' }} />
-            <select 
-              value={selectedTemplate} 
-              onChange={(e) => setSelectedTemplate(e.target.value)} 
-              className="red-select"
-            >
-              <option value="two-column">Double Column</option>
-              <option value="single-column">Single Column</option>
-            </select>
-          </div>
-
-          {/* Fonts Dropdown */}
-          <div className="nvo-bar-group">
-            <Type size={14} style={{ color: '#38bdf8' }} />
-            <select 
-              value={selectedFont} 
-              onChange={(e) => {
-                setSelectedFont(e.target.value);
-                localStorage.setItem("cl_selected_font", e.target.value);
-              }} 
-              className="red-select font-selector"
-              title="Change Font Family"
-            >
-              {PREMIUM_FONTS.map(f => (
-                <option key={f.name} value={f.name}>{f.name}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Font Size Selector */}
+          {/* Font Size Selector (Crucial for page length adjustment) */}
           <div className="nvo-bar-group">
             <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#38bdf8' }}>A±</span>
             <select 
@@ -1232,112 +1687,23 @@ export default function ResumeEditorPage() {
               }} 
               className="red-select"
               title="Adjust Font Size"
+              style={{ paddingRight: '12px' }}
             >
-              <option value={0.5}>Size: 6.5pt (Ultra Micro — Fits 1 Page)</option>
-              <option value={0.7}>Size: 7.0pt (Micro — Single Page Guarantee)</option>
-              <option value={0.85}>Size: 7.5pt (Very Compact)</option>
-              <option value={1}>Size: 8.0pt (Compact)</option>
-              <option value={1.5}>Size: 8.5pt (Small Compact)</option>
-              <option value={2}>Size: 9.0pt (Small)</option>
-              <option value={3}>Size: 10.0pt (Normal)</option>
-              <option value={4}>Size: 11.0pt (Large)</option>
+              <option value={0.5}>6.5pt (Ultra Micro)</option>
+              <option value={0.7}>7.0pt (Micro)</option>
+              <option value={0.85}>7.5pt (Very Compact)</option>
+              <option value={1}>8.0pt (Compact)</option>
+              <option value={1.5}>8.5pt (Small Compact)</option>
+              <option value={2}>9.0pt (Small)</option>
+              <option value={3}>10.0pt (Normal)</option>
+              <option value={4}>11.0pt (Large)</option>
             </select>
           </div>
-
-          {/* Page Margins Selector */}
-          <div className="nvo-bar-group">
-            <Maximize2 size={13} style={{ color: '#38bdf8' }} />
-            <select 
-              value={pageMargins} 
-              onChange={(e) => {
-                const val = Number(e.target.value);
-                setPageMargins(val);
-                localStorage.setItem("cl_selected_margins", val);
-              }} 
-              className="red-select"
-              title="Adjust Page Margins"
-            >
-              <option value={1}>Margin: Compact (0.3 in)</option>
-              <option value={2}>Margin: Normal (0.5 in)</option>
-              <option value={3}>Margin: Spacious (0.75 in)</option>
-            </select>
-          </div>
-
-          {/* Section Spacing Selector */}
-          <div className="nvo-bar-group">
-            <Sliders size={13} style={{ color: '#38bdf8' }} />
-            <select 
-              value={sectionSpacing} 
-              onChange={(e) => {
-                const val = Number(e.target.value);
-                setSectionSpacing(val);
-                localStorage.setItem("cl_selected_spacing", val);
-              }} 
-              className="red-select"
-              title="Adjust Section Spacing"
-            >
-              <option value={1}>Spacing: Tight</option>
-              <option value={3}>Spacing: Normal</option>
-              <option value={5}>Spacing: Relaxed</option>
-            </select>
-          </div>
-
-          {/* Color Themes */}
-          <div className="nvo-bar-group">
-            <Palette size={14} style={{ color: '#38bdf8' }} />
-            <div className="red-color-circles">
-              {PREMIUM_THEMES.map((theme) => (
-                <button
-                  key={theme.hex}
-                  className={`red-color-dot ${selectedColor === theme.hex ? 'active' : ''}`}
-                  style={{ backgroundColor: theme.hex }}
-                  onClick={() => {
-                    setSelectedColor(theme.hex);
-                    localStorage.setItem("cl_selected_color", theme.hex);
-                  }}
-                  title={theme.name}
-                />
-              ))}
-            </div>
-          </div>
-
-          <div className="nvo-bar-divider" />
-
-          {/* Preview Toggle Button */}
-          <button 
-            className={`nvo-bar-btn ${isPreviewMode ? 'active' : ''}`} 
-            title={isPreviewMode ? "Exit Preview Mode" : "Enter Preview Mode"} 
-            onClick={() => setIsPreviewMode(!isPreviewMode)}
-            style={{ 
-              background: isPreviewMode ? 'rgba(56, 189, 248, 0.15)' : 'transparent',
-              color: isPreviewMode ? '#38bdf8' : '#cbd5e1',
-              border: isPreviewMode ? '1px solid rgba(56, 189, 248, 0.3)' : 'none'
-            }}
-          >
-            {isPreviewMode ? <EyeOff size={14} /> : <Eye size={14} />}
-            <span>{isPreviewMode ? 'Edit Mode' : 'Preview'}</span>
-          </button>
-
           {/* Download PDF Button */}
           <button className={`nvo-bar-btn nvo-btn-download ${downloading ? 'loading' : ''}`} onClick={handleDownloadPDF} disabled={downloading}>
             {downloading ? <span className="red-spinner" /> : <Download size={14} />}
             <span>{downloading ? 'Exporting...' : 'Download PDF'}</span>
           </button>
-
-          {/* Page Counter Badge */}
-          <span style={{ 
-            fontFamily: "'Fira Code', monospace", 
-            fontSize: "0.7rem", 
-            fontWeight: 700, 
-            color: pageCount > 1 ? "#38bdf8" : "#94a3b8",
-            background: pageCount > 1 ? "rgba(56, 189, 248, 0.12)" : "rgba(255, 255, 255, 0.05)",
-            border: pageCount > 1 ? "1px solid rgba(56, 189, 248, 0.3)" : "1px solid rgba(255, 255, 255, 0.08)",
-            padding: "3px 10px",
-            borderRadius: "99px",
-            marginLeft: "4px"
-          }}>
-            📄 {pageCount} {pageCount === 1 ? 'Page' : 'Pages'} (A4)
-          </span>
         </header>
 
         {/* ── CENTERED CANVAS VIEWPORT ── */}

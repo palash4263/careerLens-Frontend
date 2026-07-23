@@ -294,7 +294,7 @@ class Column {
     if (curIdx === pages.length - 1) {
       const newPage = this.pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
       if (this.accentBar) {
-        newPage.drawRectangle({ x: 0, y: PAGE_HEIGHT - 6, width: PAGE_WIDTH, height: 6, fill: this.PRIMARY });
+        newPage.drawRectangle({ x: 0, y: PAGE_HEIGHT - 6, width: PAGE_WIDTH, height: 6, color: this.PRIMARY });
       }
       this.page = newPage;
     } else {
@@ -700,7 +700,7 @@ export async function generateResumePDF({
 
     // Dark sleek sidebar background (#121722)
     const SIDEBAR_BG = rgb(0.07, 0.09, 0.13);
-    p.drawRectangle({ x: 0, y: 0, width: SIDEBAR_W, height: PAGE_HEIGHT, fill: SIDEBAR_BG });
+    p.drawRectangle({ x: 0, y: 0, width: SIDEBAR_W, height: PAGE_HEIGHT, color: SIDEBAR_BG });
 
     // Accent line on sidebar right border
     p.drawLine({ start: { x: SIDEBAR_W, y: 0 }, end: { x: SIDEBAR_W, y: PAGE_HEIGHT }, thickness: 1, color: PRIMARY });
@@ -820,7 +820,7 @@ export async function generateResumePDF({
   } else {
     // SINGLE-COLUMN LAYOUT
     let cursorY = PAGE_HEIGHT - 40;
-    p.drawRectangle({ x: 0, y: cursorY - 10, width: PAGE_WIDTH, height: 60, fill: PRIMARY });
+    p.drawRectangle({ x: 0, y: cursorY - 10, width: PAGE_WIDTH, height: 60, color: PRIMARY });
 
     dh.drawText(p, id.name.toUpperCase(), 36, cursorY + 22, 16, { bold: true, color: WHITE });
     if (id.role) {

@@ -506,6 +506,7 @@
 
 /* Auto Page Break Indicator (visible in editor, but doesn't affect layout) */
 .pdf-auto-page-break-label {
+  display: none !important;
   position: absolute;
   left: -36px;
   right: -36px;
@@ -1379,17 +1380,24 @@
     font-size: 0.65rem !important;
   }
 
-  /* Drawer panel overlays everything from bottom, matching tab height */
+  /* Drawer panel overlays bottom half of screen on mobile */
   .nvo-drawer-panel {
     position: fixed !important;
     bottom: 62px !important;
     left: 0 !important;
     width: 100vw !important;
-    height: calc(100vh - 62px) !important;
+    height: 48vh !important;
     z-index: 150 !important;
     border-right: none !important;
     border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
     box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5) !important;
+    overflow: hidden !important;
+  }
+
+  .nvo-drawer-body {
+    overflow-y: auto !important;
+    max-height: calc(48vh - 54px) !important;
+    padding-bottom: 24px !important;
   }
 
   /* Top bar layout scrollable on mobile */
@@ -1424,7 +1432,7 @@
 
   /* Canvas viewport - auto scales down content so the entire A4 fits on mobile screen */
   .nvo-canvas-viewport {
-    padding: 70px 10px 20px !important; /* Top padding matching fixed top bar */
+    padding: 70px 10px 50vh !important; /* Large padding-bottom allows scrolling document above the 48vh bottom drawer */
     overflow-x: hidden !important;
     overflow-y: auto !important;
     display: flex !important;
@@ -1439,7 +1447,7 @@
     display: flex !important;
     justify-content: center !important;
     align-items: flex-start !important;
-    overflow: visible !important;
+    overflow: hidden !important;
   }
 
   .red-page-canvas {
@@ -1486,22 +1494,619 @@
     width: 20px !important;
     height: 20px !important;
   }
-  
-  /* Double column layout inside paper needs to adjust column direction on narrow viewport in canvas */
-  .ecv-layout {
-    flex-direction: column !important;
-    margin: 0 !important;
+
+  /* Edit Summary Redesign styling */
+  .nvo-mobile-done-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #0f272c !important;
+    border: 1px solid rgba(0, 242, 254, 0.2) !important;
+    color: #00f2fe !important;
+    border-radius: 99px !important;
+    padding: 6px 16px !important;
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    cursor: pointer;
   }
 
-  .ecv-sidebar {
+  .nvo-mobile-ai-suggest-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #111827;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+  }
+
+  .nvo-mobile-ai-suggest-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .nvo-mobile-ai-suggest-stars {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: rgba(0, 242, 254, 0.08);
+    color: #00f2fe;
+    flex-shrink: 0;
+  }
+
+  .nvo-mobile-ai-suggest-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .nvo-mobile-ai-suggest-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #00f2fe;
+  }
+
+  .nvo-mobile-ai-suggest-desc {
+    font-size: 0.72rem;
+    color: #94a3b8;
+    line-height: 1.4;
+  }
+
+  .nvo-mobile-editor-card {
+    background: #111827;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 14px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .nvo-mobile-editor-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
+  .nvo-mobile-editor-card-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .nvo-mobile-editor-card-icon {
+    color: #00f2fe;
+  }
+
+  .nvo-mobile-editor-card-titles {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .nvo-mobile-editor-card-title {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #ffffff;
+  }
+
+  .nvo-mobile-editor-card-desc {
+    font-size: 0.72rem;
+    color: #64748b;
+  }
+
+  .nvo-mobile-editor-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .nvo-mobile-words-badge {
+    background: rgba(0, 242, 254, 0.08);
+    color: #00f2fe;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 2px 10px;
+    border-radius: 99px;
+    border: 1px solid rgba(0, 242, 254, 0.15);
+  }
+
+  .nvo-mobile-edit-pencil {
+    color: #94a3b8;
+  }
+
+  .nvo-mobile-textarea-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-height: 180px;
+  }
+
+  .nvo-mobile-textarea-field {
+    width: 100%;
+    min-height: 200px;
+    background: #090e16;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+    padding: 14px;
+    color: #e2e8f0;
+    font-family: inherit;
+    font-size: 0.84rem;
+    line-height: 1.55;
+    outline: none;
+    resize: none;
+  }
+
+  .nvo-mobile-textarea-field:focus {
+    border-color: rgba(0, 242, 254, 0.4);
+  }
+
+  .nvo-mobile-char-count-fraction {
+    position: absolute;
+    bottom: 10px;
+    right: 12px;
+    font-size: 0.68rem;
+    color: #64748b;
+    font-family: 'Fira Code', monospace;
+  }
+
+  .nvo-mobile-tips-card {
+    background: #111827;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .nvo-mobile-tips-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .nvo-mobile-tips-icon-circle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(234, 179, 8, 0.1);
+    color: #eab308;
+  }
+
+  .nvo-mobile-tips-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #eab308;
+  }
+
+  .nvo-mobile-tips-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-left: 4px;
+  }
+
+  .nvo-mobile-tips-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.74rem;
+    color: #cbd5e1;
+  }
+
+  .nvo-mobile-tips-check {
+    color: #10b981;
+    font-weight: bold;
+  }
+
+  .nvo-mobile-bottom-actions-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 0 0 16px;
+  }
+
+  .nvo-mobile-editor-gradient-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+    border: none;
+    color: #090e16;
+    font-weight: 700;
+    padding: 14px;
+    border-radius: 12px;
+    font-size: 0.88rem;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 242, 254, 0.2);
+  }
+
+  .nvo-mobile-editor-gradient-btn span {
+    color: #090e16;
+  }
+
+  .nvo-mobile-editor-save-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    background: #111827;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #cbd5e1;
+    font-weight: 600;
+    padding: 14px;
+    border-radius: 12px;
+    font-size: 0.88rem;
+    cursor: pointer;
+  }
+
+  .nvo-mobile-editor-save-btn:active {
+    background: #1f2937;
+  }
+
+  /* ── Mobile Layout Re-design (exact copy of reference images) ── */
+  .nvo-mobile-screen {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
     width: 100% !important;
-    padding: 16px 12px !important;
-    border-bottom: 2px solid var(--primary-color) !important;
-    border-right: none !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+    background: #090e16 !important;
+    overflow-y: auto;
+    font-family: 'Outfit', sans-serif;
+    color: #f1f5f9;
   }
 
-  .ecv-main {
-    padding: 16px 12px !important;
+  .nvo-mobile-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .nvo-mobile-header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .nvo-mobile-back-arrow {
+    color: #00f2fe;
+    cursor: pointer;
+  }
+
+  .nvo-mobile-title-container {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .nvo-mobile-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0;
+  }
+
+  .nvo-mobile-subtitle {
+    font-size: 0.72rem;
+    color: #94a3b8;
+    margin: 0;
+  }
+
+  .nvo-mobile-header-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    border: 1px solid #00f2fe;
+    color: #00f2fe;
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .nvo-mobile-ai-active-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 16px 20px;
+    padding: 16px;
+    background: rgba(16, 26, 44, 0.6);
+    border: 1px solid rgba(0, 242, 254, 0.15);
+    border-radius: 12px;
+  }
+
+  .nvo-mobile-ai-bulb-circle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(234, 179, 8, 0.1);
+    color: #eab308;
+    flex-shrink: 0;
+  }
+
+  .nvo-mobile-ai-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .nvo-mobile-ai-title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #00f2fe;
+  }
+
+  .nvo-mobile-ai-desc {
+    font-size: 0.7rem;
+    color: #94a3b8;
+    line-height: 1.4;
+  }
+
+  /* List items */
+  .nvo-mobile-section-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 0 20px 20px;
+  }
+
+  .nvo-mobile-section-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    background: #111827;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .nvo-mobile-section-item:active {
+    background: #1f2937;
+    border-color: rgba(0, 242, 254, 0.2);
+  }
+
+  .nvo-mobile-item-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex: 1;
+  }
+
+  .nvo-mobile-icon-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    color: #ffffff;
+    flex-shrink: 0;
+  }
+
+  .nvo-mobile-item-details {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .nvo-mobile-item-title-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .nvo-mobile-item-title {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #ffffff;
+  }
+
+  .nvo-mobile-enhanced-badge {
+    background: rgba(16, 185, 129, 0.12);
+    color: #10b981;
+    font-size: 0.58rem;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .nvo-mobile-item-subtitle {
+    font-size: 0.72rem;
+    color: #64748b;
+  }
+
+  .nvo-mobile-item-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .nvo-mobile-item-stats {
+    font-size: 0.72rem;
+    color: #94a3b8;
+  }
+
+  .nvo-mobile-item-chevron {
+    color: #64748b;
+  }
+
+  .nvo-mobile-add-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 10px 20px 30px;
+    padding: 12px;
+    border: 1px dashed rgba(0, 242, 254, 0.4);
+    background: transparent;
+    color: #00f2fe;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  /* Preview Screen Capsule Tabs */
+  .nvo-mobile-tab-capsule {
+    display: flex;
+    background: #111827;
+    padding: 4px;
+    border-radius: 99px;
+    margin: 16px 20px;
+  }
+
+  .nvo-mobile-tab-btn {
+    flex: 1;
+    padding: 8px;
+    border: none;
+    background: transparent;
+    color: #94a3b8;
+    font-size: 0.82rem;
+    font-weight: 600;
+    border-radius: 99px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s ease;
+  }
+
+  .nvo-mobile-tab-btn.active {
+    background: rgba(0, 242, 254, 0.1);
+    color: #00f2fe;
+  }
+
+  /* Bottom Actions Bar */
+  .nvo-mobile-bottom-bar {
+    display: flex;
+    background: #0b0f17;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 12px 16px;
+    gap: 12px;
+    justify-content: space-around;
+  }
+
+  .nvo-mobile-action-card-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 4px;
+    background: #111827;
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    border-radius: 10px;
+    color: #94a3b8;
+    cursor: pointer;
+  }
+
+  .nvo-mobile-action-card-btn:hover,
+  .nvo-mobile-action-card-btn:active {
+    background: rgba(0, 242, 254, 0.05);
+    border-color: rgba(0, 242, 254, 0.2);
+    color: #00f2fe;
+  }
+
+  .nvo-mobile-action-card-btn span {
+    font-size: 0.68rem;
+    font-weight: 600;
+  }
+
+  /* Full Screen Mobile Section Editor */
+  .nvo-mobile-editor-screen {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+    background: #090e16;
+    color: #ffffff;
+    font-family: 'Outfit', sans-serif;
+  }
+
+  .nvo-mobile-editor-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 16px 20px;
+    gap: 16px;
+  }
+
+  .nvo-mobile-editor-textarea {
+    flex: 1;
+    width: 100%;
+    background: #111827;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    padding: 16px;
+    color: #ffffff;
+    font-family: 'Fira Code', monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    resize: none;
+    outline: none;
+  }
+
+  .nvo-mobile-editor-textarea:focus {
+    border-color: #00f2fe;
+  }
+
+  .nvo-mobile-optimize-float-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
+    border: none;
+    color: #090e16;
+    font-weight: 700;
+    padding: 12px 24px;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    box-shadow: 0 10px 20px rgba(0, 242, 254, 0.3);
+  }
+
+  .nvo-mobile-save-btn {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    padding: 12px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .nvo-mobile-save-btn:active {
+    background: rgba(255, 255, 255, 0.12);
   }
 }
 

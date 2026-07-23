@@ -6,7 +6,8 @@ import {
   ArrowLeft, Copy, Check, Sparkles, Download, X, Sliders, Maximize2,
   Trash2, LayoutGrid, CheckSquare, Plus, ArrowUp, ArrowDown, GripVertical,
   FileText, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight,
-  Award, Globe, Briefcase, GraduationCap, ChevronRight, Undo2, Redo2, Type, Layers, Bot, Upload, Palette
+  Award, Globe, Briefcase, GraduationCap, ChevronRight, Undo2, Redo2, Type, Layers, Bot, Upload, Palette,
+  Eye, EyeOff
 } from "lucide-react";
 import { getResumes } from "../services/resumeService";
 import { getJobDescriptions } from "../services/jobDescriptionService";
@@ -216,6 +217,8 @@ export default function ResumeEditorPage() {
   const [activeSection, setActiveSection] = useState("Header");
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [activeRailTab, setActiveRailTab] = useState("content");
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [mobileSelectedSection, setMobileSelectedSection] = useState("Summary");
 
   // History stack for Undo / Redo
   const [history, setHistory] = useState([editedSections]);
@@ -503,12 +506,16 @@ export default function ResumeEditorPage() {
       }
       
       if (optimizedText) {
-        setEditedSections(prev => ({
-          ...prev,
+        updateSectionsWithHistory({
+          ...editedSections,
           [sectionName]: optimizedText
-        }));
+        });
         setSectionPrompts(prev => ({ ...prev, [sectionName]: "" }));
         setShowPromptInput(prev => ({ ...prev, [sectionName]: false }));
+        
+        // Auto-switch mobile view focus to show the updated section
+        setMobileSelectedSection(sectionName);
+        setActiveRailTab("content");
       }
     } catch (error) {
       console.error(`Error optimizing section ${sectionName}:`, error);
@@ -928,7 +935,7 @@ export default function ResumeEditorPage() {
   const activeFontFamily = PREMIUM_FONTS.find(f => f.name === selectedFont)?.family || "sans-serif";
 
   return (
-    <div className="nvo-editor-shell" style={{ fontFamily: activeFontFamily }}>
+    <div className={`nvo-editor-shell ${isPreviewMode ? 'is-preview' : ''}`} style={{ fontFamily: activeFontFamily }}>
       {/* ── NOVORESUME LEFT SIDEBAR RAIL ── */}
       <aside className="nvo-sidebar-rail">
         <div className="nvo-brand-logo" onClick={() => navigate("/resume-optimizer")} title="Back to Optimizer">
@@ -1079,20 +1086,48 @@ export default function ResumeEditorPage() {
               </button>
             </div>
 
-            <div className="nvo-drawer-body">
+            <div className="nvo-drawer-body" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div className="nvo-ai-card">
-                <span className="nvo-ai-card-title">Jump to Section</span>
-                {Object.keys(editedSections).map(key => (
-                  <button 
-                    key={key} 
-                    className="nvo-ai-action-btn"
-                    onClick={() => {
-                      document.getElementById(`editor-card-${key}`)?.scrollIntoView({ behavior: 'smooth' });
-                    }}
-                  >
-                    <span>{SECTION_ICONS[key] || "📝"} {key} Section</span>
-                  </button>
-                ))}
+                <span className="nvo-ai-card-title">Select Section to Edit</span>
+                <select 
+                  className="nvo-ai-input" 
+                  value={mobileSelectedSection} 
+                  onChange={(e) => {
+                    setMobileSelectedSection(e.target.value);
+                    document.getElementById(`editor-card-${e.target.value}`)?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(56, 189, 248, 0.3)', color: '#fff' }}
+                >
+                  {Object.keys(editedSections).map(key => (
+                    <option key={key} value={key}>{SECTION_ICONS[key] || "📝"} {key} Section</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="nvo-ai-card" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span className="nvo-ai-card-title">{mobileSelectedSection} Section Content</span>
+                  <span style={{ fontSize: '0.68rem', color: '#38bdf8', fontWeight: 600 }}>✍️ Live Edit Mode</span>
+                </div>
+                <textarea 
+                  className="nvo-ai-input"
+                  style={{ 
+                    flex: 1, 
+                    minHeight: '280px', 
+                    fontFamily: "'Fira Code', monospace", 
+                    fontSize: '0.8rem', 
+                    lineHeight: 1.5,
+                    resize: 'vertical',
+                    background: 'rgba(10, 15, 30, 0.8)',
+                    borderColor: 'rgba(255,255,255,0.08)'
+                  }}
+                  value={editedSections[mobileSelectedSection] || ''}
+                  onChange={(e) => updateSectionsWithHistory({ ...editedSections, [mobileSelectedSection]: e.target.value })}
+                  placeholder={`Write content for ${mobileSelectedSection} section...`}
+                />
+                <p style={{ fontSize: '0.7rem', color: '#94a3b8', margin: 0, lineHeight: 1.4, textAlign: 'center' }}>
+                  💡 Changes sync with the A4 preview instantly. Use lines/bullets format as needed.
+                </p>
               </div>
             </div>
           </motion.div>
@@ -1267,6 +1302,21 @@ export default function ResumeEditorPage() {
           </div>
 
           <div className="nvo-bar-divider" />
+
+          {/* Preview Toggle Button */}
+          <button 
+            className={`nvo-bar-btn ${isPreviewMode ? 'active' : ''}`} 
+            title={isPreviewMode ? "Exit Preview Mode" : "Enter Preview Mode"} 
+            onClick={() => setIsPreviewMode(!isPreviewMode)}
+            style={{ 
+              background: isPreviewMode ? 'rgba(56, 189, 248, 0.15)' : 'transparent',
+              color: isPreviewMode ? '#38bdf8' : '#cbd5e1',
+              border: isPreviewMode ? '1px solid rgba(56, 189, 248, 0.3)' : 'none'
+            }}
+          >
+            {isPreviewMode ? <EyeOff size={14} /> : <Eye size={14} />}
+            <span>{isPreviewMode ? 'Edit Mode' : 'Preview'}</span>
+          </button>
 
           {/* Download PDF Button */}
           <button className={`nvo-bar-btn nvo-btn-download ${downloading ? 'loading' : ''}`} onClick={handleDownloadPDF} disabled={downloading}>

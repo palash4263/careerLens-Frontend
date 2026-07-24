@@ -533,7 +533,7 @@ export default function ResumeOptimizationPage() {
   const [copySuccess, setCopySuccess] = useState(false);
   const [viewMode, setViewMode] = useState('side-by-side');
   const [downloading, setDownloading] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState('two-column');
+  const [selectedTemplate, setSelectedTemplate] = useState('single-column');
   const [selectedColor, setSelectedColor] = useState('#1761c7');
   const [selectedFont, setSelectedFont] = useState('Rubik');
   const [searchParams] = useSearchParams();
@@ -861,7 +861,9 @@ export default function ResumeOptimizationPage() {
 
       const isSectionsEmpty = !editedSections || Object.values(editedSections).every(v => !v || !v.trim());
       const headerLines = (editedSections?.Header || '').split('\n').map(l => l.trim()).filter(Boolean);
-      const resolvedName = headerLines[0] || userData.name;
+      const rawHeaderName = headerLines[0] || userData.name;
+      const cleanedHeaderName = rawHeaderName.replace(/\b(full\s*stack|fullstack|full-stack|software|backend|frontend|web|mobile|devops|data|cloud|ml|ai|qa|ui\/ux|lead|senior|junior|principal|staff)?\s*(developer|engineer|intern|analyst|consultant|architect|manager|designer|specialist|sde)\b/gi, '').replace(/\s+/g, ' ').trim();
+      const resolvedName = (cleanedHeaderName && cleanedHeaderName.split(' ').length > 1) ? cleanedHeaderName : userData.name;
 
       await generateResumePDF({
         resumeText: isSectionsEmpty ? (result.optimizedText || '') : '',

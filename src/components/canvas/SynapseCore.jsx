@@ -1,7 +1,33 @@
 import * as THREE from "three";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls, MeshDistortMaterial, Float } from "@react-three/drei";
-import { useRef, useState, useEffect } from "react";
+import { OrbitControls, MeshDistortMaterial, Float, useGLTF } from "@react-three/drei";
+import { useRef, useState, useEffect, Component } from "react";
+
+class ErrorBoundary extends Component {
+  state = { hasError: false };
+  static getDerivedStateFromError() { return { hasError: true }; }
+  componentDidCatch(err) {
+    // Catch GLB 404/parse errors
+  }
+  render() {
+    if (this.state.hasError) return this.props.fallback;
+    return this.props.children;
+  }
+}
+
+function TripoModel({ hovered }) {
+  const meshRef = useRef(null);
+  const { scene } = useGLTF("/models/tripo_model.glb");
+
+  useFrame((state, delta) => {
+    const speedMult = hovered ? 2.5 : 1.0;
+    if (meshRef.current) {
+      meshRef.current.rotation.y += delta * 0.25 * speedMult;
+    }
+  });
+
+  return <primitive ref={meshRef} object={scene} scale={2.8} />;
+}
 
 function SynapseCoreMesh() {
   const innerRef = useRef(null);
@@ -91,7 +117,9 @@ export default function SynapseCore() {
         <pointLight position={[-10, -10, -5]} color="#7c3aed" intensity={2} />
         
         <Float speed={3.5} rotationIntensity={0.5} floatIntensity={1.2}>
-          <SynapseCoreMesh />
+          <ErrorBoundary fallback={<SynapseCoreMesh />}>
+            <TripoModel />
+          </ErrorBoundary>
         </Float>
 
         <OrbitControls enableZoom={false} enablePan={false} />

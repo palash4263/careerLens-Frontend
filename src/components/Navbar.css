@@ -21,8 +21,10 @@
   height: 80px;
   padding: 0 20px 0 14px;
   border-radius: 999px;
-  background: var(--shell-nav-bg);
-  border: 1px solid var(--shell-nav-border);
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: var(--shell-nav-shadow);
   transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
 }
@@ -38,10 +40,10 @@
 /* 1. Remove the outer spacing and apply your main background color to the root */
 .nb-root.nb-scrolled {
   padding: 0;
-  background: rgba(6, 6, 12, 0.65); /* Translucent background */
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--shell-nav-border-strong);
+  background: rgba(9, 14, 22, 0.45) !important; /* Less opaque background */
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .nb-logo {

@@ -44,6 +44,23 @@ const SECTION_ICONS = {
   Certifications: "🏆",
 };
 
+const cleanCandidateName = (nameStr) => {
+  if (!nameStr || typeof nameStr !== 'string') return '';
+  let clean = nameStr.replace(/[*_#`~]/g, '').trim();
+
+  if (clean.includes('|')) clean = clean.split('|')[0].trim();
+  if (clean.includes(' - ')) clean = clean.split(' - ')[0].trim();
+  if (clean.includes(':')) clean = clean.split(':')[0].trim();
+
+  const ROLE_PATTERN = /\b(full\s*stack|fullstack|full-stack|software|backend|frontend|web|mobile|devops|data|cloud|ml|ai|qa|ui\/ux|lead|senior|junior|principal|staff)?\s*(developer|engineer|intern|analyst|consultant|architect|manager|designer|specialist|sde|coder|programmer|technologist|administrator)\b/gi;
+  clean = clean.replace(ROLE_PATTERN, '').trim();
+
+  const STANDALONE_ROLE = /\b(fullstack|full-stack|full\s+stack|developer|engineer|sde|backend|frontend|architect|analyst|consultant|intern|manager|designer|devops)\b/gi;
+  clean = clean.replace(STANDALONE_ROLE, '').trim();
+
+  return clean.replace(/\s+/g, ' ').replace(/^[\s,\-_|]+|[\s,\-_|]+$/g, '').trim();
+};
+
 const sanitizeSections = (sectionsObj) => {
   if (!sectionsObj || typeof sectionsObj !== 'object') return sectionsObj;
   const cleaned = { ...sectionsObj };
@@ -133,18 +150,31 @@ export default function ResumeEditorPage() {
     return sanitizeSections(parsed);
   });
 
-  const [selectedTemplate, setSelectedTemplate] = useState(() => localStorage.getItem("cl_selected_template") || 'two-column');
+  const [selectedTemplate, setSelectedTemplate] = useState(() => localStorage.getItem("cl_selected_template") || 'single-column');
   const [selectedColor, setSelectedColor] = useState(() => localStorage.getItem("cl_selected_color") || '#1761c7');
   const [selectedFont, setSelectedFont] = useState(() => localStorage.getItem("cl_selected_font") || 'Outfit');
   const [pageMargins, setPageMargins] = useState(() => Number(localStorage.getItem("cl_selected_margins")) || 1);
   const [sectionSpacing, setSectionSpacing] = useState(() => Number(localStorage.getItem("cl_selected_spacing")) || 3);
-  const [baseFontSize, setBaseFontSize] = useState(() => Number(localStorage.getItem("cl_selected_font_size")) || 3);
+  const [baseFontSize, setBaseFontSize] = useState(() => {
+    const saved = localStorage.getItem("cl_selected_font_size");
+    if (!saved) return 10.0;
+    const val = Number(saved);
+    if (val === 3) return 10.0;
+    if (val === 4) return 11.0;
+    if (val === 2) return 9.0;
+    if (val === 1.5) return 8.5;
+    if (val === 1) return 8.0;
+    if (val === 0.85) return 7.5;
+    if (val === 0.7) return 7.0;
+    if (val === 0.5) return 6.5;
+    return val > 5 ? val : 10.0;
+  });
   const [sectionFontSizes, setSectionFontSizes] = useState(() => JSON.parse(localStorage.getItem("cl_section_fonts")) || {});
   const [pageCount, setPageCount] = useState(1);
 
   // Drag and Drop Section Ordering State
-  const DEFAULT_MAIN_SECTIONS = ['Summary', 'Experience', 'Projects'];
-  const DEFAULT_SIDE_SECTIONS = ['Skills', 'Education', 'Certifications'];
+  const DEFAULT_MAIN_SECTIONS = ['Summary', 'Skills', 'Experience', 'Projects', 'Education', 'Certifications'];
+  const DEFAULT_SIDE_SECTIONS = [];
 
   const [mainSectionOrder, setMainSectionOrder] = useState(() => {
     const saved = localStorage.getItem(`cl_main_order_${selectedResume}`);
@@ -231,6 +261,8 @@ export default function ResumeEditorPage() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+
 
   // History stack for Undo / Redo
   const [history, setHistory] = useState([editedSections]);
@@ -392,9 +424,10 @@ export default function ResumeEditorPage() {
           
           // If there's very little space left for the header and first entry (e.g. < 70px)
           if (remainingOnPage < 70) {
-            section.style.marginTop = `${remainingOnPage}px`;
-            const pageNum = Math.floor((offsetTop + remainingOnPage) / A4_PAGE_PX) + 1;
-            addBreakIndicator(offsetTop, remainingOnPage, pageNum);
+            // Disabled shifting to prevent visual gap artifacts when page break labels are hidden
+            // section.style.marginTop = `${remainingOnPage}px`;
+            // const pageNum = Math.floor((offsetTop + remainingOnPage) / A4_PAGE_PX) + 1;
+            // addBreakIndicator(offsetTop, remainingOnPage, pageNum);
           }
         }
       });
@@ -408,9 +441,10 @@ export default function ResumeEditorPage() {
 
         // Push if element's height with buffer crosses the page boundary
         if ((elHeight + 8) > remainingOnPage && elHeight < A4_PAGE_PX) {
-          el.style.marginTop = `${remainingOnPage}px`;
-          const pageNum = Math.floor((offsetTop + remainingOnPage) / A4_PAGE_PX) + 1;
-          addBreakIndicator(offsetTop, remainingOnPage, pageNum);
+          // Disabled shifting to prevent visual gap artifacts when page break labels are hidden
+          // el.style.marginTop = `${remainingOnPage}px`;
+          // const pageNum = Math.floor((offsetTop + remainingOnPage) / A4_PAGE_PX) + 1;
+          // addBreakIndicator(offsetTop, remainingOnPage, pageNum);
         }
       });
 
@@ -575,6 +609,47 @@ export default function ResumeEditorPage() {
     }
   };
 
+  // Global Power-User Keyboard Shortcuts (Ctrl+S / Cmd+S for instant PDF download, Ctrl+Z / Cmd+Z for undo)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      const isCmdOrCtrl = e.metaKey || e.ctrlKey;
+      
+      // Ctrl+S / Cmd+S -> Trigger instant PDF Export
+      if (isCmdOrCtrl && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        if (!downloading) {
+          handleDownloadPDF();
+        }
+        return;
+      }
+
+      // Ctrl+Z / Cmd+Z -> Global Undo
+      if (isCmdOrCtrl && e.key.toLowerCase() === 'z' && !e.shiftKey) {
+        const isEditable = document.activeElement && document.activeElement.isContentEditable;
+        const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+        if (!isEditable && activeTag !== 'input' && activeTag !== 'textarea') {
+          e.preventDefault();
+          handleUndo();
+        }
+        return;
+      }
+
+      // Ctrl+Y / Cmd+Y -> Global Redo
+      if ((isCmdOrCtrl && e.key.toLowerCase() === 'y') || (isCmdOrCtrl && e.shiftKey && e.key.toLowerCase() === 'z')) {
+        const isEditable = document.activeElement && document.activeElement.isContentEditable;
+        const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+        if (!isEditable && activeTag !== 'input' && activeTag !== 'textarea') {
+          e.preventDefault();
+          handleRedo();
+        }
+        return;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [downloading, editedSections, history, historyIdx, selectedResume, selectedTemplate, selectedColor, pageMargins, sectionSpacing, baseFontSize, mainSectionOrder, sideSectionOrder]);
+
   const copyToClipboard = async () => {
     try {
       const fullText = Object.keys(editedSections)
@@ -690,69 +765,83 @@ export default function ResumeEditorPage() {
     );
   };
 
-  const renderTimelineEntries = (text, themeColor, sectionKey = 'Experience') => {
-    if (!text) return null;
-    const rawLines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  const parseEntryBlocks = (text) => {
+    if (!text) return [];
+    const contentLines = text.split('\n').map(l => l.trim()).filter(Boolean);
     const blocks = [];
     let currentHeader = null;
-    let currentDate = null;
-    let currentSubtitle = null;
+    let currentDate = '';
+    let currentSubtitle = '';
     let currentBullets = [];
 
     const flush = () => {
       if (currentHeader || currentBullets.length > 0) {
         blocks.push({
-          header: currentHeader || "",
-          date: currentDate || "",
-          subtitle: currentSubtitle || "",
+          header: currentHeader || '',
+          date: currentDate || '',
+          subtitle: currentSubtitle || '',
           bullets: currentBullets,
         });
         currentHeader = null;
-        currentDate = null;
-        currentSubtitle = null;
+        currentDate = '';
+        currentSubtitle = '';
         currentBullets = [];
       }
     };
 
-    const DATE_RE = /\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|\d{4})\b.*[-–—].*\b(Present|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|\d{4})\b/i;
+    const DATE_REGEX = /\b((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|\d{4})\b.*?(?:[-–—].*?\b(?:Present|Current|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|\d{4}))?|\b\d{4}\b)/i;
 
-    for (const line of rawLines) {
-      if (/^\s*\d+%\.?\s*$/.test(line)) continue; // Ignore standalone orphaned metric lines
-      const isBullet = line.startsWith('•') || line.startsWith('-');
-      const dateMatch = line.match(DATE_RE);
+    for (let i = 0; i < contentLines.length; i++) {
+      const raw = contentLines[i];
+      const trimmed = raw.trim();
+      if (!trimmed) continue;
+      if (/^\s*\d+%\.?\s*$/.test(trimmed)) continue;
 
-      if (!isBullet && (line.includes('|') || dateMatch || line.length < 55)) {
-        if (line.includes('|')) {
-          flush();
-          const parts = line.split('|').map(p => p.trim());
-          currentHeader = parts[0];
-          currentDate = parts.slice(1).join(' | ');
-        } else if (dateMatch) {
-          const dateStr = dateMatch[0].trim();
-          const labelStr = line.replace(dateMatch[0], '').trim();
-          if (labelStr && !currentHeader) {
-            currentHeader = labelStr;
-            currentDate = dateStr;
-          } else if (currentHeader && !currentDate) {
-            currentDate = dateStr;
-          } else {
-            flush();
-            currentHeader = labelStr || line;
-            currentDate = dateStr;
-          }
+      const isBulletChar = trimmed.startsWith('•') || trimmed.startsWith('-') || trimmed.startsWith('*') || trimmed.startsWith('+');
+      const cleanLine = trimmed.replace(/^[•+\-\*]\s*/, '').trim();
+
+      const dateMatch = trimmed.match(DATE_REGEX);
+      const hasHeaderSeparator = /—|\||-/.test(trimmed) && trimmed.length < 90;
+
+      const isNewHeader = !currentHeader || 
+        (dateMatch && currentBullets.length > 0) || 
+        (hasHeaderSeparator && !isBulletChar && currentBullets.length > 0 && trimmed.length < 80);
+
+      if (isNewHeader) {
+        if (currentHeader) flush();
+
+        if (dateMatch) {
+          currentDate = dateMatch[0].trim();
+          const nonDatePart = trimmed.replace(dateMatch[0], '').replace(/[-–—,|]\s*$/, '').replace(/^[-–—,|]\s*/, '').trim();
+          currentHeader = nonDatePart || trimmed;
         } else {
-          if (currentHeader && !currentSubtitle && currentBullets.length === 0) {
-            currentSubtitle = line;
-          } else {
-            flush();
-            currentHeader = line;
-          }
+          currentHeader = cleanLine;
         }
-      } else {
-        currentBullets.push(line.replace(/^[•\-\s]+/, ''));
+        continue;
       }
+
+      if (currentHeader && !currentSubtitle && !currentDate && currentBullets.length === 0 && !isBulletChar) {
+        if (dateMatch) {
+          currentDate = dateMatch[0].trim();
+          const nonDatePart = trimmed.replace(dateMatch[0], '').replace(/[-–—,|]\s*$/, '').replace(/^[-–—,|]\s*/, '').trim();
+          if (nonDatePart) currentSubtitle = nonDatePart;
+          continue;
+        } else if (trimmed.length < 90 && !/^(architected|designed|developed|built|engineered|utilized|containerized|improved|tuned|worked|created|lead|managed)\b/i.test(trimmed)) {
+          currentSubtitle = cleanLine;
+          continue;
+        }
+      }
+
+      currentBullets.push(cleanLine);
     }
+
     flush();
+    return blocks;
+  };
+
+  const renderTimelineEntries = (text, themeColor, sectionKey = 'Experience') => {
+    if (!text) return null;
+    const blocks = parseEntryBlocks(text);
 
     return blocks.map((blk, idx) => (
       <div key={idx} className="nvo-entry-block-wrapper enhancv-entry-block">
@@ -782,12 +871,11 @@ export default function ResumeEditorPage() {
         {blk.header && (
           <div className="enhancv-entry-header">
             <span className="enhancv-entry-title nvo-editable-text" contentEditable suppressContentEditableWarning>{blk.header}</span>
-            {blk.date && <span className="enhancv-entry-date nvo-editable-text" contentEditable suppressContentEditableWarning style={{ color: themeColor }}>{blk.date}</span>}
           </div>
         )}
-        {blk.subtitle && (
-          <div className="enhancv-entry-subtitle nvo-editable-text" contentEditable suppressContentEditableWarning style={{ color: '#475569', fontSize: '0.66rem', fontWeight: '600', marginBottom: '2px' }}>
-            {blk.subtitle}
+        {(blk.subtitle || blk.date) && (
+          <div className="enhancv-entry-subtitle nvo-editable-text" contentEditable suppressContentEditableWarning style={{ color: '#475569', fontSize: '0.66rem', fontStyle: 'italic', fontWeight: '500', marginBottom: '3px' }}>
+            {[blk.subtitle, blk.date].filter(Boolean).join(' | ')}
           </div>
         )}
         <div className="enhancv-bullet-list">
@@ -820,8 +908,7 @@ export default function ResumeEditorPage() {
         <div key={sectionKey} {...dragProps}>
           <div className="ecv-section-header" style={{ color: selectedColor }}>
             <span className="nvo-drag-handle" title="Drag & drop section"><GripVertical size={14} /></span>
-            <span className="ecv-section-icon">◈</span>
-            <span className="ecv-section-title">PROFESSIONAL SUMMARY</span>
+            <span className="ecv-section-title">SUMMARY</span>
             <div className="ecv-section-rule" style={{ backgroundColor: selectedColor }} />
           </div>
           <p 
@@ -839,8 +926,7 @@ export default function ResumeEditorPage() {
         <div key={sectionKey} {...dragProps}>
           <div className="ecv-section-header" style={{ color: selectedColor }}>
             <span className="nvo-drag-handle" title="Drag & drop section"><GripVertical size={14} /></span>
-            <span className="ecv-section-icon">◈</span>
-            <span className="ecv-section-title">WORK EXPERIENCE</span>
+            <span className="ecv-section-title">EXPERIENCE</span>
             <div className="ecv-section-rule" style={{ backgroundColor: selectedColor }} />
           </div>
           {renderTimelineEntries(editedSections.Experience, selectedColor, 'Experience')}
@@ -853,8 +939,7 @@ export default function ResumeEditorPage() {
         <div key={sectionKey} {...dragProps}>
           <div className="ecv-section-header" style={{ color: selectedColor }}>
             <span className="nvo-drag-handle" title="Drag & drop section"><GripVertical size={14} /></span>
-            <span className="ecv-section-icon">◈</span>
-            <span className="ecv-section-title">PERSONAL PROJECTS</span>
+            <span className="ecv-section-title">PROJECTS</span>
             <div className="ecv-section-rule" style={{ backgroundColor: selectedColor }} />
           </div>
           {renderTimelineEntries(editedSections.Projects, selectedColor, 'Projects')}
@@ -869,7 +954,6 @@ export default function ResumeEditorPage() {
             <span className="nvo-drag-handle" title="Drag & drop section"><GripVertical size={14} /></span>
             {isSidebar ? 'SKILLS' : (
               <>
-                <span className="ecv-section-icon">◈</span>
                 <span className="ecv-section-title">SKILLS</span>
                 <div className="ecv-section-rule" style={{ backgroundColor: selectedColor }} />
               </>
@@ -894,22 +978,12 @@ export default function ResumeEditorPage() {
             <span className="nvo-drag-handle" title="Drag & drop section"><GripVertical size={14} /></span>
             {isSidebar ? 'EDUCATION' : (
               <>
-                <span className="ecv-section-icon">◈</span>
                 <span className="ecv-section-title">EDUCATION</span>
                 <div className="ecv-section-rule" style={{ backgroundColor: selectedColor }} />
               </>
             )}
           </div>
-          <div 
-            className="nvo-editable-text"
-            contentEditable
-            suppressContentEditableWarning
-            onBlur={(e) => updateSectionsWithHistory({ ...editedSections, Education: e.target.innerText })}
-          >
-            {parseBulletPoints(editedSections.Education).map((line, i) => (
-              <p key={i} className={isSidebar ? "ecv-sidebar-line" : "ecv-body-text"}>{line}</p>
-            ))}
-          </div>
+          {renderTimelineEntries(editedSections.Education, selectedColor, 'Education')}
         </div>
       );
     }
@@ -1207,7 +1281,7 @@ export default function ResumeEditorPage() {
                       className="red-page-canvas" 
                       style={{ 
                         fontFamily: activeFontFamily,
-                        fontSize: `${0.5 + (baseFontSize * 0.1)}rem`,
+                        fontSize: `${baseFontSize * 0.08}rem`,
                         '--page-padding': pageMargins === 1 ? '24px 20px' : pageMargins === 2 ? '36px 30px' : '48px 40px',
                         '--section-margin': `${sectionSpacing * 6}px`,
                         '--list-gap': `${sectionSpacing * 2.5}px`,
@@ -1216,7 +1290,7 @@ export default function ResumeEditorPage() {
                     >
                       {selectedTemplate === 'two-column' ? (
                         <div className="ecv-layout">
-                          <div className="ecv-sidebar" style={{ backgroundColor: selectedColor }}>
+                          <div className="ecv-sidebar" style={{ background: 'transparent' }}>
                             <div className="ecv-avatar" style={{ borderColor: 'rgba(255,255,255,0.3)' }}>
                               <span className="ecv-avatar-initials">
                                 {(() => {
@@ -1249,17 +1323,14 @@ export default function ResumeEditorPage() {
                         </div>
                       ) : (
                         <div className="ecv-single">
-                          <div className="ecv-single-header" style={{ backgroundColor: selectedColor, ...getSectionFontSize('Header') }}>
-                            <div className="ecv-single-avatar">
-                              <span className="ecv-avatar-initials" style={{ fontSize: '1.1rem' }}>
-                                {(editedSections.Header.split('\n')[0] || 'U').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase()}
-                              </span>
+                          <div className="ecv-single-header-modern" style={getSectionFontSize('Header')}>
+                            <h2 className="ecv-single-name-modern" style={{ color: selectedColor }}>
+                              {cleanCandidateName((editedSections.Header || '').split('\n')[0]) || 'Your Name'}
+                            </h2>
+                            <div className="ecv-single-contacts-modern">
+                              {(editedSections.Header ? editedSections.Header.split('\n').slice(1).filter(Boolean) : []).map(l => l.replace(/^https?:\/\/(www\.)?/, '').trim()).filter(Boolean).join(' | ')}
                             </div>
-                            <div>
-                              <h2 className="ecv-single-name">{editedSections.Header.split('\n')[0] || 'Your Name'}</h2>
-                              <p className="ecv-single-role">{editedSections.Header.split('\n')[1] || 'Professional Role'}</p>
-                              <p className="ecv-single-contacts">{editedSections.Header.split('\n').slice(2).join('  •  ')}</p>
-                            </div>
+                            <div className="ecv-header-divider" style={{ backgroundColor: selectedColor }} />
                           </div>
                           <div className="ecv-single-body">
                             {[...mainSectionOrder, ...sideSectionOrder].map(key => renderSectionByKey(key, false))}
@@ -1689,20 +1760,15 @@ export default function ResumeEditorPage() {
               title="Adjust Font Size"
               style={{ paddingRight: '12px' }}
             >
-              <option value={0.5}>6.5pt (Ultra Micro)</option>
-              <option value={0.7}>7.0pt (Micro)</option>
-              <option value={0.85}>7.5pt (Very Compact)</option>
-              <option value={1}>8.0pt (Compact)</option>
-              <option value={1.5}>8.5pt (Small Compact)</option>
-              <option value={2}>9.0pt (Small)</option>
-              <option value={3}>10.0pt (Normal)</option>
-              <option value={4}>11.0pt (Large)</option>
+              <option value={8.0}>8.0pt (Compact)</option>
+              <option value={10.0}>10.0pt (Normal)</option>
+              <option value={11.0}>11.0pt (Large)</option>
             </select>
           </div>
           {/* Download PDF Button */}
-          <button className={`nvo-bar-btn nvo-btn-download ${downloading ? 'loading' : ''}`} onClick={handleDownloadPDF} disabled={downloading}>
+          <button className={`nvo-bar-btn nvo-btn-download ${downloading ? 'loading' : ''}`} onClick={handleDownloadPDF} disabled={downloading} title="Download PDF (Ctrl+S / Cmd+S)">
             {downloading ? <span className="red-spinner" /> : <Download size={14} />}
-            <span>{downloading ? 'Exporting...' : 'Download PDF'}</span>
+            <span>{downloading ? 'Exporting...' : 'Download PDF (Ctrl+S)'}</span>
           </button>
         </header>
 
@@ -1728,7 +1794,7 @@ export default function ResumeEditorPage() {
               className="red-page-canvas" 
               style={{ 
                 fontFamily: activeFontFamily,
-                fontSize: `${0.5 + (baseFontSize * 0.1)}rem`,
+                fontSize: `${baseFontSize * 0.08}rem`,
                 '--page-padding': pageMargins === 1 ? '24px 20px' : pageMargins === 2 ? '36px 30px' : '48px 40px',
                 '--section-margin': `${sectionSpacing * 6}px`,
                 '--list-gap': `${sectionSpacing * 2.5}px`,
@@ -1740,7 +1806,7 @@ export default function ResumeEditorPage() {
                 <div className="ecv-layout">
 
                   {/* ── DARK SIDEBAR ── */}
-                  <div className="ecv-sidebar" style={{ backgroundColor: selectedColor }}>
+                  <div className="ecv-sidebar" style={{ background: 'transparent' }}>
                     {/* Avatar / initials */}
                     <div className="ecv-avatar" style={{ borderColor: 'rgba(255,255,255,0.3)' }}>
                       <span className="ecv-avatar-initials">
@@ -1814,47 +1880,34 @@ export default function ResumeEditorPage() {
                 </div>
 
               ) : (
-                /* ── ENHANCV-STYLE SINGLE COLUMN ── */
+                /* ── SINGLE COLUMN ELEGANT EXECUTIVE ── */
                 <div className="ecv-single">
-
-                  {/* Bold header band */}
-                  <div className="ecv-single-header" style={{ backgroundColor: selectedColor, ...getSectionFontSize('Header') }}>
-                    <div className="ecv-single-avatar">
-                      <span className="ecv-avatar-initials" style={{ fontSize: '1.1rem' }}>
-                        {(editedSections.Header.split('\n')[0] || 'U').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase()}
-                      </span>
+                  <div className="ecv-single-header-modern" style={getSectionFontSize('Header')}>
+                    <h2 
+                      className="ecv-single-name-modern nvo-editable-text"
+                      contentEditable
+                      suppressContentEditableWarning
+                      style={{ color: selectedColor }}
+                      onBlur={(e) => {
+                        const lines = (editedSections.Header || '').split('\n');
+                        lines[0] = e.target.innerText;
+                        updateSectionsWithHistory({ ...editedSections, Header: lines.join('\n') });
+                      }}
+                    >
+                      {cleanCandidateName((editedSections.Header || '').split('\n')[0]) || 'Your Name'}
+                    </h2>
+                    <div 
+                      className="ecv-single-contacts-modern nvo-editable-text"
+                      contentEditable
+                      suppressContentEditableWarning
+                      onBlur={(e) => {
+                        const firstLine = (editedSections.Header || '').split('\n')[0];
+                        updateSectionsWithHistory({ ...editedSections, Header: firstLine + '\n' + e.target.innerText });
+                      }}
+                    >
+                      {(editedSections.Header ? editedSections.Header.split('\n').slice(1).filter(Boolean) : []).map(l => l.replace(/^https?:\/\/(www\.)?/, '').trim()).filter(Boolean).join(' | ')}
                     </div>
-                    <div>
-                      <h2 
-                        className="ecv-single-name nvo-editable-text"
-                        contentEditable
-                        suppressContentEditableWarning
-                        onBlur={(e) => {
-                          const lines = (editedSections.Header || '').split('\n');
-                          lines[0] = e.target.innerText;
-                          updateSectionsWithHistory({ ...editedSections, Header: lines.join('\n') });
-                        }}
-                      >{editedSections.Header.split('\n')[0] || 'Your Name'}</h2>
-                      <p 
-                        className="ecv-single-role nvo-editable-text"
-                        contentEditable
-                        suppressContentEditableWarning
-                        onBlur={(e) => {
-                          const lines = (editedSections.Header || '').split('\n');
-                          lines[1] = e.target.innerText;
-                          updateSectionsWithHistory({ ...editedSections, Header: lines.join('\n') });
-                        }}
-                      >{editedSections.Header.split('\n')[1] || 'Professional Role'}</p>
-                      <p 
-                        className="ecv-single-contacts nvo-editable-text"
-                        contentEditable
-                        suppressContentEditableWarning
-                        onBlur={(e) => {
-                          const topLines = (editedSections.Header || '').split('\n').slice(0, 2);
-                          updateSectionsWithHistory({ ...editedSections, Header: topLines.join('\n') + '\n' + e.target.innerText });
-                        }}
-                      >{editedSections.Header.split('\n').slice(2).join('  •  ')}</p>
-                    </div>
+                    <div className="ecv-header-divider" style={{ backgroundColor: selectedColor }} />
                   </div>
 
                   <div className="ecv-single-body">

@@ -1,6 +1,33 @@
 import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls, MeshDistortMaterial, Float } from "@react-three/drei";
-import { useRef } from "react";
+import { OrbitControls, MeshDistortMaterial, Float, useGLTF } from "@react-three/drei";
+import { useRef, useState, Component } from "react";
+
+class ErrorBoundary extends Component {
+  state = { hasError: false };
+  static getDerivedStateFromError() { return { hasError: true }; }
+  componentDidCatch(err) {
+    // Gracefully catch 404/parsing errors for the GLB model
+  }
+  render() {
+    if (this.state.hasError) return this.props.fallback;
+    return this.props.children;
+  }
+}
+
+function TripoModel() {
+  const meshRef = useRef(null);
+  const { scene } = useGLTF("/models/tripo_model.glb");
+
+  useFrame((state) => {
+    const time = state.clock.getElapsedTime();
+    if (meshRef.current) {
+      meshRef.current.rotation.x = time * 0.15;
+      meshRef.current.rotation.y = time * 0.25;
+    }
+  });
+
+  return <primitive ref={meshRef} object={scene} scale={2.0} />;
+}
 
 function GlowingCrystal() {
   const meshRef = useRef(null);
@@ -39,7 +66,9 @@ export default function FloatingModel() {
         <pointLight position={[-10, -10, -5]} color="#a855f7" intensity={2} />
         
         <Float speed={3} rotationIntensity={0.8} floatIntensity={1}>
-          <GlowingCrystal />
+          <ErrorBoundary fallback={<GlowingCrystal />}>
+            <TripoModel />
+          </ErrorBoundary>
         </Float>
 
         <OrbitControls enableZoom={false} enablePan={false} />

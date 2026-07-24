@@ -1592,7 +1592,9 @@ export default function ResumeEditorPage() {
                     fontFamily: "'Fira Code', monospace", 
                     fontSize: '0.8rem', 
                     lineHeight: 1.5,
-                    resize: 'vertical',
+                    resize: 'none',
+                    boxSizing: 'border-box',
+                    overflowY: 'auto',
                     background: 'rgba(10, 15, 30, 0.8)',
                     borderColor: 'rgba(255,255,255,0.08)'
                   }}

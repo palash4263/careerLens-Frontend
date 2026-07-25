@@ -1,0 +1,162 @@
+/* src/components/resume/Resume3DViewer.css */
+
+.r3d-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: rgba(2, 6, 23, 0.9);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.r3d-modal-card {
+  position: relative;
+  width: 100%;
+  max-width: 680px;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 
+    0 30px 90px -15px rgba(0, 0, 0, 0.9),
+    0 0 60px rgba(56, 189, 248, 0.25),
+    inset 0 1px 1px rgba(255, 255, 255, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow: hidden;
+}
+
+.r3d-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 14px;
+}
+
+.r3d-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.r3d-icon-spin {
+  color: #38bdf8;
+  animation: r3dSpin 6s linear infinite;
+}
+
+@keyframes r3dSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.r3d-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+}
+
+.r3d-badge {
+  font-family: 'Fira Code', monospace;
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #a3e635;
+  background: rgba(163, 230, 53, 0.12);
+  border: 1px solid rgba(163, 230, 53, 0.3);
+  padding: 3px 10px;
+  border-radius: 99px;
+  letter-spacing: 0.08em;
+}
+
+.r3d-close-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.r3d-close-btn:hover {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.12);
+  transform: scale(1.08);
+}
+
+/* 3D Canvas Container */
+.r3d-canvas-wrapper {
+  position: relative;
+  width: 100%;
+  height: 380px;
+  background: radial-gradient(circle at center, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.95) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.r3d-hint {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 4px 14px;
+  border-radius: 99px;
+  font-size: 0.72rem;
+  color: #94a3b8;
+  pointer-events: none;
+  font-family: 'Fira Code', monospace;
+}
+
+.r3d-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 6px;
+}
+
+.r3d-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  color: #cbd5e1;
+  font-weight: 500;
+}
+
+.r3d-btn-done {
+  padding: 8px 20px;
+  background: #38bdf8;
+  color: #0f172a;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.84rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 16px rgba(56, 189, 248, 0.3);
+}
+
+.r3d-btn-done:hover {
+  transform: translateY(-1px);
+  background: #7dd3fc;
+  box-shadow: 0 6px 22px rgba(56, 189, 248, 0.5);
+}

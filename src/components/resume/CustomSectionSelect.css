@@ -1,0 +1,258 @@
+/* src/components/resume/CustomSectionSelect.css */
+
+.css-select-container {
+  position: relative;
+  width: 100%;
+  z-index: 80;
+}
+
+/* Trigger Button */
+.css-trigger-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.08);
+}
+
+.css-trigger-btn:hover {
+  background: rgba(15, 23, 42, 0.95);
+  border-color: rgba(56, 189, 248, 0.5);
+  box-shadow: 0 6px 20px rgba(56, 189, 248, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.12);
+  transform: translateY(-1px);
+}
+
+.css-trigger-btn.open {
+  border-color: #38bdf8;
+  box-shadow: 0 0 25px rgba(56, 189, 248, 0.35);
+  background: #0f172a;
+}
+
+.css-trigger-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+}
+
+.css-trigger-icon-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.css-trigger-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.css-trigger-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+}
+
+.css-trigger-desc {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+
+.css-trigger-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.css-pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  box-shadow: 0 0 10px currentColor;
+  animation: cssPulse 2s infinite alternate;
+}
+
+@keyframes cssPulse {
+  0% { transform: scale(0.8); opacity: 0.6; }
+  100% { transform: scale(1.2); opacity: 1; }
+}
+
+.css-chevron {
+  color: #94a3b8;
+  transition: color 0.2s ease;
+}
+
+.css-trigger-btn:hover .css-chevron {
+  color: #38bdf8;
+}
+
+/* Popover Menu */
+.css-popover-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  width: 100%;
+  background: rgba(15, 23, 42, 0.98);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 14px;
+  padding: 10px;
+  box-shadow: 
+    0 20px 50px -10px rgba(0, 0, 0, 0.95),
+    0 0 35px rgba(56, 189, 248, 0.25),
+    inset 0 1px 1px rgba(255, 255, 255, 0.12);
+  z-index: 99999 !important;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 280px;
+  overflow: hidden;
+}
+
+/* Mobile Responsive Bottom Sheet Override */
+.css-mobile-backdrop {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .css-mobile-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(2, 6, 23, 0.7);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 999998 !important;
+  }
+
+  .css-popover-menu {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: auto !important;
+    width: 100vw !important;
+    max-height: 60vh !important;
+    border-radius: 20px 20px 0 0 !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-bottom: none !important;
+    box-shadow: 0 -15px 50px rgba(0, 0, 0, 0.85) !important;
+    z-index: 999999 !important;
+    padding: 16px !important;
+  }
+}
+
+.css-popover-header {
+  padding: 6px 8px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.css-popover-header-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #94a3b8;
+  letter-spacing: 0.08em;
+}
+
+.css-options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+/* Option Item */
+.css-option-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 8px 10px;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: left;
+}
+
+.css-option-item:hover {
+  background: rgba(56, 189, 248, 0.08);
+  border-color: rgba(56, 189, 248, 0.2);
+  transform: translateX(2px);
+}
+
+.css-option-item.selected {
+  background: rgba(56, 189, 248, 0.12);
+  border-color: rgba(56, 189, 248, 0.35);
+}
+
+.css-option-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.css-option-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+.css-option-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.css-option-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.css-option-desc {
+  font-size: 0.68rem;
+  color: #64748b;
+  line-height: 1.2;
+}
+
+.css-check-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+}

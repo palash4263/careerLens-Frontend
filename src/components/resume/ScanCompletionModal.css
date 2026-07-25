@@ -4,70 +4,102 @@
   position: fixed;
   inset: 0;
   z-index: 9999;
-  background: rgba(2, 6, 23, 0.85);
-  backdrop-filter: blur(16px);
+  background: rgba(2, 6, 23, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 24px;
+  overflow: hidden;
 }
 
-.scm-ray-burst {
+/* Confetti explosion particle container */
+.scm-confetti-container {
   position: absolute;
-  width: 600px;
-  height: 600px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(163, 230, 53, 0.12) 0%, rgba(15, 23, 42, 0) 70%);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   pointer-events: none;
-  animation: rayPulse 3s ease-in-out infinite alternate;
+  z-index: 10000;
+  width: 1px;
+  height: 1px;
 }
 
-@keyframes rayPulse {
-  0% { transform: scale(0.9); opacity: 0.5; }
+.scm-confetti-piece {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  pointer-events: none;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+.scm-ambient-glow {
+  position: absolute;
+  width: 650px;
+  height: 650px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(163, 230, 53, 0.15) 0%, rgba(56, 189, 248, 0.08) 40%, rgba(2, 6, 23, 0) 70%);
+  pointer-events: none;
+  animation: scmGlowPulse 4s ease-in-out infinite alternate;
+}
+
+@keyframes scmGlowPulse {
+  0% { transform: scale(0.85); opacity: 0.6; }
   100% { transform: scale(1.15); opacity: 1; }
 }
 
 .scm-card {
   position: relative;
   width: 100%;
-  max-width: 480px;
-  background: #0f172a;
-  border: 1px solid rgba(163, 230, 53, 0.3);
-  border-radius: 12px;
-  padding: 36px 28px;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), 0 0 30px rgba(163, 230, 53, 0.15);
+  max-width: 460px;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(163, 230, 53, 0.35);
+  border-radius: 20px;
+  padding: 36px 30px 28px;
+  box-shadow: 
+    0 30px 80px -15px rgba(0, 0, 0, 0.8),
+    0 0 50px rgba(163, 230, 53, 0.2),
+    inset 0 1px 1px rgba(255, 255, 255, 0.15);
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
   z-index: 2;
+  overflow: hidden;
 }
 
 .scm-close-btn {
   position: absolute;
-  top: 16px;
-  right: 16px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
+  top: 18px;
+  right: 18px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
   color: #94a3b8;
-  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .scm-close-btn:hover {
   color: #ffffff;
   border-color: rgba(255, 255, 255, 0.25);
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.12);
+  transform: scale(1.08);
 }
 
-/* Radar Pulse Rings */
-.scm-radar-wrapper {
+/* Radar & Pulsing Target Rings */
+.scm-target-wrapper {
   position: relative;
-  width: 84px;
-  height: 84px;
-  margin-bottom: 20px;
+  width: 90px;
+  height: 90px;
+  margin-bottom: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -76,9 +108,9 @@
 .scm-pulse-ring {
   position: absolute;
   border-radius: 50%;
-  border: 1px solid rgba(163, 230, 53, 0.4);
+  border: 1px solid rgba(163, 230, 53, 0.45);
   pointer-events: none;
-  animation: radarExpand 2.4s ease-out infinite;
+  animation: scmRadarExpand 2.5s cubic-bezier(0, 0.2, 0.8, 1) infinite;
 }
 
 .scm-pulse-ring.ring-1 {
@@ -88,45 +120,46 @@
 }
 
 .scm-pulse-ring.ring-2 {
-  width: 130%;
-  height: 130%;
-  animation-delay: 0.6s;
+  width: 135%;
+  height: 135%;
+  animation-delay: 0.7s;
 }
 
 .scm-pulse-ring.ring-3 {
-  width: 160%;
-  height: 160%;
-  animation-delay: 1.2s;
+  width: 170%;
+  height: 170%;
+  animation-delay: 1.4s;
 }
 
-@keyframes radarExpand {
+@keyframes scmRadarExpand {
   0% { transform: scale(0.6); opacity: 1; }
-  100% { transform: scale(1.4); opacity: 0; }
+  100% { transform: scale(1.45); opacity: 0; }
 }
 
 .scm-icon-circle {
   position: relative;
-  width: 64px;
-  height: 64px;
+  width: 68px;
+  height: 68px;
   border-radius: 50%;
-  background: rgba(163, 230, 53, 0.12);
-  border: 1px solid rgba(163, 230, 53, 0.4);
+  background: linear-gradient(135deg, rgba(163, 230, 53, 0.25) 0%, rgba(56, 189, 248, 0.15) 100%);
+  border: 2px solid rgba(163, 230, 53, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 2;
-  box-shadow: 0 0 20px rgba(163, 230, 53, 0.3);
+  box-shadow: 0 0 30px rgba(163, 230, 53, 0.4), inset 0 0 15px rgba(163, 230, 53, 0.3);
 }
 
 .scm-check-icon {
   color: #a3e635;
+  filter: drop-shadow(0 2px 8px rgba(163, 230, 53, 0.6));
 }
 
 .scm-header {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   margin-bottom: 24px;
 }
 
@@ -134,28 +167,39 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 3px 10px;
-  background: rgba(163, 230, 53, 0.1);
-  border: 1px solid rgba(163, 230, 53, 0.25);
-  border-radius: 4px;
+  padding: 4px 12px;
+  background: rgba(163, 230, 53, 0.12);
+  border: 1px solid rgba(163, 230, 53, 0.3);
+  border-radius: 99px;
   font-family: 'Fira Code', monospace;
-  font-size: 0.7rem;
-  font-weight: 700;
+  font-size: 0.68rem;
+  font-weight: 800;
   color: #a3e635;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
+  box-shadow: 0 2px 10px rgba(163, 230, 53, 0.15);
+}
+
+.scm-sparkle-spin {
+  animation: scmSparkleRotate 3s linear infinite;
+}
+
+@keyframes scmSparkleRotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .scm-title {
-  font-family: 'DM Serif Display', Georgia, serif;
-  font-size: 1.6rem;
-  font-weight: 400;
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.45rem;
+  font-weight: 800;
   color: #ffffff;
   margin: 0;
-  line-height: 1.2;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
 }
 
 .scm-subtitle {
-  font-size: 0.88rem;
+  font-size: 0.84rem;
   color: #94a3b8;
   margin: 0;
   line-height: 1.5;
@@ -168,38 +212,50 @@
   display: flex;
   align-items: center;
   justify-content: space-around;
-  background: #1e293b;
+  background: rgba(30, 41, 59, 0.7);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 28px;
+  border-radius: 12px;
+  padding: 16px 12px;
+  margin-bottom: 26px;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 .scm-stat-box {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
+}
+
+.scm-stat-header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.scm-stat-icon {
+  color: #38bdf8;
 }
 
 .scm-stat-val {
   font-family: 'Fira Code', monospace;
-  font-size: 1.3rem;
-  font-weight: 700;
+  font-size: 1.25rem;
+  font-weight: 800;
   color: #a3e635;
+  text-shadow: 0 0 12px rgba(163, 230, 53, 0.3);
 }
 
 .scm-stat-lbl {
   font-family: 'Fira Code', monospace;
-  font-size: 0.65rem;
-  font-weight: 600;
+  font-size: 0.62rem;
+  font-weight: 700;
   color: #64748b;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
 }
 
 .scm-stat-divider {
   width: 1px;
-  height: 28px;
+  height: 32px;
   background: rgba(255, 255, 255, 0.08);
 }
 
@@ -212,52 +268,77 @@
 }
 
 .scm-btn-primary {
+  position: relative;
   width: 100%;
-  padding: 12px;
-  background: #a3e635;
+  padding: 13px;
+  background: linear-gradient(135deg, #a3e635 0%, #84cc16 100%);
   color: #0f172a;
   border: none;
-  border-radius: 6px;
-  font-family: 'Fira Code', monospace;
-  font-size: 0.88rem;
-  font-weight: 700;
+  border-radius: 10px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.92rem;
+  font-weight: 800;
   letter-spacing: 0.02em;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  box-shadow: 0 4px 16px rgba(163, 230, 53, 0.25);
-  transition: all 0.2s ease;
+  box-shadow: 0 4px 20px rgba(163, 230, 53, 0.35);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
 }
 
 .scm-btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 24px rgba(163, 230, 53, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(163, 230, 53, 0.5);
+  background: linear-gradient(135deg, #bef264 0%, #a3e635 100%);
+}
+
+.scm-btn-primary:active {
+  transform: translateY(0);
+}
+
+/* Shimmer Light Reflection */
+.scm-btn-shimmer {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  animation: scmShimmer 3s infinite;
+}
+
+@keyframes scmShimmer {
+  0% { left: -100%; }
+  30% { left: 200%; }
+  100% { left: 200%; }
 }
 
 .scm-btn-secondary {
   width: 100%;
   padding: 12px;
-  background: #1e293b;
+  background: rgba(30, 41, 59, 0.8);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
+  border-radius: 10px;
   color: #f8fafc;
-  font-family: 'Fira Code', monospace;
-  font-size: 0.88rem;
-  font-weight: 600;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.86rem;
+  font-weight: 700;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .scm-btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(163, 230, 53, 0.3);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(163, 230, 53, 0.4);
   color: #a3e635;
+  transform: translateY(-1px);
 }
 
 .scm-btn-ghost {
@@ -265,11 +346,22 @@
   border: none;
   color: #64748b;
   font-size: 0.8rem;
+  font-weight: 600;
   cursor: pointer;
-  padding: 4px;
+  padding: 6px;
   transition: color 0.2s ease;
 }
 
 .scm-btn-ghost:hover {
-  color: #94a3b8;
+  color: #cbd5e1;
+}
+
+/* Accessibility Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .scm-pulse-ring,
+  .scm-ambient-glow,
+  .scm-sparkle-spin,
+  .scm-btn-shimmer {
+    animation: none !important;
+  }
 }

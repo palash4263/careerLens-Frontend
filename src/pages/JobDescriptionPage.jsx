@@ -8,6 +8,7 @@ import {
 } from "../services/jobDescriptionService";
 import { useScrollReveal } from "../hooks/useScrollReveal";
 import { motion } from "framer-motion";
+import InterviewQuestionsModal from "../components/jobs/InterviewQuestionsModal";
 import "../assets/jobDescription.css";
 
 function JobDescriptionPage() {
@@ -17,6 +18,7 @@ function JobDescriptionPage() {
   const [toast, setToast] = useState(null);
   const [selectedJobs, setSelectedJobs] = useState([]);
   const [selectedJob, setSelectedJob] = useState(null);
+  const [interviewModalJob, setInterviewModalJob] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("newest");
   const [filterCompany, setFilterCompany] = useState("all");
@@ -145,10 +147,12 @@ function JobDescriptionPage() {
     e.preventDefault();
     try {
       setLoading(true);
-      await createJobDescription(formData);
+      const savedJob = await createJobDescription(formData);
       showToast("Job description created successfully!", "success");
+      const jobForModal = savedJob || { ...formData, id: Date.now() };
       setFormData({ title: "", company: "", description: "" });
       await loadJobDescriptions();
+      setInterviewModalJob(jobForModal);
     } catch (error) {
       console.error(error);
       showToast("Failed to create job description.", "error");
@@ -384,19 +388,46 @@ function JobDescriptionPage() {
                   />
                 </div>
 
-                <button type="submit" className="jobs-submit-btn" disabled={loading}>
-                  {loading ? (
-                    <>
-                      <span className="spinner"></span>
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <span className="btn-icon">💾</span>
-                      Save job description
-                    </>
-                  )}
-                </button>
+                <div style={{ display: 'flex', gap: '10px', marginTop: '12px', flexWrap: 'wrap' }}>
+                  <button type="submit" className="jobs-submit-btn" disabled={loading} style={{ flex: '1 1 200px' }}>
+                    {loading ? (
+                      <>
+                        <span className="spinner"></span>
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <span className="btn-icon">💾</span>
+                        Save job description
+                      </>
+                    )}
+                  </button>
+
+                  <button 
+                    type="button" 
+                    className="jobs-submit-btn"
+                    style={{ 
+                      flex: '1 1 200px', 
+                      background: 'linear-gradient(135deg, #7c3aed, #4f46e5)', 
+                      border: '1px solid rgba(168, 85, 247, 0.4)',
+                      boxShadow: '0 4px 16px rgba(124, 58, 237, 0.35)'
+                    }}
+                    onClick={() => {
+                      if (!formData.title && !formData.description) {
+                        showToast("Please enter a role title or paste a description first!", "error");
+                        return;
+                      }
+                      setInterviewModalJob({
+                        title: formData.title || "Target Software Role",
+                        company: formData.company || "Target Company",
+                        description: formData.description
+                      });
+                    }}
+                  >
+                    <span className="btn-icon">🎯</span>
+                    Generate Interview Questions
+                  </button>
+                </div>
               </form>
             </div>
           </section>
@@ -677,6 +708,23 @@ function JobDescriptionPage() {
                         </span>
                       </div>
                       <div className="jobs-job-actions">
+                        <button
+                          className="jobs-job-action-btn interview"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setInterviewModalJob(job);
+                          }}
+                          style={{
+                            background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.25), rgba(124, 58, 237, 0.25))',
+                            border: '1px solid #c084fc',
+                            color: '#ffffff',
+                            fontWeight: '800',
+                            boxShadow: '0 0 14px rgba(168, 85, 247, 0.3)'
+                          }}
+                          title="Generate & View Tailored Interview Questions"
+                        >
+                          <span>🎯</span> Interview Qs
+                        </button>
                         <button 
                           className="jobs-job-action-btn optimize"
                           onClick={() => navigate(`/resume-optimizer?jobId=${job.id}`)}
@@ -753,6 +801,17 @@ function JobDescriptionPage() {
               </div>
               <div className="modal-actions">
                 <button 
+                  className="modal-btn secondary"
+                  style={{ background: 'rgba(168, 85, 247, 0.2)', color: '#c084fc', border: '1px solid rgba(168, 85, 247, 0.4)', fontWeight: '700' }}
+                  onClick={() => {
+                    const targetJob = selectedJob;
+                    setSelectedJob(null);
+                    setInterviewModalJob(targetJob);
+                  }}
+                >
+                  🎯 Interview Questions
+                </button>
+                <button 
                   className="modal-btn primary"
                   onClick={() => {
                     setSelectedJob(null);
@@ -784,6 +843,13 @@ function JobDescriptionPage() {
           </div>
         </div>
       )}
+
+      {/* AI Interview Questions Modal */}
+      <InterviewQuestionsModal
+        isOpen={!!interviewModalJob}
+        onClose={() => setInterviewModalJob(null)}
+        job={interviewModalJob}
+      />
 
       {/* Toast Notification */}
       {toast && (

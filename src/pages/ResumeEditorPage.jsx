@@ -7,7 +7,7 @@ import {
   Trash2, LayoutGrid, CheckSquare, Plus, ArrowUp, ArrowDown, GripVertical,
   FileText, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight,
   Award, Globe, Briefcase, GraduationCap, ChevronRight, Undo2, Redo2, Type, Layers, Bot, Upload, Palette,
-  Eye, EyeOff, User, Lightbulb, Save
+  Eye, EyeOff, User, Lightbulb, Save, Box
 } from "lucide-react";
 import { getResumes } from "../services/resumeService";
 import { getJobDescriptions } from "../services/jobDescriptionService";
@@ -15,6 +15,8 @@ import { optimizeSection } from "../services/resumeOptimizationService";
 import { generateResumePDF } from "../utils/pdfGenerator";
 import { parseSections } from "../utils/resumeOptimizer";
 import ScanCompletionModal from "../components/resume/ScanCompletionModal";
+import Resume3DViewer from "../components/resume/Resume3DViewer";
+import CustomSectionSelect from "../components/resume/CustomSectionSelect";
 import "../components/resume/ScanCompletionModal.css";
 import api from "../api/axiosConfig";
 import "./ResumeEditorPage.css";
@@ -71,6 +73,51 @@ const sanitizeSections = (sectionsObj) => {
     'certifications', 'languages', 'summary', 'professional summary'
   ];
 
+  // Extract skills lines (e.g. "Libraries:", "SKILLS") accidentally placed in Projects or Experience
+  ['Projects', 'Experience'].forEach(sectionKey => {
+    if (cleaned[sectionKey] && typeof cleaned[sectionKey] === 'string') {
+      const projLines = cleaned[sectionKey].split('\n');
+      const validProjLines = [];
+      const extractedSkillsLines = [];
+      let foundSkillsBreak = false;
+
+      for (let line of projLines) {
+        const trimmed = line.trim();
+
+        if (
+          /\bSKILLS\b/i.test(trimmed) && (trimmed.length < 20 || trimmed.endsWith('SKILLS')) ||
+          /^(programming languages|ai and machine learning|frameworks|developer tools|libraries|cloud platforms|databases|web technologies|core competencies)\s*:/i.test(trimmed)
+        ) {
+          foundSkillsBreak = true;
+
+          if (/\bSKILLS\b/i.test(trimmed) && trimmed.length > 8) {
+            const cleanProjPart = trimmed.replace(/[\s\.\-_]*\bSKILLS\b.*/i, '').trim();
+            if (cleanProjPart) validProjLines.push(cleanProjPart);
+          }
+          continue;
+        }
+
+        if (foundSkillsBreak) {
+          extractedSkillsLines.push(line);
+        } else {
+          validProjLines.push(line);
+        }
+      }
+
+      cleaned[sectionKey] = validProjLines.join('\n').trim();
+
+      if (extractedSkillsLines.length > 0) {
+        const skillsText = extractedSkillsLines.join('\n').trim();
+        if (skillsText) {
+          const currentSkills = cleaned.Skills || '';
+          if (!currentSkills.includes(skillsText.slice(0, 30))) {
+            cleaned.Skills = currentSkills ? `${currentSkills}\n${skillsText}` : skillsText;
+          }
+        }
+      }
+    }
+  });
+
   // Fix Education section if Experience or orphaned date/location lines got appended into Education
   if (cleaned.Education && typeof cleaned.Education === 'string') {
     const eduLines = cleaned.Education.split('\n');
@@ -98,7 +145,6 @@ const sanitizeSections = (sectionsObj) => {
   for (const key of Object.keys(cleaned)) {
     if (cleaned[key] && typeof cleaned[key] === 'string') {
       let textVal = cleaned[key];
-      // Merge standalone percentage lines (e.g., "\n 40%.") back onto preceding line
       textVal = textVal.replace(/\n\s*(\d+%\.?)\s*/g, ' $1\n')
                        .replace(/,\s*,/g, ',')
                        .replace(/,\s*\./g, '.');
@@ -246,6 +292,7 @@ export default function ResumeEditorPage() {
   const [downloading, setDownloading] = useState(false);
   const [activeSection, setActiveSection] = useState("Header");
   const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [show3DViewer, setShow3DViewer] = useState(false);
   const [activeRailTab, setActiveRailTab] = useState("content");
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [mobileSelectedSection, setMobileSelectedSection] = useState("Summary");
@@ -1512,15 +1559,11 @@ export default function ResumeEditorPage() {
               {/* Custom AI Instruction Box */}
               <div className="nvo-ai-card">
                 <span className="nvo-ai-card-title">📝 Custom AI Instructions</span>
-                <select 
-                  className="nvo-ai-input" 
+                <CustomSectionSelect 
                   value={activeSection} 
-                  onChange={(e) => setActiveSection(e.target.value)}
-                >
-                  {Object.keys(editedSections).map(sec => (
-                    <option key={sec} value={sec}>{sec} Section</option>
-                  ))}
-                </select>
+                  onChange={setActiveSection} 
+                  options={Object.keys(editedSections)} 
+                />
                 <input 
                   type="text" 
                   className="nvo-ai-input" 
@@ -1562,21 +1605,16 @@ export default function ResumeEditorPage() {
             </div>
 
             <div className="nvo-drawer-body" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <div className="nvo-ai-card">
+              <div className="nvo-ai-card" style={{ overflow: 'visible' }}>
                 <span className="nvo-ai-card-title">Select Section to Edit</span>
-                <select 
-                  className="nvo-ai-input" 
+                <CustomSectionSelect 
                   value={mobileSelectedSection} 
-                  onChange={(e) => {
-                    setMobileSelectedSection(e.target.value);
-                    document.getElementById(`editor-card-${e.target.value}`)?.scrollIntoView({ behavior: 'smooth' });
-                  }}
-                  style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(56, 189, 248, 0.3)', color: '#fff' }}
-                >
-                  {Object.keys(editedSections).map(key => (
-                    <option key={key} value={key}>{SECTION_ICONS[key] || "📝"} {key} Section</option>
-                  ))}
-                </select>
+                  onChange={(val) => {
+                    setMobileSelectedSection(val);
+                    document.getElementById(`editor-card-${val}`)?.scrollIntoView({ behavior: 'smooth' });
+                  }} 
+                  options={Object.keys(editedSections)} 
+                />
               </div>
 
               <div className="nvo-ai-card" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -1763,10 +1801,21 @@ export default function ResumeEditorPage() {
               style={{ paddingRight: '12px' }}
             >
               <option value={8.0}>8.0pt (Compact)</option>
+              <option value={9.0}>9.0pt (Small)</option>
               <option value={10.0}>10.0pt (Normal)</option>
-              <option value={11.0}>11.0pt (Large)</option>
+              <option value={11.0}>11.0pt (Medium)</option>
+              <option value={12.0}>12.0pt (Large)</option>
+              <option value={13.0}>13.0pt (Extra Large)</option>
+              <option value={14.0}>14.0pt (Jumbo)</option>
+              <option value={16.0}>16.0pt (Maximum)</option>
             </select>
           </div>
+          {/* 3D Model Showcase Button */}
+          <button className="nvo-bar-btn" onClick={() => setShow3DViewer(true)} title="View Interactive 3D Hologram Model">
+            <Box size={14} style={{ color: '#38bdf8' }} />
+            <span>3D Model</span>
+          </button>
+
           {/* Download PDF Button */}
           <button className={`nvo-bar-btn nvo-btn-download ${downloading ? 'loading' : ''}`} onClick={handleDownloadPDF} disabled={downloading} title="Download PDF (Ctrl+S / Cmd+S)">
             {downloading ? <span className="red-spinner" /> : <Download size={14} />}
@@ -1796,7 +1845,7 @@ export default function ResumeEditorPage() {
               className="red-page-canvas" 
               style={{ 
                 fontFamily: activeFontFamily,
-                fontSize: `${baseFontSize * 0.08}rem`,
+                fontSize: `${baseFontSize * 0.088}rem`,
                 '--page-padding': pageMargins === 1 ? '24px 20px' : pageMargins === 2 ? '36px 30px' : '48px 40px',
                 '--section-margin': `${sectionSpacing * 6}px`,
                 '--list-gap': `${sectionSpacing * 2.5}px`,
@@ -1907,7 +1956,14 @@ export default function ResumeEditorPage() {
                         updateSectionsWithHistory({ ...editedSections, Header: firstLine + '\n' + e.target.innerText });
                       }}
                     >
-                      {(editedSections.Header ? editedSections.Header.split('\n').slice(1).filter(Boolean) : []).map(l => l.replace(/^https?:\/\/(www\.)?/, '').trim()).filter(Boolean).join(' | ')}
+                      {(editedSections.Header ? editedSections.Header.split('\n').slice(1).filter(Boolean) : [])
+                        .map(l => {
+                          return l.replace(/\b(full\s*stack|fullstack|full-stack|software|backend|frontend|web|mobile|devops|data|cloud|ml|ai)?\s*(developer|engineer|intern|analyst|consultant|architect|manager|designer|specialist|sde)\b/gi, '')
+                                  .replace(/^https?:\/\/(www\.)?/, '')
+                                  .replace(/^[\s,\-_|]+|[\s,\-_|]+$/g, '').trim();
+                        })
+                        .filter(l => Boolean(l) && !/\b(developer|engineer|analyst|architect|manager|designer|consultant|specialist|lead|intern|fullstack|backend|frontend|sde|software)\b/i.test(l))
+                        .join(' | ')}
                     </div>
                     <div className="ecv-header-divider" style={{ backgroundColor: selectedColor }} />
                   </div>
@@ -1929,6 +1985,13 @@ export default function ResumeEditorPage() {
         onClose={() => setShowCompletionModal(false)}
         title="PDF Resume Compiled & Exported!"
         subtitle="Your ATS-optimized PDF resume has been formatted and saved."
+        score={result?.estimated_new_score || 95}
+      />
+
+      <Resume3DViewer
+        isOpen={show3DViewer}
+        onClose={() => setShow3DViewer(false)}
+        candidateName={cleanCandidateName((editedSections.Header || '').split('\n')[0]) || "Palash Mishra"}
         score={result?.estimated_new_score || 95}
       />
     </div>

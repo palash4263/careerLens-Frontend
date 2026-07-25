@@ -779,6 +779,57 @@ async function generateSingleColumnPDF({
   saveAs(new Blob([pdfBytes], { type: 'application/pdf' }), `${cleanFile}_optimized.pdf`);
 }
 
+const sanitizeSections = (sectionsObj) => {
+  if (!sectionsObj || typeof sectionsObj !== 'object') return sectionsObj;
+  const cleaned = { ...sectionsObj };
+
+  ['Projects', 'Experience'].forEach(sectionKey => {
+    if (cleaned[sectionKey] && typeof cleaned[sectionKey] === 'string') {
+      const projLines = cleaned[sectionKey].split('\n');
+      const validProjLines = [];
+      const extractedSkillsLines = [];
+      let foundSkillsBreak = false;
+
+      for (let line of projLines) {
+        const trimmed = line.trim();
+
+        if (
+          /\bSKILLS\b/i.test(trimmed) && (trimmed.length < 20 || trimmed.endsWith('SKILLS')) ||
+          /^(programming languages|ai and machine learning|frameworks|developer tools|libraries|cloud platforms|databases|web technologies|core competencies)\s*:/i.test(trimmed)
+        ) {
+          foundSkillsBreak = true;
+
+          if (/\bSKILLS\b/i.test(trimmed) && trimmed.length > 8) {
+            const cleanProjPart = trimmed.replace(/[\s\.\-_]*\bSKILLS\b.*/i, '').trim();
+            if (cleanProjPart) validProjLines.push(cleanProjPart);
+          }
+          continue;
+        }
+
+        if (foundSkillsBreak) {
+          extractedSkillsLines.push(line);
+        } else {
+          validProjLines.push(line);
+        }
+      }
+
+      cleaned[sectionKey] = validProjLines.join('\n').trim();
+
+      if (extractedSkillsLines.length > 0) {
+        const skillsText = extractedSkillsLines.join('\n').trim();
+        if (skillsText) {
+          const currentSkills = cleaned.Skills || '';
+          if (!currentSkills.includes(skillsText.slice(0, 30))) {
+            cleaned.Skills = currentSkills ? `${currentSkills}\n${skillsText}` : skillsText;
+          }
+        }
+      }
+    }
+  });
+
+  return cleaned;
+};
+
 // =====================================================================
 // MAIN TWO-COLUMN & SINGLE-COLUMN PDF GENERATION
 // =====================================================================
@@ -799,6 +850,10 @@ export async function generateResumePDF({
   mainSectionOrder = ['Summary', 'Experience', 'Projects'],
   sideSectionOrder = ['Skills', 'Education', 'Certifications'],
 }) {
+  if (editedSections) {
+    editedSections = sanitizeSections(editedSections);
+  }
+
   const PRIMARY = hexToRgbColor(primaryColor);
   const WHITE   = rgb(1, 1, 1);
   const LIGHT_TEXT = rgb(0.92, 0.94, 0.97);
@@ -965,13 +1020,42 @@ export async function generateResumePDF({
     dh.drawText(p, nameStr, (PAGE_WIDTH - nameW) / 2, cursorY, sizes.sizeName, { bold: true, color: PRIMARY });
     cursorY -= 16;
 
-    const contactParts = (id.contactLines && id.contactLines.length > 0)
-      ? id.contactLines
+    const isRoleLine = (l) => /\b(developer|engineer|analyst|architect|manager|designer|consultant|specialist|lead|intern|fullstack|backend|frontend|sde|software)\b/i.test(l);
+    
+    let rawContactLines = (id.contactLines && id.contactLines.length > 0)
+      ? id.contactLines.map(l => {
+          return l.replace(/\b(full\s*stack|fullstack|full-stack|software|backend|frontend|web|mobile|devops|data|cloud|ml|ai)?\s*(developer|engineer|intern|analyst|consultant|architect|manager|designer|specialist|sde)\b/gi, '')
+                  .replace(/^[\s,\-_|]+|[\s,\-_|]+$/g, '').trim();
+        }).filter(l => Boolean(l) && !isRoleLine(l))
       : [id.phone, id.email, id.linkedin, id.github].filter(Boolean);
-    const contactStr = contactParts.map(l => safeText(l).replace(/^https?:\/\/(www\.)?/, '').trim()).filter(Boolean).join(' | ');
-    if (contactStr) {
-      const contactW = dh.tw(contactStr, sizes.sizeContact);
-      dh.drawText(p, contactStr, (PAGE_WIDTH - contactW) / 2, cursorY, sizes.sizeContact, { color: DARK_GRAY });
+
+    if (rawContactLines.length === 0) {
+      rawContactLines = [id.phone, id.email, id.linkedin, id.github].filter(Boolean);
+    }
+
+    const formattedParts = rawContactLines.map(l => safeText(l).replace(/^https?:\/\/(www\.)?/, '').trim()).filter(Boolean);
+    const MAX_CONTACT_W = PAGE_WIDTH - 72;
+    let fullContactStr = formattedParts.join(' | ');
+
+    if (dh.tw(fullContactStr, sizes.sizeContact) > MAX_CONTACT_W && formattedParts.length > 2) {
+      const mid = Math.ceil(formattedParts.length / 2);
+      const parts1 = formattedParts.slice(0, mid);
+      const parts2 = formattedParts.slice(mid);
+
+      const str1 = parts1.join(' | ');
+      const str2 = parts2.join(' | ');
+
+      const w1 = dh.tw(str1, sizes.sizeContact);
+      const w2 = dh.tw(str2, sizes.sizeContact);
+
+      dh.drawText(p, str1, Math.max(36, (PAGE_WIDTH - w1) / 2), cursorY, sizes.sizeContact, { color: DARK_GRAY });
+      cursorY -= 10;
+      dh.drawText(p, str2, Math.max(36, (PAGE_WIDTH - w2) / 2), cursorY, sizes.sizeContact, { color: DARK_GRAY });
+      cursorY -= 12;
+    } else if (fullContactStr) {
+      const contactW = dh.tw(fullContactStr, sizes.sizeContact);
+      const drawX = Math.max(36, (PAGE_WIDTH - contactW) / 2);
+      dh.drawText(p, fullContactStr, drawX, cursorY, sizes.sizeContact, { color: DARK_GRAY });
       cursorY -= 12;
     }
 

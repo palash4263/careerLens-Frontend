@@ -3,7 +3,7 @@
 /* ====== PAGE CONTAINER ====== */
 .ats-page-premium {
   min-height: 100vh;
-  background: #020617;
+  background: var(--cl-bg-base);
   position: relative;
   overflow: hidden;
   padding: 6.5rem 2.5rem 5rem;
@@ -64,7 +64,7 @@
 .ats-header-title {
   font-size: 2.8rem;
   font-weight: 700;
-  color: #F1F5F9;
+  color: var(--cl-text-primary);
   margin: 0.5rem 0;
 }
 
@@ -76,13 +76,13 @@
 
 .ats-header-sub {
   font-size: 1rem;
-  color: #94A3B8;
+  color: var(--cl-text-secondary);
   margin: 0;
 }
 
 /* ====== CONTROL PANEL ====== */
 .ats-control-panel {
-  background: rgba(18, 18, 26, 0.85);
+  background: color-mix(in srgb, var(--cl-bg-card) 85%, transparent);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 24px;
   padding: 2rem;
@@ -107,7 +107,7 @@
 .ats-field-premium label {
   font-size: 0.85rem;
   font-weight: 600;
-  color: #94A3B8;
+  color: var(--cl-text-secondary);
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -132,7 +132,7 @@
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 14px;
-  color: #F1F5F9;
+  color: var(--cl-text-primary);
   font-size: 0.95rem;
   transition: all 0.3s ease;
   font-family: inherit;
@@ -156,8 +156,8 @@
 }
 
 .ats-select option {
-  background: #1a1a2e;
-  color: #F1F5F9;
+  background: var(--cl-bg-elevated);
+  color: var(--cl-text-primary);
 }
 
 .ats-control-actions {
@@ -172,7 +172,7 @@
   gap: 0.75rem;
   padding: 0.8rem 2.5rem;
   background: linear-gradient(135deg, #7C3AED, #6D28D9);
-  color: white;
+  color: var(--cl-text-primary);
   border: none;
   border-radius: 14px;
   font-weight: 700;
@@ -197,7 +197,7 @@
   padding: 0.8rem 2rem;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #F1F5F9;
+  color: var(--cl-text-primary);
   border-radius: 14px;
   font-weight: 600;
   font-size: 0.95rem;
@@ -233,7 +233,7 @@
 }
 
 .ats-score-card {
-  background: rgba(18, 18, 26, 0.85);
+  background: color-mix(in srgb, var(--cl-bg-card) 85%, transparent);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 20px;
   padding: 2rem;
@@ -244,7 +244,7 @@
 .score-label {
   display: block;
   font-size: 0.85rem;
-  color: #94A3B8;
+  color: var(--cl-text-secondary);
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -254,7 +254,7 @@
   display: block;
   font-size: 4rem;
   font-weight: 800;
-  color: #F1F5F9;
+  color: var(--cl-text-primary);
   background: linear-gradient(135deg, #7C3AED, #3B82F6);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -284,7 +284,7 @@
 }
 
 .ats-skills-card {
-  background: rgba(18, 18, 26, 0.85);
+  background: color-mix(in srgb, var(--cl-bg-card) 85%, transparent);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 20px;
   padding: 1.5rem;
@@ -302,7 +302,7 @@
 .ats-skills-card h3 {
   font-size: 1rem;
   font-weight: 600;
-  color: #F1F5F9;
+  color: var(--cl-text-primary);
   margin: 0 0 1rem 0;
 }
 
@@ -333,13 +333,13 @@
 }
 
 .empty-text {
-  color: #64748B;
+  color: var(--cl-text-muted);
   font-size: 0.85rem;
 }
 
 /* ====== SUGGESTIONS ====== */
 .ats-suggestions {
-  background: rgba(18, 18, 26, 0.85);
+  background: color-mix(in srgb, var(--cl-bg-card) 85%, transparent);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 20px;
   padding: 1.5rem;
@@ -349,7 +349,7 @@
 .ats-suggestions h3 {
   font-size: 1rem;
   font-weight: 600;
-  color: #F1F5F9;
+  color: var(--cl-text-primary);
   margin: 0 0 1rem 0;
 }
 
@@ -364,7 +364,7 @@
   align-items: flex-start;
   gap: 0.75rem;
   padding: 0.5rem 0;
-  color: #94A3B8;
+  color: var(--cl-text-secondary);
   font-size: 0.9rem;
   line-height: 1.5;
   border-bottom: 1px solid rgba(255, 255, 255, 0.03);
@@ -381,7 +381,7 @@
 
 /* ====== OPTIMIZATION ====== */
 .ats-optimization-premium {
-  background: rgba(18, 18, 26, 0.85);
+  background: color-mix(in srgb, var(--cl-bg-card) 85%, transparent);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 24px;
   padding: 2rem;
@@ -401,7 +401,7 @@
 .optimization-header h2 {
   font-size: 1.4rem;
   font-weight: 700;
-  color: #F1F5F9;
+  color: var(--cl-text-primary);
   margin: 0;
 }
 
@@ -423,7 +423,7 @@
 
 .score-value.old {
   font-size: 1.5rem;
-  color: #94A3B8;
+  color: var(--cl-text-secondary);
 }
 
 .score-value.new {
@@ -432,7 +432,7 @@
 }
 
 .score-arrow {
-  color: #64748B;
+  color: var(--cl-text-muted);
   font-size: 1.5rem;
 }
 
@@ -445,7 +445,7 @@
 .optimization-summary h3 {
   font-size: 0.95rem;
   font-weight: 600;
-  color: #F1F5F9;
+  color: var(--cl-text-primary);
   margin: 0 0 0.75rem 0;
 }
 
@@ -454,7 +454,7 @@
   align-items: flex-start;
   gap: 0.75rem;
   padding: 0.5rem 0;
-  color: #94A3B8;
+  color: var(--cl-text-secondary);
   font-size: 0.9rem;
   line-height: 1.5;
   border-bottom: 1px solid rgba(255, 255, 255, 0.03);
@@ -466,7 +466,7 @@
 }
 
 .optimization-summary p {
-  color: #94A3B8;
+  color: var(--cl-text-secondary);
   font-size: 0.95rem;
   line-height: 1.7;
   margin: 0;
@@ -483,7 +483,7 @@
   right: 2rem;
   padding: 0.75rem 1.5rem;
   border-radius: 12px;
-  background: rgba(18, 18, 26, 0.95);
+  background: color-mix(in srgb, var(--cl-bg-card) 95%, transparent);
   border: 1px solid rgba(255, 255, 255, 0.06);
   backdrop-filter: blur(20px);
   display: flex;
@@ -512,7 +512,7 @@
 }
 
 .toast-message {
-  color: #F1F5F9;
+  color: var(--cl-text-primary);
   font-size: 0.9rem;
   margin: 0;
 }
@@ -589,7 +589,7 @@
   overflow-y: auto;
   background: radial-gradient(circle at 80% 20%, rgba(124, 59, 237, 0.07) 0%, transparent 50%),
               radial-gradient(circle at 10% 80%, rgba(59, 130, 246, 0.05) 0%, transparent 50%),
-              #08080C;
+              var(--cl-bg-base);
 }
 
 .ats-dashboard-container {
@@ -610,7 +610,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: rgba(15, 15, 27, 0.7);
+  background: color-mix(in srgb, var(--cl-bg-surface) 70%, transparent);
   border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: 24px;
   padding: 1.25rem 2rem;
@@ -640,9 +640,9 @@
   font-size: 1.3rem;
   font-weight: 800;
   margin: 0;
-  color: #fff;
+  color: var(--cl-text-primary);
   letter-spacing: -0.03em;
-  background: linear-gradient(135deg, #fff 40%, #e9d5ff 100%);
+  background: linear-gradient(135deg, var(--cl-text-primary) 40%, #e9d5ff 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -681,7 +681,7 @@
 
 .meta-info-label {
   font-size: 0.6rem;
-  color: #94a3b8;
+  color: var(--cl-text-secondary);
   text-transform: uppercase;
   font-weight: 800;
   letter-spacing: 0.06em;
@@ -691,7 +691,7 @@
 .ats-select {
   background: transparent;
   border: none;
-  color: #fff;
+  color: var(--cl-text-primary);
   font-size: 0.85rem;
   font-weight: 700;
   cursor: pointer;
@@ -720,7 +720,7 @@
 
 .ats-reset-btn:hover {
   background: rgba(124, 59, 237, 0.2);
-  color: #fff;
+  color: var(--cl-text-primary);
   border-color: rgba(124, 59, 237, 0.4);
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(124, 59, 237, 0.2);
@@ -742,7 +742,7 @@
 }
 
 .ats-canvas-card {
-  background: rgba(15, 15, 27, 0.65);
+  background: color-mix(in srgb, var(--cl-bg-surface) 65%, transparent);
   border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 28px;
   padding: 1.5rem;
@@ -772,13 +772,13 @@
 .ats-canvas-hint {
   text-align: center;
   font-size: 0.75rem;
-  color: #475569;
+  color: var(--cl-text-muted);
   margin-top: 1rem;
   font-weight: 500;
 }
 
 .ats-quick-actions-card {
-  background: rgba(15, 15, 27, 0.65);
+  background: color-mix(in srgb, var(--cl-bg-surface) 65%, transparent);
   border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 28px;
   padding: 1.5rem;
@@ -789,7 +789,7 @@
 .ats-quick-actions-card h3 {
   font-size: 1rem;
   font-weight: 800;
-  color: #fff;
+  color: var(--cl-text-primary);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
@@ -806,7 +806,7 @@
 /* --- TABS --- */
 .ats-panel-tabs {
   display: flex;
-  background: rgba(15, 15, 27, 0.8);
+  background: color-mix(in srgb, var(--cl-bg-surface) 80%, transparent);
   border: 1px solid rgba(255, 255, 255, 0.06);
   padding: 0.35rem;
   border-radius: 20px;
@@ -824,13 +824,13 @@
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   border: none;
   background: transparent;
-  color: #64748b;
+  color: var(--cl-text-muted);
   font-family: 'Inter', sans-serif;
   letter-spacing: 0.01em;
 }
 
 .panel-tab:hover {
-  color: #cbd5e1;
+  color: var(--cl-text-secondary);
 }
 
 .panel-tab.active {
@@ -842,7 +842,7 @@
 
 /* --- SCORE BLOCK --- */
 .ats-db-score-overview {
-  background: linear-gradient(135deg, rgba(15, 15, 27, 0.8) 0%, rgba(20, 20, 35, 0.6) 100%);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--cl-bg-surface) 80%, transparent) 0%, color-mix(in srgb, var(--cl-bg-surface) 60%, transparent) 100%);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 28px;
   padding: 2rem;
@@ -865,10 +865,10 @@
 .big-score {
   font-size: 4rem;
   font-weight: 900;
-  color: #fff;
+  color: var(--cl-text-primary);
   line-height: 1;
   letter-spacing: -0.04em;
-  background: linear-gradient(135deg, #fff 20%, #c084fc 80%, #6366f1 100%);
+  background: linear-gradient(135deg, var(--cl-text-primary) 20%, #c084fc 80%, #6366f1 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   filter: drop-shadow(0 0 20px rgba(192, 132, 252, 0.25));
@@ -876,7 +876,7 @@
 
 .score-desc-label {
   font-size: 0.85rem;
-  color: #64748b;
+  color: var(--cl-text-muted);
   font-weight: 700;
   margin-top: 0.4rem;
   text-transform: uppercase;
@@ -935,7 +935,7 @@
 }
 
 .skills-db-card {
-  background: rgba(15, 15, 27, 0.65);
+  background: color-mix(in srgb, var(--cl-bg-surface) 65%, transparent);
   border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 28px;
   padding: 1.75rem;
@@ -970,7 +970,7 @@
   font-size: 0.9rem;
   font-weight: 800;
   margin: 0;
-  color: #e2e8f0;
+  color: var(--cl-text-primary);
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -1004,14 +1004,14 @@
 
 .empty-db-skills {
   font-size: 0.8rem;
-  color: #475569;
+  color: var(--cl-text-muted);
   font-style: italic;
   font-weight: 500;
 }
 
 /* --- SECTION CARDS --- */
 .ats-db-section-card {
-  background: rgba(15, 15, 27, 0.65);
+  background: color-mix(in srgb, var(--cl-bg-surface) 65%, transparent);
   border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 28px;
   padding: 1.75rem;
@@ -1022,7 +1022,7 @@
 .ats-db-section-card h3 {
   font-size: 1rem;
   font-weight: 800;
-  color: #fff;
+  color: var(--cl-text-primary);
   margin: 0 0 1.5rem 0;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -1055,7 +1055,7 @@
 .ats-db-suggestion-item p {
   font-size: 0.85rem;
   line-height: 1.6;
-  color: #cbd5e1;
+  color: var(--cl-text-secondary);
   margin: 0;
   font-weight: 500;
 }
@@ -1066,7 +1066,7 @@
   align-items: center;
   gap: 0.75rem;
   font-size: 0.85rem;
-  color: #cbd5e1;
+  color: var(--cl-text-secondary);
   font-weight: 600;
   background: rgba(255, 255, 255, 0.015);
   border: 1px solid rgba(255, 255, 255, 0.03);
@@ -1139,5 +1139,11 @@
   }
   .ats-skills-db-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .mobile-tab-btn.active {
+    color: var(--cl-text-primary);
   }
 }

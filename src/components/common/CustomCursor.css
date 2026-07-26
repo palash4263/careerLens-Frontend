@@ -1,0 +1,10 @@
+/* src/components/common/CustomCursor.css - Restored Default Cursor */
+
+/* Ensure default system cursor is visible */
+body, button, a, input, select, textarea, * {
+  cursor: auto;
+}
+
+button, a, input[type="submit"], input[type="button"], .jobs-job-action-btn, [role="button"] {
+  cursor: pointer !important;
+}

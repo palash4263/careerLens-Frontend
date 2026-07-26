@@ -231,13 +231,6 @@ export default function PremiumDropdown({
         )}
       </AnimatePresence>
 
-      {selectedOption && (
-        <div className="dropdown-hint">
-          {type === "resume"
-            ? selectedOption.file_name
-            : `${selectedOption.title} at ${selectedOption.company}`}
-        </div>
-      )}
     </div>
   );
 }

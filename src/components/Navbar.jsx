@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import "./Navbar.css";
 import { useState, useEffect } from "react";
+import ThemeToggle from "./common/ThemeToggle";
 
 export default function Navbar() {
   const navigate = useNavigate();
@@ -216,6 +217,9 @@ export default function Navbar() {
                 </div>
               )}
             </div>
+
+            {/* Theme Toggle */}
+            <ThemeToggle />
 
             {/* Divider */}
             <div className="nb-divider" />

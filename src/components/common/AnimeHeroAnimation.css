@@ -1,0 +1,277 @@
+/* src/components/common/AnimeHeroAnimation.css */
+
+.anime-hero-container {
+  position: relative;
+  width: 100%;
+  padding: 24px 28px;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 24px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 
+    0 20px 50px rgba(0, 0, 0, 0.6),
+    inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+  margin: 20px 0;
+}
+
+/* Staggered Particle Grid Matrix */
+.anime-grid-matrix {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 16px;
+  position: absolute;
+  inset: 0;
+  padding: 24px;
+  pointer-events: none;
+  opacity: 0.35;
+}
+
+.anime-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #38bdf8;
+  box-shadow: 0 0 12px #38bdf8;
+  margin: auto;
+}
+
+/* Header Badge */
+.aha-top-header {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 14px;
+  background: rgba(56, 189, 248, 0.08);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 99px;
+  margin-bottom: 18px;
+}
+
+.aha-header-icon {
+  font-size: 0.85rem;
+}
+
+.aha-header-text {
+  font-family: 'Fira Code', monospace;
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #38bdf8;
+  letter-spacing: 0.06em;
+}
+
+.aha-header-pulse {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #34d399;
+  box-shadow: 0 0 8px #34d399;
+}
+
+/* 3-Column Dashboard Layout */
+.aha-dashboard-grid {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 760px;
+  gap: 24px;
+  margin-bottom: 20px;
+}
+
+.aha-metric-card {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  backdrop-filter: blur(10px);
+  transition: transform 0.25s ease, border-color 0.25s ease;
+}
+
+.aha-metric-card:hover {
+  transform: translateY(-4px);
+  border-color: #38bdf8;
+}
+
+.aha-metric-icon {
+  font-size: 1.4rem;
+}
+
+.aha-metric-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.aha-metric-title {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.aha-metric-val {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #f8fafc;
+}
+
+.aha-progress-bar {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 99px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.aha-progress-fill {
+  height: 100%;
+  border-radius: 99px;
+}
+
+.aha-progress-fill.green {
+  width: 100%;
+  background: #34d399;
+  box-shadow: 0 0 8px #34d399;
+}
+
+.aha-progress-fill.cyan {
+  width: 96%;
+  background: #38bdf8;
+  box-shadow: 0 0 8px #38bdf8;
+}
+
+/* Center Score Badge */
+.anime-score-badge {
+  position: relative;
+  z-index: 2;
+  width: 210px;
+  height: 210px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(2, 6, 23, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  flex-shrink: 0;
+}
+
+.anime-ring-glow {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, #38bdf8, #8b5cf6, #ec4899, #34d399, #38bdf8);
+  filter: blur(8px);
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.anime-score-content {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  text-align: center;
+}
+
+.anime-score-label {
+  font-family: 'Fira Code', monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #38bdf8;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.anime-score-val {
+  font-family: 'Outfit', sans-serif;
+  font-size: 2.7rem;
+  font-weight: 900;
+  color: #ffffff;
+  margin: 0;
+  line-height: 1;
+  text-shadow: 0 0 24px rgba(56, 189, 248, 0.7);
+}
+
+.anime-score-status {
+  font-size: 0.6rem;
+  font-weight: 800;
+  color: #a3e635;
+  background: rgba(163, 230, 53, 0.12);
+  border: 1px solid rgba(163, 230, 53, 0.3);
+  padding: 3px 10px;
+  border-radius: 99px;
+  letter-spacing: 0.05em;
+}
+
+/* Bottom Insights Bar */
+.aha-bottom-bar {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 760px;
+  gap: 16px;
+  padding: 12px 20px;
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 16px;
+  flex-wrap: wrap;
+}
+
+.aha-bar-text {
+  font-size: 0.8rem;
+  color: #cbd5e1;
+  flex: 1;
+}
+
+.aha-bar-text strong {
+  color: #38bdf8;
+}
+
+.aha-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  border: none;
+  border-radius: 99px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 0 16px rgba(168, 85, 247, 0.4);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.aha-action-btn:hover {
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 0 24px rgba(168, 85, 247, 0.6);
+}
+
+@media (max-width: 768px) {
+  .aha-dashboard-grid {
+    flex-direction: column;
+  }
+}

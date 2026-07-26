@@ -8,9 +8,12 @@ import { getResumes } from "../services/resumeService";
 import { getJobDescriptions } from "../services/jobDescriptionService";
 import { optimizeResume, optimizeSection } from "../services/resumeOptimizationService";
 import { generateResumePDF } from "../utils/pdfGenerator";
+import { animate as animeAnimate } from "animejs";
 import PremiumDropdown from "../components/resume/PremiumDropdown";
 import ScoreRing from "../components/resume/ScoreRing";
-import OptimizerShieldHero from "../components/canvas/OptimizerShieldHero";
+import KineticText from "../components/common/KineticText";
+import SkillRainHeader from "../components/common/SkillRainHeader";
+import NeuralPipelineVisualizer from "../components/common/NeuralPipelineVisualizer";
 // ====== UTILITY FUNCTIONS ======
 const TECH_KEYWORDS = [
   'React', 'Angular', 'Vue', 'Node.js', 'Express', 'Python', 'Django', 'Flask', 'Java', 'Spring Boot', 'Spring MVC', 
@@ -407,30 +410,28 @@ function ScoreConfetti({ trigger, intensity = 1 }) {
   );
 }
 
-function CountUp({ value, duration = 0.9, suffix = "" }) {
-  const [display, setDisplay] = useState(0);
-  const reduceMotion = useReducedMotion();
+function CountUp({ value, duration = 1.2, suffix = "" }) {
+  const spanRef = useRef(null);
 
   useEffect(() => {
     if (value == null || Number.isNaN(value)) return;
-    if (reduceMotion) {
-      setDisplay(value);
-      return;
-    }
-    let raf;
-    const start = performance.now();
-    const from = 0;
-    const tick = (now) => {
-      const progress = Math.min(1, (now - start) / (duration * 1000));
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setDisplay(Math.round(from + (value - from) * eased));
-      if (progress < 1) raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [value, duration, reduceMotion]);
+    const counterObj = { val: 0 };
+    const anim = animeAnimate(counterObj, {
+      val: Number(value),
+      round: 1,
+      ease: "outExpo",
+      duration: duration * 1000,
+      onUpdate: () => {
+        if (spanRef.current) {
+          spanRef.current.innerHTML = `${counterObj.val}${suffix}`;
+        }
+      },
+    });
 
-  return <>{display}{suffix}</>;
+    return () => anim.pause();
+  }, [value, duration, suffix]);
+
+  return <span ref={spanRef}>0{suffix}</span>;
 }
 
 // ====== SCANNING TERMINAL SUB-COMPONENT ======
@@ -961,26 +962,31 @@ export default function ResumeOptimizationPage() {
                 AI-Powered Optimization
               </motion.div>
 
-              <motion.h1 className="optimizer-hero-title" variants={staggerItem}>
-                Transform Your Resume
-                <br />
-                <span className="phrase-switcher-wrapper">
-                  into{" "}
-                  <span className="inline-phrase-container">
-                    <AnimatePresence mode="wait">
-                      <motion.span
-                        key={phraseIndex}
-                        className="inline-phrase"
-                        initial={{ opacity: 0, y: 12, filter: 'blur(3px)' }}
-                        animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                        exit={{ opacity: 0, y: -12, filter: 'blur(3px)' }}
-                        transition={{ duration: 0.35, ease: "easeInOut" }}
-                      >
-                        {MAGNET_PHRASES[phraseIndex]}
-                      </motion.span>
-                    </AnimatePresence>
+              <motion.h1 className="optimizer-hero-title" variants={staggerItem} style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                <span>
+                  <KineticText text="Transform Your Resume" />
+                  <br />
+                  <span className="phrase-switcher-wrapper">
+                    into{" "}
+                    <span className="inline-phrase-container">
+                      <AnimatePresence mode="wait">
+                        <motion.span
+                          key={phraseIndex}
+                          className="inline-phrase"
+                          initial={{ opacity: 0, y: 12, filter: 'blur(3px)' }}
+                          animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                          exit={{ opacity: 0, y: -12, filter: 'blur(3px)' }}
+                          transition={{ duration: 0.35, ease: "easeInOut" }}
+                        >
+                          {MAGNET_PHRASES[phraseIndex]}
+                        </motion.span>
+                      </AnimatePresence>
+                    </span>
                   </span>
                 </span>
+
+                {/* Skill Rain Badge Drop Component */}
+                <SkillRainHeader />
               </motion.h1>
 
               <motion.p className="optimizer-hero-sub" variants={staggerItem}>
@@ -996,11 +1002,10 @@ export default function ResumeOptimizationPage() {
               </motion.div>
             </div>
 
-       <motion.div className="optimizer-hero-right" variants={staggerItem}>
-  <div className="optimizer-hero-3d-wrapper">
-    <OptimizerShieldHero  />
-  </div>
-</motion.div>
+            {/* AI Neural Pipeline Visualizer Component */}
+            <motion.div className="optimizer-hero-right" variants={staggerItem}>
+              <NeuralPipelineVisualizer />
+            </motion.div>
           </motion.div>
         </motion.section>
 
@@ -1014,39 +1019,30 @@ export default function ResumeOptimizationPage() {
           </div>
 
           <div className="optimizer-control-content">
-            <div className="control-panel-header">
+            <div className="control-panel-header" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '20px', marginBottom: '32px' }}>
               <div className="header-badge">
                 <span className="badge-icon">⚡</span>
-                <span className="badge-text">AI-Powered</span>
+                <span className="badge-text">AI Neural Optimizer</span>
                 <span className="badge-pulse"></span>
               </div>
-              <h3 className="panel-title">
+
+              <h3 className="panel-title" style={{ fontSize: '1.85rem', margin: 0 }}>
                 Optimization Studio
-                <motion.span
-                  className="title-underline"
-                  initial={{ width: 0, opacity: 0 }}
-                  whileInView={{ width: 50, opacity: 0.7 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-                />
               </h3>
-              <p className="panel-subtitle">
-                Select your resume and target role to begin the transformation
+
+              <p className="panel-subtitle" style={{ fontSize: '0.92rem', color: '#94a3b8', margin: 0, maxWidth: '520px' }}>
+                Select your resume and target role to begin AI ATS transformation
               </p>
-              <div className="header-stats-mini">
-                <div className="mini-stat-item">
-                  <span className="mini-stat-number">{resumes.length}</span>
-                  <span className="mini-stat-label">Resumes Ready</span>
+
+
+              <div className="header-stats-mini" style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
+                <div className="mini-stat-item" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(56, 189, 248, 0.08)', padding: '6px 16px', borderRadius: '99px', border: '1px solid rgba(56, 189, 248, 0.2)' }}>
+                  <span className="mini-stat-number" style={{ color: '#38bdf8', fontWeight: '800' }}>{resumes.length}</span>
+                  <span className="mini-stat-label" style={{ fontSize: '0.78rem', color: '#cbd5e1' }}>Resumes Ready</span>
                 </div>
-                <div className="mini-stat-divider"></div>
-                <div className="mini-stat-item">
-                  <span className="mini-stat-number">{jobDescriptions.length}</span>
-                  <span className="mini-stat-label">Job Targets</span>
-                </div>
-                <div className="mini-stat-divider"></div>
-                <div className="mini-stat-item active">
-                  <span className="mini-stat-dot"></span>
-                  <span className="mini-stat-label">Ready to Optimize</span>
+                <div className="mini-stat-item" style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(168, 85, 247, 0.08)', padding: '6px 16px', borderRadius: '99px', border: '1px solid rgba(168, 85, 247, 0.2)' }}>
+                  <span className="mini-stat-number" style={{ color: '#c084fc', fontWeight: '800' }}>{jobDescriptions.length}</span>
+                  <span className="mini-stat-label" style={{ fontSize: '0.78rem', color: '#cbd5e1' }}>Target Jobs</span>
                 </div>
               </div>
             </div>

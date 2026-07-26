@@ -8,33 +8,33 @@
 
 :root {
   /* ====== Existing Design Tokens ====== */
-  --cl-bg: #f7f3ea;
-  --cl-surface-1: #ffffff;
-  --cl-surface-2: #f1ece0;
-  --cl-border: rgba(27, 36, 31, 0.1);
-  --cl-border-strong: rgba(27, 36, 31, 0.2);
-  --cl-text-primary: #1b241f;
-  --cl-text-muted: #6b6558;
-  --cl-text-faint: #9a9384;
+  --cl-bg: var(--cl-bg-base);
+  --cl-surface-1: var(--cl-bg-surface);
+  --cl-surface-2: var(--cl-bg-card);
+  --cl-border: var(--cl-border);
+  --cl-border-strong: var(--cl-border);
+  --cl-text-primary: var(--cl-text-primary);
+  --cl-text-muted: var(--cl-text-muted);
+  --cl-text-faint: var(--cl-text-secondary);
   --cl-accent: #c9a227;
   --cl-accent-soft: #ad8a20;
   --cl-accent-dim: rgba(201, 162, 39, 0.12);
   --cl-negative: #b3432b;
-  --cl-ink: #122019;
+  --cl-ink: var(--cl-text-primary);
   --cl-sage: #8ca391;
   --cl-font-display: 'Fraunces', 'Sora', serif;
   --cl-font-body: 'Inter', sans-serif;
 
   /* ====== Shell Tokens ====== */
-  --shell-bg: #f7f3ea;
-  --shell-surface: #ffffff;
-  --shell-surface-muted: #f1ece0;
-  --shell-surface-elevated: #faf8f5;
-  --shell-border: rgba(27, 36, 31, 0.1);
-  --shell-border-strong: rgba(27, 36, 31, 0.2);
-  --shell-text: #1b241f;
-  --shell-text-muted: #6b6558;
-  --shell-text-faint: #9a9384;
+  --shell-bg: var(--cl-bg-base);
+  --shell-surface: var(--cl-bg-surface);
+  --shell-surface-muted: var(--cl-bg-card);
+  --shell-surface-elevated: var(--cl-bg-elevated);
+  --shell-border: var(--cl-border);
+  --shell-border-strong: var(--cl-border);
+  --shell-text: var(--cl-text-primary);
+  --shell-text-muted: var(--cl-text-secondary);
+  --shell-text-faint: var(--cl-text-muted);
   --shell-accent: #c9a227;
   --shell-accent-soft: #ad8a20;
   --shell-accent-wash: rgba(201, 162, 39, 0.12);
@@ -42,24 +42,24 @@
   --shell-warning: #c9a227;
   --shell-danger: #b3432b;
   --shell-info: #5b7f95;
-  --shell-shadow-sm: 0 4px 16px rgba(27, 36, 31, 0.06);
-  --shell-shadow-md: 0 8px 24px rgba(27, 36, 31, 0.1);
-  --shell-shadow-lg: 0 16px 32px rgba(27, 36, 31, 0.12);
-  --shell-nav-bg: rgba(255, 255, 255, 0.92);
-  --shell-nav-bg-scrolled: rgba(250, 248, 245, 0.96);
-  --shell-nav-surface: rgba(255, 255, 255, 0.78);
-  --shell-nav-surface-strong: rgba(255, 255, 255, 0.94);
-  --shell-nav-border: rgba(27, 36, 31, 0.08);
-  --shell-nav-border-strong: rgba(27, 36, 31, 0.14);
-  --shell-nav-text: #1b241f;
-  --shell-nav-text-muted: #6b6558;
-  --shell-nav-text-faint: #9a9384;
+  --shell-shadow-sm: 0 4px 16px rgba(0, 0, 0, 0.2);
+  --shell-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.3);
+  --shell-shadow-lg: 0 16px 32px rgba(0, 0, 0, 0.4);
+  --shell-nav-bg: var(--cl-bg-surface);
+  --shell-nav-bg-scrolled: var(--cl-bg-elevated);
+  --shell-nav-surface: var(--cl-bg-card);
+  --shell-nav-surface-strong: var(--cl-bg-elevated);
+  --shell-nav-border: var(--cl-border);
+  --shell-nav-border-strong: var(--cl-border);
+  --shell-nav-text: var(--cl-text-primary);
+  --shell-nav-text-muted: var(--cl-text-secondary);
+  --shell-nav-text-faint: var(--cl-text-muted);
   --shell-nav-accent: #c9a227;
   --shell-nav-accent-soft: rgba(201, 162, 39, 0.16);
   --shell-nav-success: #4a7c59;
   --shell-nav-danger: #b3432b;
-  --shell-nav-shadow: 0 8px 24px rgba(27, 36, 31, 0.08);
-  --shell-nav-shadow-scrolled: 0 10px 28px rgba(27, 36, 31, 0.1);
+  --shell-nav-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  --shell-nav-shadow-scrolled: 0 10px 28px rgba(0, 0, 0, 0.3);
 
   /* ====== Premium Additions ====== */
   --primary: #c9a227;
@@ -76,17 +76,17 @@
   --warning: #c9a227;
   --danger: #b3432b;
   
-  --bg-primary: #f7f3ea;
-  --bg-secondary: #f1ece0;
-  --bg-card: #ffffff;
-  --bg-card-hover: #faf8f5;
+  --bg-primary: var(--cl-bg-base);
+  --bg-secondary: var(--cl-bg-surface);
+  --bg-card: var(--cl-bg-card);
+  --bg-card-hover: var(--cl-bg-elevated);
   
-  --text-primary: #1b241f;
-  --text-secondary: #6b6558;
-  --text-tertiary: #9a9384;
+  --text-primary: var(--cl-text-primary);
+  --text-secondary: var(--cl-text-secondary);
+  --text-tertiary: var(--cl-text-muted);
   
-  --shadow-card: 0 4px 16px rgba(27, 36, 31, 0.06);
-  --shadow-hover: 0 8px 32px rgba(27, 36, 31, 0.1);
+  --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.2);
+  --shadow-hover: 0 8px 32px rgba(0, 0, 0, 0.3);
   
   --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -889,4 +889,75 @@ body {
   .premium-section {
     padding: 1rem;
   }
+}
+
+/* ====== Toast Premium notifications ====== */
+.toast-premium {
+  position: fixed !important;
+  top: 1.5rem !important;
+  left: 50% !important;
+  bottom: auto !important;
+  right: auto !important;
+  transform: translate(-50%, -20px) !important;
+  z-index: 1000000 !important;
+  background: var(--cl-bg-surface) !important;
+  border: 1px solid var(--cl-border) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  padding: 10px 18px !important;
+  border-radius: 12px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+  animation: toast-slide-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+  max-width: 380px !important;
+  width: fit-content !important;
+  height: auto !important;
+  pointer-events: auto !important;
+}
+.toast-premium.success {
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #10b981;
+}
+.toast-premium.error {
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #f87171;
+}
+.toast-message {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--cl-text-primary);
+  margin: 0;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+.toast-icon {
+  font-size: 13px;
+  flex-shrink: 0;
+}
+@keyframes toast-slide-in {
+  from {
+    transform: translate(-50%, -20px) scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, 0) scale(1);
+    opacity: 1;
+  }
+}
+
+/* ====== Scroll Reveal Utility classes ====== */
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(40px) scale(0.96);
+  filter: blur(8px);
+  transition: opacity 1s cubic-bezier(0.215, 0.61, 0.355, 1),
+              transform 1s cubic-bezier(0.215, 0.61, 0.355, 1),
+              filter 1s cubic-bezier(0.215, 0.61, 0.355, 1);
+}
+.scroll-reveal.revealed {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: blur(0);
 }

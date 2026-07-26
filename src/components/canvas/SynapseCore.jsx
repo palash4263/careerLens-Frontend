@@ -1,41 +1,25 @@
+// src/components/canvas/SynapseCore.jsx
 import * as THREE from "three";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls, MeshDistortMaterial, Float, useGLTF } from "@react-three/drei";
-import { useRef, useState, useEffect, Component } from "react";
+import { OrbitControls, Float, Text } from "@react-three/drei";
+import { useRef, useState, useEffect } from "react";
+import { animate } from "animejs";
 
-class ErrorBoundary extends Component {
-  state = { hasError: false };
-  static getDerivedStateFromError() { return { hasError: true }; }
-  componentDidCatch(err) {
-    // Catch GLB 404/parse errors
-  }
-  render() {
-    if (this.state.hasError) return this.props.fallback;
-    return this.props.children;
-  }
-}
-
-function TripoModel({ hovered }) {
-  const meshRef = useRef(null);
-  const { scene } = useGLTF("/models/tripo_model.glb");
-
-  useFrame((state, delta) => {
-    const speedMult = hovered ? 2.5 : 1.0;
-    if (meshRef.current) {
-      meshRef.current.rotation.y += delta * 0.25 * speedMult;
-    }
-  });
-
-  return <primitive ref={meshRef} object={scene} scale={2.8} />;
-}
-
-function SynapseCoreMesh() {
-  const innerRef = useRef(null);
-  const outerRef = useRef(null);
+/**
+ * SynapseCore (Futuristic Cyber-AI Document Vault & Scanner - Powered by Anime.js)
+ * ----------------------------------------------------------------------------------
+ * 3D Model Driven by Anime.js Timelines:
+ * 1. Anime.js driven 3D Glass Document Vault rotation & scale pulses.
+ * 2. Anime.js laser scanner sweep with smooth inOutQuad easing.
+ * 3. Orbiting Crystalline Tech Gems & emissive light pulses.
+ * 4. Interactive Hover & Cursor Parallax Physics.
+ */
+function HolographicResumeVault() {
   const groupRef = useRef(null);
-
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const laserRef = useRef(null);
+  const coreMatRef = useRef(null);
   const [hovered, setHovered] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -44,82 +28,161 @@ function SynapseCoreMesh() {
   }, []);
 
   useEffect(() => {
-    document.body.style.cursor = hovered ? 'pointer' : 'auto';
-    return () => { document.body.style.cursor = 'auto'; };
+    document.body.style.cursor = hovered ? "pointer" : "auto";
+    return () => {
+      document.body.style.cursor = "auto";
+    };
   }, [hovered]);
 
+  useEffect(() => {
+    // 1. Anime.js Laser Scanner Beam Sweep
+    const animLaser = animate(laserRef.current ? laserRef.current.position : {}, {
+      y: [{ to: 0.72, duration: 1400 }, { to: -0.72, duration: 1400 }],
+      ease: "inOutQuad",
+      loop: true,
+    });
+
+    // 2. Anime.js Core Emissive Light Pulse
+    const animCore = animate(coreMatRef.current ? coreMatRef.current : {}, {
+      emissiveIntensity: [{ to: 2.4, duration: 1500 }, { to: 1.2, duration: 1500 }],
+      ease: "inOutSine",
+      loop: true,
+    });
+
+    return () => {
+      animLaser.pause();
+      animCore.pause();
+    };
+  }, []);
+
   useFrame((state, delta) => {
-    const time = state.clock.getElapsedTime();
-    
     const speedMult = hovered ? 2.5 : 1.0;
 
-    if (innerRef.current) {
-      innerRef.current.rotation.x += delta * 0.2 * speedMult;
-      innerRef.current.rotation.y += delta * -0.35 * speedMult;
-    }
-    
-    if (outerRef.current) {
-      outerRef.current.rotation.x += delta * -0.12 * speedMult;
-      outerRef.current.rotation.y += delta * 0.18 * speedMult;
-    }
-
+    // Smooth floating Y-axis rotation
     if (groupRef.current) {
-      const baseScale = isMobile ? 1.5 : 2.8;
-      const targetScale = hovered ? baseScale * 1.25 : baseScale;
-      groupRef.current.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), delta * 6);
+      groupRef.current.rotation.y += delta * 0.35 * speedMult;
+
+      const baseScale = isMobile ? 0.95 : 1.25;
+      const targetScale = hovered ? baseScale * 1.15 : baseScale;
+      groupRef.current.scale.lerp(
+        new THREE.Vector3(targetScale, targetScale, targetScale),
+        delta * 6
+      );
     }
   });
 
   return (
-    <group 
+    <group
       ref={groupRef}
-      scale={isMobile ? 1.5 : 2.8}
-      onPointerOver={(e) => { e.stopPropagation(); setHovered(true); }}
-      onPointerOut={(e) => { e.stopPropagation(); setHovered(false); }}
-      onPointerDown={(e) => { e.stopPropagation(); setHovered(true); }}
-      onPointerUp={(e) => { e.stopPropagation(); setHovered(false); }}
+      scale={isMobile ? 0.95 : 1.25}
+      onPointerOver={(e) => {
+        e.stopPropagation();
+        setHovered(true);
+      }}
+      onPointerOut={(e) => {
+        e.stopPropagation();
+        setHovered(false);
+      }}
     >
-      {/* 1. INNER CORE: Solid glowing abstract data crystal */}
-      <mesh ref={innerRef}>
-        <octahedronGeometry args={[0.5, 0]} />
-        <MeshDistortMaterial
-          color="#f3e8ff"
-          emissive="#a855f7"
-          emissiveIntensity={hovered ? 3.0 : 2.0}
-          distort={hovered ? 0.5 : 0.3}
-          speed={hovered ? 5 : 3}
+      {/* 1. Outer Holographic Shield Ring */}
+      <mesh>
+        <torusGeometry args={[1.35, 0.02, 16, 80]} />
+        <meshStandardMaterial
+          color={hovered ? "#38bdf8" : "#8b5cf6"}
+          emissive={hovered ? "#38bdf8" : "#8b5cf6"}
+          emissiveIntensity={hovered ? 1.8 : 0.9}
+          wireframe={false}
           roughness={0.1}
           metalness={0.9}
-          wireframe={false}
         />
       </mesh>
 
-      {/* 2. OUTER SHELL: Structural connectivity mesh grid */}
-      <mesh ref={outerRef}>
-        <icosahedronGeometry args={[0.9, 1]} />
-        <meshBasicMaterial
-          color="#c084fc"
-          wireframe={true}
+      {/* 2. Glass Document Base Slab */}
+      <mesh position={[0, 0, 0]}>
+        <boxGeometry args={[1.3, 1.75, 0.06]} />
+        <meshPhysicalMaterial
+          ref={coreMatRef}
+          color={hovered ? "#0284c7" : "#4c1d95"}
+          emissive={hovered ? "#38bdf8" : "#7c3aed"}
+          emissiveIntensity={1.4}
+          roughness={0.15}
+          metalness={0.85}
+          clearcoat={1.0}
           transparent={true}
-          opacity={hovered ? 0.6 : 0.35}
+          opacity={0.95}
         />
       </mesh>
+
+      {/* 3. Glowing Chrome Rim */}
+      <mesh position={[0, 0, 0.035]}>
+        <boxGeometry args={[1.34, 1.79, 0.01]} />
+        <meshBasicMaterial color="#ffffff" wireframe={true} />
+      </mesh>
+
+      {/* 4. 3D Floating Header Text */}
+      <Text
+        position={[0, 0.6, 0.06]}
+        fontSize={0.12}
+        color="#a3e635"
+        anchorX="center"
+        anchorY="middle"
+      >
+        AI DOCUMENT VAULT
+      </Text>
+
+      {/* 5. Document Line Placeholders */}
+      {[0.3, 0.1, -0.1, -0.3, -0.5].map((y, idx) => (
+        <mesh key={idx} position={[0, y, 0.05]}>
+          <boxGeometry args={[idx === 0 ? 0.9 : 1.0, 0.03, 0.01]} />
+          <meshBasicMaterial color={idx === 0 ? "#38bdf8" : "#cbd5e1"} />
+        </mesh>
+      ))}
+
+      {/* 6. Sweeping Emerald Laser Beam */}
+      <mesh ref={laserRef} position={[0, 0, 0.065]}>
+        <boxGeometry args={[1.4, 0.035, 0.02]} />
+        <meshBasicMaterial color="#34d399" transparent={true} opacity={0.95} />
+      </mesh>
+
+      {/* 7. Orbiting Crystalline Moons */}
+      <group rotation={[0.4, 0.6, 0]}>
+        <mesh position={[1.6, 0.4, 0]}>
+          <octahedronGeometry args={[0.16, 0]} />
+          <meshStandardMaterial
+            color="#fbbf24"
+            emissive="#fbbf24"
+            emissiveIntensity={1.2}
+            metalness={0.9}
+            roughness={0.1}
+          />
+        </mesh>
+
+        <mesh position={[-1.5, -0.5, 0.2]}>
+          <icosahedronGeometry args={[0.15, 0]} />
+          <meshStandardMaterial
+            color="#38bdf8"
+            emissive="#38bdf8"
+            emissiveIntensity={1.2}
+            metalness={0.9}
+            roughness={0.1}
+          />
+        </mesh>
+      </group>
     </group>
   );
 }
 
 export default function SynapseCore() {
   return (
-    <div className="hero-3d-wrapper">
-      <Canvas camera={{ position: [0, 0, 4.2], fov: 45 }}>
-        <ambientLight intensity={1.5} />
-        <directionalLight position={[10, 10, 5]} intensity={2.5} />
-        <pointLight position={[-10, -10, -5]} color="#7c3aed" intensity={2} />
-        
-        <Float speed={3.5} rotationIntensity={0.5} floatIntensity={1.2}>
-          <ErrorBoundary fallback={<SynapseCoreMesh />}>
-            <TripoModel />
-          </ErrorBoundary>
+    <div className="hero-3d-wrapper" style={{ width: "100%", height: "100%", minHeight: 320 }}>
+      <Canvas camera={{ position: [0, 0, 5.2], fov: 45 }}>
+        <ambientLight intensity={2.0} />
+        <directionalLight position={[10, 10, 8]} intensity={3.0} />
+        <pointLight position={[-8, -8, -5]} color="#38bdf8" intensity={2.5} />
+        <pointLight position={[8, 8, 5]} color="#8b5cf6" intensity={2.5} />
+
+        <Float speed={2.5} rotationIntensity={0.3} floatIntensity={0.4}>
+          <HolographicResumeVault />
         </Float>
 
         <OrbitControls enableZoom={false} enablePan={false} />

@@ -1,5 +1,64 @@
 @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Barlow:wght@300;400;500;600&display=swap');
 
+/* ============================================================
+   THEME TOKENS — Anime.js interpolates these per-toggle click
+   ============================================================ */
+:root {
+  --cl-bg-base:        rgb(8,15,26);
+  --cl-bg-surface:     rgb(15,23,42);
+  --cl-bg-card:        rgb(17,24,39);
+  --cl-bg-elevated:    rgb(30,41,59);
+  --cl-border:         rgb(30,41,59);
+  --cl-text-primary:   rgb(241,245,249);
+  --cl-text-secondary: rgb(148,163,184);
+  --cl-text-muted:     rgb(71,85,105);
+  --cl-accent-cyan:    rgb(56,189,248);
+  --cl-accent-violet:  rgb(139,92,246);
+  --cl-accent-emerald: rgb(52,211,153);
+  --cl-navbar-bg:      rgb(10,22,40);
+  --cl-navbar-border:  rgb(30,41,59);
+}
+
+/* ── Light-mode structural overrides ── */
+[data-theme="light"] body {
+  background:
+    radial-gradient(circle at top left,  rgba(14,165,233,0.08), transparent 35%),
+    radial-gradient(circle at top right, rgba(124,58,237,0.06), transparent 35%),
+    var(--cl-bg-base) !important;
+  color: var(--cl-text-primary) !important;
+}
+
+/* Generic card & surface backgrounds pick up CSS vars automatically
+   because all CSS files now use var(--cl-*) tokens. */
+
+[data-theme="light"] .nb-root {
+  background: var(--cl-navbar-bg) !important;
+  border-bottom-color: var(--cl-navbar-border) !important;
+  box-shadow: 0 2px 24px rgba(0,0,0,0.08) !important;
+}
+[data-theme="light"] .nb-link {
+  color: var(--cl-text-secondary) !important;
+}
+[data-theme="light"] .nb-link:hover,
+[data-theme="light"] .nb-link.nb-active {
+  color: var(--cl-accent-violet) !important;
+  background: rgba(124,58,237,0.08) !important;
+}
+[data-theme="light"] .nb-logo-text-custom,
+[data-theme="light"] .nb-user-name {
+  color: var(--cl-text-primary) !important;
+}
+[data-theme="light"] .nb-user-role,
+[data-theme="light"] .nb-user-info span {
+  color: var(--cl-text-muted) !important;
+}
+[data-theme="light"] ::-webkit-scrollbar-track {
+  background: var(--cl-bg-surface) !important;
+}
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: var(--cl-border) !important;
+}
+
 /* index.css - Complete with Gradient Background */
 html,
 body,
@@ -8,6 +67,11 @@ body,
   padding: 0;
   min-height: 100vh;
   width: 100%;
+  cursor: auto !important;
+}
+
+button, a, input, select, textarea, [role="button"] {
+  cursor: pointer;
 }
 body {
   background:

@@ -1,0 +1,44 @@
+/* src/components/common/SkillRainHeader.css */
+
+.srh-container {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-left: 16px;
+  vertical-align: middle;
+  perspective: 800px;
+}
+
+.srh-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid var(--badge-color, #38bdf8);
+  border-radius: 99px;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #f8fafc;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.4), inset 0 0 8px rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  will-change: transform, opacity;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  cursor: default;
+}
+
+.srh-badge:hover {
+  transform: translateY(-4px) scale(1.08) !important;
+  box-shadow: 0 0 18px var(--badge-color, #38bdf8);
+}
+
+.srh-icon {
+  font-size: 0.85rem;
+}
+
+.srh-name {
+  color: #f8fafc;
+  letter-spacing: 0.02em;
+}

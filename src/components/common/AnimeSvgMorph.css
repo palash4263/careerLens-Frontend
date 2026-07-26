@@ -1,0 +1,78 @@
+/* src/components/common/AnimeSvgMorph.css */
+
+.asm-container {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+  height: 220px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 20px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(12px);
+}
+
+.asm-orbit-wrapper {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.asm-svg {
+  width: 90px;
+  height: 90px;
+  z-index: 2;
+}
+
+.asm-orbit-ring {
+  position: absolute;
+  inset: -20px;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.asm-badge {
+  position: absolute;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 99px;
+  white-space: nowrap;
+}
+
+.asm-badge.b1 {
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(56, 189, 248, 0.2);
+  border: 1px solid #38bdf8;
+  color: #38bdf8;
+}
+
+.asm-badge.b2 {
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(168, 85, 247, 0.2);
+  border: 1px solid #c084fc;
+  color: #c084fc;
+}
+
+.asm-hint {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #94a3b8;
+  margin-top: 12px;
+  font-family: 'Outfit', sans-serif;
+  text-align: center;
+}

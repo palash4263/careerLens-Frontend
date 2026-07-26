@@ -66,21 +66,15 @@ function FloatingResumeMesh({ name = "PALASH MISHRA", score = 95 }) {
         EXECUTIVE RESUME • ATS 100%
       </Text>
 
-      {/* 3D Score Ring */}
-      <mesh position={[0, 0, 0.12]}>
-        <torusGeometry args={[0.7, 0.06, 16, 64]} />
-        <meshStandardMaterial color="#a3e635" roughness={0.1} metalness={0.9} />
-      </mesh>
-
-      {/* Score Text */}
+      {/* Clean 3D ATS Score Badge */}
       <Text
-        position={[0, 0, 0.14]}
-        fontSize={0.32}
+        position={[0, 0.1, 0.14]}
+        fontSize={0.28}
         color="#38bdf8"
         anchorX="center"
         anchorY="middle"
       >
-        {`${score}%`}
+        {`ATS SCORE: ${score}%`}
       </Text>
 
       {/* Decorative Lines simulating bullet points in 3D */}

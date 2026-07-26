@@ -9,6 +9,7 @@ import {
 import { useScrollReveal } from "../hooks/useScrollReveal";
 import { motion } from "framer-motion";
 import InterviewQuestionsModal from "../components/jobs/InterviewQuestionsModal";
+import AnimeLayoutGrid from "../components/common/AnimeLayoutGrid";
 import "../assets/jobDescription.css";
 
 function JobDescriptionPage() {
@@ -658,9 +659,9 @@ function JobDescriptionPage() {
                 </div>
               )}
               
-              <div className="jobs-grid">
+              <AnimeLayoutGrid filterKey={searchTerm + sortBy + filterCompany} className="jobs-grid">
                 {filteredJobs.map((job, index) => (
-                  <div key={job.id} className="jobs-job-card">
+                  <div key={job.id} data-id={job.id} className="jobs-job-card">
                     <div className="jobs-job-card-header">
                       <div className="jobs-job-select" onClick={(e) => e.stopPropagation()}>
                         <input
@@ -741,7 +742,7 @@ function JobDescriptionPage() {
                     </div>
                   </div>
                 ))}
-              </div>
+              </AnimeLayoutGrid>
             </>
           )}
         </section>

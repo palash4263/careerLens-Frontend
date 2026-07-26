@@ -1,0 +1,13 @@
+/* src/components/common/AnimeLayoutGrid.css */
+
+.alg-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+  width: 100%;
+  position: relative;
+}
+
+.alg-container > * {
+  will-change: transform, opacity;
+}

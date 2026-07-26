@@ -9,7 +9,8 @@ import {
   getResumeFile,
 } from "../services/resumeService";
 import { useScrollReveal } from "../hooks/useScrollReveal";
-import SynapseCore from "../components/canvas/SynapseCore";
+import AnimeHeroAnimation from "../components/common/AnimeHeroAnimation";
+import AiNeuralTerminalConsole from "../components/common/AiNeuralTerminalConsole";
 import { motion } from "framer-motion";
 import "../assets/resume.css";
 
@@ -315,13 +316,14 @@ function ResumePage() {
                   )}
                 </div>
               ) : (
-                <div className="hero-3d-wrapper">
-                  <SynapseCore />
-                </div>
+                <AiNeuralTerminalConsole fileName={selectedFile?.name} />
               )}
             </div>
           </div>
         </div>
+
+        {/* Kinetic Anime.js Score & Matrix Animation */}
+        <AnimeHeroAnimation score={bestAtsScore || 98} label="Parsability Index" />
 
         {/* Stats Overview */}
         <div className="stats-overview-premium scroll-reveal">

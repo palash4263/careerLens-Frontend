@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { ThemeProvider } from "./context/ThemeContext";
 import {
   BrowserRouter,
   Routes,
@@ -169,9 +170,11 @@ function App() {
   }, []);
 
   return (
-    <BrowserRouter>
-      <Layout />
-    </BrowserRouter>
+    <ThemeProvider>
+      <BrowserRouter>
+        <Layout />
+      </BrowserRouter>
+    </ThemeProvider>
   );
 }
 

@@ -1,0 +1,700 @@
+/* src/pages/InterviewPrepPage.css — Alignment overhaul v2 */
+
+/* ─────────────────────────────────────────────
+   1. PAGE SHELL
+───────────────────────────────────────────── */
+.ip-page-wrapper {
+  width: 100%;
+  min-height: calc(100vh - 116px);
+  padding: 28px 32px 80px;
+  background: var(--cl-bg-base, #080f1a);
+}
+
+.ip-container {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ─────────────────────────────────────────────
+   2. TOP BAR
+───────────────────────────────────────────── */
+.ip-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.ip-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 99px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.04);
+  color: #cbd5e1;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s, background 0.2s, transform 0.2s;
+}
+
+.ip-back-btn:hover {
+  color: #ffffff;
+  border-color: #38bdf8;
+  background: rgba(56,189,248,0.1);
+  transform: translateX(-3px);
+}
+
+.ip-live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 14px;
+  border-radius: 99px;
+  background: rgba(168,85,247,0.1);
+  border: 1px solid rgba(168,85,247,0.3);
+  font-family: 'Fira Code', monospace;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #c084fc;
+  letter-spacing: 0.08em;
+}
+
+.ip-pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #a855f7;
+  box-shadow: 0 0 8px #a855f7;
+  animation: ip-pulse 2s ease-in-out infinite;
+}
+
+@keyframes ip-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(1.25); }
+}
+
+/* ─────────────────────────────────────────────
+   3. HERO CARD — fixed clipping of right chips
+───────────────────────────────────────────── */
+.ip-hero-card {
+  position: relative;
+  width: 100%;
+  padding: 28px 32px;
+  background: linear-gradient(135deg, rgba(15,23,42,0.92), rgba(30,41,59,0.75));
+  border: 1px solid rgba(168,85,247,0.3);
+  border-radius: 20px;
+  backdrop-filter: blur(20px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  overflow: hidden;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.45);
+  box-sizing: border-box; /* ensures padding never expands past 100% */
+}
+
+.ip-hero-glow {
+  position: absolute;
+  top: -60px;
+  right: -60px;
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(168,85,247,0.2) 0%, transparent 68%);
+  pointer-events: none;
+}
+
+.ip-hero-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 2;
+  flex: 1;
+  min-width: 0; /* prevent flex children from blowing out */
+}
+
+.ip-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #38bdf8;
+  letter-spacing: 0.06em;
+}
+
+.ip-sparkle-spin {
+  color: #fbbf24;
+}
+
+.ip-job-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: clamp(1.5rem, 2.2vw, 2rem);
+  font-weight: 900;
+  color: #ffffff;
+  margin: 0;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.ip-company-subtitle {
+  font-size: 0.9rem;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ip-company-subtitle strong {
+  color: #e2e8f0;
+}
+
+/* Stat chips — flex-shrink:0 prevents collapsing */
+.ip-hero-stats {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  z-index: 2;
+  flex-shrink: 0;
+}
+
+.ip-stat-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 20px;
+  background: rgba(8,15,28,0.7);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 14px;
+  min-width: 100px;
+}
+
+.ip-stat-val {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: #a855f7;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.ip-stat-lbl {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  font-weight: 700;
+  margin-top: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+/* ─────────────────────────────────────────────
+   4. MAIN 2-COLUMN GRID
+   Left fills remaining, sidebar fixed at 320px
+───────────────────────────────────────────── */
+.ip-main-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 24px;
+  align-items: start;
+}
+
+/* ─────────────────────────────────────────────
+   5. LEFT COLUMN
+───────────────────────────────────────────── */
+.ip-left-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0; /* prevent overflow into sidebar */
+}
+
+/* CATEGORY TABS */
+.ip-tabs-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  background: rgba(15,23,42,0.8);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.ip-tabs-bar::-webkit-scrollbar { display: none; }
+
+.ip-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 16px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #94a3b8;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 0.18s, background 0.18s, border-color 0.18s;
+  white-space: nowrap;
+}
+
+.ip-tab-btn:hover {
+  color: #ffffff;
+  background: rgba(255,255,255,0.06);
+}
+
+.ip-tab-btn.active {
+  color: #ffffff;
+  background: linear-gradient(135deg, rgba(168,85,247,0.25), rgba(56,189,248,0.2));
+  border-color: rgba(168,85,247,0.45);
+  box-shadow: 0 0 12px rgba(168,85,247,0.25);
+}
+
+/* ─────────────────────────────────────────────
+   6. QUESTION CARDS
+───────────────────────────────────────────── */
+.ip-questions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ip-q-card {
+  background: rgba(15,23,42,0.8);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  overflow: hidden;
+  transition: border-color 0.22s, box-shadow 0.22s;
+}
+
+.ip-q-card:hover,
+.ip-q-card.expanded {
+  border-color: rgba(168,85,247,0.45);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.4);
+}
+
+/* Card header — fixed alignment */
+.ip-q-header {
+  padding: 18px 20px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ip-q-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.ip-q-num {
+  font-family: 'Fira Code', monospace;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #a855f7;
+  background: rgba(168,85,247,0.13);
+  padding: 2px 8px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.ip-q-category {
+  font-family: 'Fira Code', monospace;
+  font-size: 0.7rem;
+  color: #38bdf8;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.ip-q-diff {
+  font-size: 0.66rem;
+  font-weight: 800;
+  padding: 2px 10px;
+  border-radius: 99px;
+  border: 1px solid transparent;
+  margin-left: auto; /* pushes to far right of meta row */
+  flex-shrink: 0;
+}
+
+.ip-q-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Actions row — buttons left, chevron right, perfectly centered */
+.ip-q-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+}
+
+.ip-q-actions-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ip-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 13px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  color: #cbd5e1;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s, color 0.18s;
+  white-space: nowrap;
+}
+
+.ip-copy-btn:hover {
+  background: rgba(56,189,248,0.1);
+  border-color: #38bdf8;
+  color: #38bdf8;
+}
+
+.ip-leetcode-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 13px;
+  background: rgba(245,158,11,0.12);
+  border: 1px solid rgba(245,158,11,0.35);
+  border-radius: 8px;
+  color: #fbbf24;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-decoration: none;
+  transition: background 0.18s, border-color 0.18s, color 0.18s, transform 0.18s, box-shadow 0.18s;
+  white-space: nowrap;
+}
+
+.ip-leetcode-btn:hover {
+  background: rgba(245,158,11,0.22);
+  border-color: #f59e0b;
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(245,158,11,0.3);
+}
+
+.ip-sandbox-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 13px;
+  background: rgba(16,185,129,0.1);
+  border: 1px solid rgba(16,185,129,0.35);
+  border-radius: 8px;
+  color: #34d399;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s, color 0.18s, transform 0.18s, box-shadow 0.18s;
+  white-space: nowrap;
+}
+
+.ip-sandbox-toggle-btn:hover,
+.ip-sandbox-toggle-btn.active {
+  background: rgba(16,185,129,0.22);
+  border-color: #10b981;
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16,185,129,0.28);
+}
+
+/* Chevron toggle button */
+.ip-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: #94a3b8;
+  cursor: pointer;
+  transition: color 0.18s, background 0.18s, border-color 0.18s;
+  flex-shrink: 0;
+}
+
+.ip-toggle-btn:hover {
+  color: #ffffff;
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(168,85,247,0.4);
+}
+
+/* ─────────────────────────────────────────────
+   7. EXPANDED QUESTION BODY
+───────────────────────────────────────────── */
+.ip-q-body {
+  padding: 0 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.ip-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.ip-section-title {
+  font-family: 'Fira Code', monospace;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #38bdf8;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin: 0;
+}
+
+.ip-points-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ip-points-list li {
+  display: flex;
+  gap: 10px;
+  font-size: 0.88rem;
+  color: #cbd5e1;
+  line-height: 1.55;
+}
+
+.ip-bullet {
+  color: #a855f7;
+  font-weight: 900;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.ip-section.answer {
+  background: rgba(30,41,59,0.5);
+  border: 1px solid rgba(56,189,248,0.2);
+  padding: 16px 18px;
+  border-radius: 12px;
+}
+
+.ip-answer-text {
+  font-size: 0.89rem;
+  color: #f1f5f9;
+  line-height: 1.65;
+  margin: 0;
+  font-style: italic;
+}
+
+/* ─────────────────────────────────────────────
+   8. RIGHT SIDEBAR — no overflow clipping
+───────────────────────────────────────────── */
+.ip-right-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.ip-sidebar-card {
+  padding: 20px;
+  background: rgba(15,23,42,0.8);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.ip-sidebar-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ip-sidebar-header h3 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0;
+}
+
+.ip-star-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ip-star-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.84rem;
+  color: #cbd5e1;
+  line-height: 1.5;
+}
+
+.ip-star-letter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: rgba(56,189,248,0.12);
+  border: 1px solid rgba(56,189,248,0.28);
+  color: #38bdf8;
+  font-weight: 900;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.78rem;
+  flex-shrink: 0;
+}
+
+.ip-platforms-desc {
+  font-size: 0.83rem;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.45;
+}
+
+.ip-platforms-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ip-platform-link-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px;
+  text-decoration: none;
+  color: #e2e8f0;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.84rem;
+  font-weight: 700;
+  transition: background 0.18s, border-color 0.18s, transform 0.18s;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.ip-platform-link-chip:hover {
+  background: rgba(255,255,255,0.08);
+  border-color: var(--chip-glow, #38bdf8);
+  transform: translateX(3px);
+}
+
+.chip-icon {
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.chip-name {
+  flex: 1;
+}
+
+.chip-ext {
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+/* ─────────────────────────────────────────────
+   9. LOADING STATE
+───────────────────────────────────────────── */
+.ip-loading-container {
+  min-height: calc(100vh - 116px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: #94a3b8;
+}
+
+.ip-spinner {
+  width: 38px;
+  height: 38px;
+  border: 3px solid rgba(56,189,248,0.18);
+  border-top-color: #38bdf8;
+  border-radius: 50%;
+  animation: ip-spin 0.75s linear infinite;
+}
+
+@keyframes ip-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ─────────────────────────────────────────────
+   10. RESPONSIVE
+───────────────────────────────────────────── */
+@media (max-width: 1080px) {
+  .ip-main-layout {
+    grid-template-columns: 1fr 280px;
+  }
+}
+
+@media (max-width: 860px) {
+  .ip-page-wrapper {
+    padding: 20px 18px 60px;
+  }
+  .ip-main-layout {
+    grid-template-columns: 1fr;
+  }
+  .ip-hero-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .ip-hero-stats {
+    align-self: stretch;
+    justify-content: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ip-pulse-dot,
+  .ip-spinner {
+    animation: none;
+  }
+}

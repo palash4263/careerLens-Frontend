@@ -1,100 +1,97 @@
+// src/components/CtaFooter.jsx
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { Sparkles, ShieldCheck, Mail, Compass, Cpu, Target, Award, Globe, Code } from "lucide-react";
 import "./CtaFooter.css";
 
 const CtaFooter = () => {
-  const containerVariants = {
-    hidden: { opacity: 0, y: 30 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.8,
-        staggerChildren: 0.15,
-        ease: [0.16, 1, 0.3, 1]
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] }
-    }
-  };
-
   return (
-    <motion.footer 
-      className="aesthetic-footer"
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, amount: 0.15 }}
-      variants={containerVariants}
-    >
-      <div className="footer-glow" />
-      <div className="footer-container">
-        <div className="footer-top">
-          {/* Logo & Brand Info */}
-          <motion.div className="footer-brand" variants={itemVariants}>
-            <Link to="/dashboard" className="footer-logo">
-              <div className="footer-logo-orb">
-                <span className="footer-logo-icon">✦</span>
-                <div className="footer-logo-ring" />
+    <footer className="cf-footer-root">
+      <div className="cf-footer-glow-top" />
+      <div className="cf-footer-wrap">
+        
+        {/* Main Grid */}
+        <div className="cf-footer-grid">
+          
+          {/* Brand Column */}
+          <div className="cf-brand-col">
+            <Link to="/dashboard" className="cf-logo-link">
+              <div className="cf-logo-orb">
+                <Sparkles size={16} className="cf-sparkle" />
               </div>
-              <span className="footer-logo-text">
-                Career<span className="footer-logo-accent">Lens</span>
+              <span className="cf-logo-text">
+                Career<span className="cf-logo-highlight">Lens</span>
               </span>
+              <span className="cf-version-tag">AI v4.1</span>
             </Link>
-            <p className="footer-tagline">
-              Empowering job seekers with AI-driven resume optimization, real-time job matching, and interactive interview intelligence.
+            
+            <p className="cf-brand-desc">
+              Next-generation AI Career Platform. Empowering job seekers with real-time resume optimization, 
+              ATS compliance analysis, and tailored 20-question interview preparation consoles.
             </p>
-          </motion.div>
 
-          {/* Quick Links Column */}
-          <motion.div className="footer-links-col" variants={itemVariants}>
-            <h4>Application</h4>
-            <div className="footer-links">
-              <Link to="/dashboard">Dashboard</Link>
-              <Link to="/resumes">Resumes</Link>
-              <Link to="/resume-optimizer">Resume Optimizer</Link>
-              <Link to="/jobs">Job Matches</Link>
+            <div className="cf-live-status">
+              <span className="cf-status-dot" />
+              <span>AI Neural Engine Active & Operational</span>
             </div>
-          </motion.div>
+          </div>
 
-          {/* Developer / Creator info column */}
-          <motion.div className="footer-links-col" variants={itemVariants}>
-            <h4>Creator & Contact</h4>
-            <div className="footer-links">
-              <span className="footer-contact-item">
-                📧 <a href="mailto:palashmishra47@gmail.com">palashmishra47@gmail.com</a>
-              </span>
-              <span className="footer-contact-item">
-                💼 <a href="https://linkedin.com/in/palash-mishra-6a68a71aa" target="_blank" rel="noopener noreferrer">LinkedIn Profile</a>
-              </span>
-              <span className="footer-contact-item">
-                🌐 <a href="https://github.com/palash4263" target="_blank" rel="noopener noreferrer">GitHub Account</a>
-              </span>
+          {/* Core Tools Links */}
+          <div className="cf-links-col">
+            <h4 className="cf-col-title">
+              <Compass size={14} />
+              <span>Core Tools</span>
+            </h4>
+            <div className="cf-links-list">
+              <Link to="/dashboard">⊞ Dashboard</Link>
+              <Link to="/resumes">📄 Resume Studio</Link>
+              <Link to="/resume-optimizer">⚡ AI Optimizer</Link>
+              <Link to="/templates">🎨 Templates Gallery</Link>
+              <Link to="/ats-calculator">📊 ATS Score Calculator</Link>
+              <Link to="/jobs">🎯 Job Tracker & Prep</Link>
             </div>
-          </motion.div>
+          </div>
+
+          {/* Contact & Developer */}
+          <div className="cf-links-col">
+            <h4 className="cf-col-title">
+              <Cpu size={14} />
+              <span>Creator & Connect</span>
+            </h4>
+            <div className="cf-links-list">
+              <a href="mailto:palashmishra47@gmail.com" className="cf-contact-link">
+                <Mail size={14} />
+                <span>palashmishra47@gmail.com</span>
+              </a>
+              <a href="https://linkedin.com/in/palash-mishra-6a68a71aa" target="_blank" rel="noopener noreferrer" className="cf-contact-link">
+                <Globe size={14} />
+                <span>LinkedIn Profile</span>
+              </a>
+              <a href="https://github.com/palash4263" target="_blank" rel="noopener noreferrer" className="cf-contact-link">
+                <Code size={14} />
+                <span>GitHub Portfolio</span>
+              </a>
+            </div>
+          </div>
+
         </div>
 
-        <motion.div className="footer-divider" variants={itemVariants} />
+        {/* Divider */}
+        <div className="cf-footer-divider" />
 
-        <motion.div className="footer-bottom" variants={itemVariants}>
-          <p className="footer-copy">
-            © 2026 CareerLens AI. Crafted for maximum career impact. All rights reserved.
-          </p>
-          <div className="footer-meta-links">
-            <span className="footer-status-indicator">
-              <span className="status-dot green" />
-              All Systems Operational
-            </span>
+        {/* Bottom Bar */}
+        <div className="cf-footer-bottom">
+          <div className="cf-copy">
+            © 2026 <strong>CareerLens AI</strong>. Designed & Engineered for Maximum Career Impact.
           </div>
-        </motion.div>
+          <div className="cf-badges">
+            <span className="cf-mini-badge">🛡️ 100% ATS Compliant</span>
+            <span className="cf-mini-badge">⚡ Instant AI Synthesis</span>
+          </div>
+        </div>
+
       </div>
-    </motion.footer>
+    </footer>
   );
 };
 

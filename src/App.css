@@ -185,18 +185,18 @@ body {
   width: 100%;
   min-height: 100vh;
   background: var(--shell-bg);
-  padding-top: 84px; /* Account for fixed navbar height */
+  padding-top: 116px;
 }
 
 @media (max-width: 900px) {
   .page-container {
-    padding-top: 76px;
+    padding-top: 100px;
   }
 }
 
 @media (max-width: 640px) {
   .page-container {
-    padding-top: 66px;
+    padding-top: 88px;
   }
 }
 
@@ -946,6 +946,8 @@ body {
     opacity: 1;
   }
 }
+
+
 
 /* ====== Scroll Reveal Utility classes ====== */
 .scroll-reveal {

@@ -1,0 +1,894 @@
+/* src/pages/ResumeBuilderPage.css — Premium Glassmorphic Redesign */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Fira+Code:wght@400;500;700&display=swap');
+
+/* ── Shell ── */
+.rb-shell {
+  width: 100%;
+  min-height: 100vh;
+  background: radial-gradient(circle at 50% 0%, #0f172a 0%, #080f1a 100%);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  color: #f8fafc;
+}
+
+/* Ambient glow highlights */
+.rb-shell::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 20%;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.rb-shell::after {
+  content: '';
+  position: absolute;
+  top: 300px;
+  right: 10%;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* ── Top Bar ── */
+.rb-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 36px;
+  height: 68px;
+  background: rgba(8, 15, 26, 0.85);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(24px) saturate(180%);
+  gap: 24px;
+}
+
+.rb-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  border-radius: 99px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: #cbd5e1;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.22s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.rb-back-btn:hover {
+  color: #ffffff;
+  border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  transform: translateX(-3px);
+}
+
+.rb-topbar-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+}
+
+.rb-save-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 22px;
+  border-radius: 12px;
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  background: linear-gradient(135deg, #a855f7, #6366f1);
+  color: #ffffff;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.86rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.22s ease;
+  box-shadow: 0 4px 16px rgba(168, 85, 247, 0.35);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.rb-save-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(168, 85, 247, 0.5);
+  background: linear-gradient(135deg, #b56cf8, #7073f2);
+}
+
+/* ── Stepper ── */
+.rb-stepper-wrapper {
+  padding: 20px 36px 8px;
+  max-width: 1440px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.rb-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 14px 24px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 18px;
+  backdrop-filter: blur(16px);
+  overflow-x: auto;
+  scrollbar-width: none;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+.rb-stepper::-webkit-scrollbar { display: none; }
+
+.rb-step-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.rb-step-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 12px;
+  transition: all 0.22s ease;
+}
+
+.rb-step-circle {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.85rem;
+  font-weight: 800;
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.05);
+  color: #94a3b8;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+}
+
+.rb-step-label {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #94a3b8;
+  white-space: nowrap;
+  transition: color 0.25s;
+}
+
+.rb-step-btn.active .rb-step-circle {
+  background: linear-gradient(135deg, #a855f7, #38bdf8);
+  border-color: #38bdf8;
+  color: #ffffff;
+  box-shadow: 0 0 20px rgba(168, 85, 247, 0.5);
+  transform: scale(1.08);
+}
+.rb-step-btn.active .rb-step-label {
+  color: #ffffff;
+  font-weight: 800;
+}
+
+.rb-step-btn.done .rb-step-circle {
+  background: rgba(16, 185, 129, 0.18);
+  border-color: #10b981;
+  color: #34d399;
+}
+.rb-step-btn.done .rb-step-label { color: #34d399; }
+
+.rb-step-connector {
+  flex: 1;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 99px;
+  min-width: 16px;
+  transition: background 0.3s;
+}
+.rb-step-connector.done {
+  background: linear-gradient(90deg, #10b981, #38bdf8);
+}
+
+/* ── Progress Bar ── */
+.rb-progress-bar {
+  height: 3px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+.rb-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #a855f7, #38bdf8, #34d399);
+  transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 0 10px #a855f7;
+}
+
+/* ── Body (Form Panel + Live Preview Panel) ── */
+.rb-body {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr;
+  max-width: 1040px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 24px 36px 64px;
+  min-height: 0;
+  align-items: start;
+}
+
+/* ── Left Form Panel Container ── */
+.rb-form-panel {
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  padding: 36px 40px;
+  backdrop-filter: blur(24px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+}
+
+.rb-section-heading {
+  margin-bottom: 30px;
+}
+.rb-section-heading h2 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.65rem;
+  font-weight: 900;
+  color: #ffffff;
+  margin: 0 0 6px;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #ffffff 40%, #c084fc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.rb-section-heading p {
+  font-size: 0.92rem;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Field Grids & Layout */
+.rb-field-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+.rb-field-grid.cols-1 { grid-template-columns: 1fr; }
+.rb-field-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+.rb-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.rb-field.full { grid-column: 1 / -1; }
+
+.rb-label {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #cbd5e1;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* High Contrast Input Fields (Fixes dim readability!) */
+.rb-input,
+.rb-textarea,
+.rb-select {
+  width: 100%;
+  padding: 12px 16px;
+  background: rgba(8, 15, 26, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  color: #ffffff;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.92rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+/* High-contrast readable placeholder */
+.rb-input::placeholder,
+.rb-textarea::placeholder {
+  color: #94a3b8;
+  font-weight: 400;
+  opacity: 0.85;
+}
+
+.rb-input:focus,
+.rb-textarea:focus,
+.rb-select:focus {
+  outline: none;
+  background: rgba(15, 23, 42, 0.95);
+  border-color: #a855f7;
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.25), 0 4px 14px rgba(168, 85, 247, 0.15);
+}
+
+.rb-textarea {
+  resize: vertical;
+  min-height: 110px;
+  line-height: 1.6;
+}
+
+.rb-select {
+  cursor: pointer;
+}
+.rb-select option {
+  background: #0f172a;
+  color: #ffffff;
+}
+
+/* Section divider */
+.rb-divider {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin: 28px 0;
+}
+
+/* Entry Cards (Experience, Education, Projects) */
+.rb-entries {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.rb-entry-card {
+  background: rgba(8, 15, 26, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  padding: 24px;
+  position: relative;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.rb-entry-card:hover {
+  border-color: rgba(168, 85, 247, 0.35);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+}
+
+.rb-entry-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.rb-entry-card-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #c084fc;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rb-entry-remove-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.08);
+  color: #f87171;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.rb-entry-remove-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #f87171;
+  color: #ffffff;
+}
+
+.rb-add-entry-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border-radius: 12px;
+  border: 1px dashed rgba(168, 85, 247, 0.4);
+  background: rgba(168, 85, 247, 0.08);
+  color: #c084fc;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+.rb-add-entry-btn:hover {
+  background: rgba(168, 85, 247, 0.16);
+  border-color: #a855f7;
+  color: #ffffff;
+}
+
+/* ── AI Suggestion Button ── */
+.rb-ai-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(168, 85, 247, 0.45);
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.22), rgba(56, 189, 248, 0.22));
+  color: #e9d5ff;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.22s ease;
+  white-space: nowrap;
+}
+.rb-ai-btn:hover {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.38), rgba(56, 189, 248, 0.38));
+  border-color: #c084fc;
+  color: #ffffff;
+  box-shadow: 0 0 16px rgba(168, 85, 247, 0.4);
+  transform: translateY(-1px);
+}
+.rb-ai-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+  pointer-events: none;
+}
+.rb-ai-spin {
+  animation: rb-spin 1s linear infinite;
+}
+@keyframes rb-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Skills Tag Input */
+.rb-skills-container { display: flex; flex-direction: column; gap: 14px; }
+.rb-tags-display {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  min-height: 52px;
+  padding: 14px;
+  background: rgba(8, 15, 26, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+}
+.rb-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 99px;
+  background: rgba(168, 85, 247, 0.18);
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  color: #e9d5ff;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+.rb-tag-remove {
+  cursor: pointer;
+  color: #cbd5e1;
+  font-size: 0.95rem;
+  line-height: 1;
+  transition: color 0.18s;
+}
+.rb-tag-remove:hover { color: #f87171; }
+.rb-tag-input-row {
+  display: flex;
+  gap: 10px;
+}
+.rb-tag-add-btn {
+  padding: 12px 22px;
+  border-radius: 12px;
+  border: 1px solid rgba(168, 85, 247, 0.45);
+  background: rgba(168, 85, 247, 0.15);
+  color: #c084fc;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+.rb-tag-add-btn:hover {
+  background: rgba(168, 85, 247, 0.28);
+  color: #ffffff;
+}
+
+.rb-ai-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  color: #fbbf24;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* Nav Buttons Row */
+.rb-nav-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.rb-btn-prev {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 26px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: #cbd5e1;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.22s ease;
+}
+.rb-btn-prev:hover {
+  border-color: #38bdf8;
+  color: #ffffff;
+  background: rgba(56, 189, 248, 0.1);
+}
+.rb-btn-prev:disabled { opacity: 0.35; cursor: default; pointer-events: none; }
+
+.rb-btn-next {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 32px;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, #a855f7, #38bdf8);
+  color: #ffffff;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.22s ease;
+  box-shadow: 0 4px 20px rgba(168, 85, 247, 0.4);
+}
+.rb-btn-next:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(168, 85, 247, 0.55);
+}
+
+.rb-btn-finish {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 32px;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #ffffff;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.22s ease;
+  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
+}
+.rb-btn-finish:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(16, 185, 129, 0.55);
+}
+
+/* ── Live Preview Panel ── */
+.rb-preview-panel {
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  padding: 28px 24px 32px;
+  backdrop-filter: blur(24px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+  position: sticky;
+  top: 92px;
+}
+
+.rb-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.rb-preview-label {
+  font-family: 'Fira Code', monospace;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #38bdf8;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.rb-preview-live-dot {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #34d399;
+}
+.rb-preview-live-dot::before {
+  content: '';
+  display: block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #34d399;
+  box-shadow: 0 0 10px #34d399;
+  animation: rb-blink 2s infinite;
+}
+
+@keyframes rb-blink {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(1.2); }
+}
+
+/* ── Font & Theme Control Toolbar ── */
+.rb-font-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  background: rgba(8, 15, 26, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  margin-bottom: 16px;
+  backdrop-filter: blur(12px);
+  flex-wrap: wrap;
+}
+
+.rb-font-control-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rb-font-label {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.rb-font-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.rb-font-btn:hover {
+  background: rgba(168, 85, 247, 0.25);
+  border-color: #a855f7;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.rb-font-val {
+  font-family: 'Fira Code', monospace;
+  font-size: 0.84rem;
+  font-weight: 800;
+  color: #a855f7;
+  min-width: 54px;
+  text-align: center;
+  background: rgba(168, 85, 247, 0.12);
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+.rb-preset-btn {
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  color: #cbd5e1;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.rb-preset-btn:hover,
+.rb-preset-btn.active {
+  background: rgba(56, 189, 248, 0.18);
+  border-color: #38bdf8;
+  color: #ffffff;
+}
+
+/* Color Swatches */
+.rb-color-swatches {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rb-color-swatch {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.18s, border-color 0.18s;
+}
+
+.rb-color-swatch:hover {
+  transform: scale(1.2);
+}
+
+.rb-color-swatch.active {
+  border-color: #ffffff;
+  transform: scale(1.25);
+  box-shadow: 0 0 10px currentColor;
+}
+
+/* ── Clean Resume Document (Live Preview A4 Paper) ── */
+.rb-resume-doc {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 32px 28px;
+  font-family: 'Outfit', sans-serif;
+  color: #1e293b;
+  line-height: 1.5;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55);
+  border: 1px solid #e2e8f0;
+  font-size: calc(1rem * var(--doc-scale, 1));
+}
+
+.rb-doc-name {
+  font-size: calc(1.5rem * var(--doc-scale, 1));
+  font-weight: 900;
+  color: #0f172a;
+  margin: 0 0 3px;
+  letter-spacing: -0.02em;
+}
+.rb-doc-title {
+  font-size: calc(0.9rem * var(--doc-scale, 1));
+  font-weight: 700;
+  color: var(--doc-theme, #6366f1);
+  margin: 0 0 10px;
+}
+.rb-doc-contact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  font-size: calc(0.78rem * var(--doc-scale, 1));
+  color: #475569;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 2px solid var(--doc-theme, #6366f1);
+}
+.rb-doc-contact span { display: inline-flex; align-items: center; gap: 4px; }
+
+.rb-doc-section { margin-top: 16px; }
+.rb-doc-section-title {
+  font-size: calc(0.75rem * var(--doc-scale, 1));
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--doc-theme, #6366f1);
+  padding-bottom: 4px;
+  border-bottom: 1.5px solid #cbd5e1;
+  margin-bottom: 10px;
+}
+.rb-doc-summary { font-size: calc(0.84rem * var(--doc-scale, 1)); color: #334155; line-height: 1.6; }
+
+.rb-doc-entry { margin-bottom: 12px; }
+.rb-doc-entry-header { display: flex; justify-content: space-between; align-items: baseline; }
+.rb-doc-entry-title { font-size: calc(0.88rem * var(--doc-scale, 1)); font-weight: 800; color: #0f172a; }
+.rb-doc-entry-date { font-size: calc(0.74rem * var(--doc-scale, 1)); color: #64748b; white-space: nowrap; font-weight: 600; }
+.rb-doc-entry-sub { font-size: calc(0.8rem * var(--doc-scale, 1)); color: var(--doc-theme, #6366f1); font-weight: 700; margin-bottom: 4px; }
+.rb-doc-bullets { margin: 0; padding-left: 18px; }
+.rb-doc-bullets li { font-size: calc(0.8rem * var(--doc-scale, 1)); color: #334155; margin-bottom: 3px; }
+
+.rb-doc-skills-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.rb-doc-skill-tag {
+  padding: 3px 10px;
+  border-radius: 6px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+  font-size: calc(0.76rem * var(--doc-scale, 1));
+  font-weight: 700;
+}
+
+.rb-doc-empty {
+  font-size: 0.82rem;
+  color: #94a3b8;
+  font-style: italic;
+  text-align: center;
+  padding: 24px 0;
+}
+
+.rb-download-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 20px;
+  padding: 13px;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, #a855f7, #38bdf8);
+  color: #ffffff;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.92rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(168, 85, 247, 0.4);
+  transition: all 0.22s ease;
+}
+.rb-download-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(168, 85, 247, 0.55);
+}
+
+/* ── Responsive Media Queries ── */
+@media (max-width: 1100px) {
+  .rb-body { grid-template-columns: 1fr; }
+  .rb-preview-panel { display: none; }
+}
+
+@media (max-width: 640px) {
+  .rb-topbar { padding: 0 16px; }
+  .rb-stepper-wrapper { padding: 12px 16px 4px; }
+  .rb-body { padding: 16px 16px 48px; }
+  .rb-form-panel { padding: 24px 20px; border-radius: 18px; }
+  .rb-field-grid { grid-template-columns: 1fr; }
+  .rb-field-grid.cols-3 { grid-template-columns: 1fr; }
+}

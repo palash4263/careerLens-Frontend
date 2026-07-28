@@ -21,6 +21,8 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import TemplatesPage from "./pages/TemplatesPage";
 import AtsScoreCalculatorPage from "./pages/AtsScoreCalculatorPage";
+import InterviewPrepPage from "./pages/InterviewPrepPage";
+import ResumeBuilderPage from "./pages/ResumeBuilderPage";
 import api from "./api/axiosConfig";
 
 function ProtectedRoute({ children }) {
@@ -43,7 +45,8 @@ function Layout() {
     location.pathname === "/register" ||
     location.pathname === "/forgot-password" ||
     location.pathname === "/reset-password" ||
-    location.pathname === "/resume-editor";
+    location.pathname === "/resume-editor" ||
+    location.pathname === "/resume-builder";
 
   return (
     <>
@@ -93,6 +96,24 @@ function Layout() {
           />
 
           <Route
+            path="/interview-prep"
+            element={
+              <ProtectedRoute>
+                <InterviewPrepPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/interview-prep/:jobId"
+            element={
+              <ProtectedRoute>
+                <InterviewPrepPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
             path="/resume-optimizer"
             element={
               <ProtectedRoute>
@@ -115,6 +136,15 @@ function Layout() {
             element={
               <ProtectedRoute>
                 <ResumeEditorPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/resume-builder"
+            element={
+              <ProtectedRoute>
+                <ResumeBuilderPage />
               </ProtectedRoute>
             }
           />

@@ -929,6 +929,7 @@ export default function ResumeOptimizationPage() {
   return (
     <div className="optimizer-wrapper">
       <div className="optimizer-page-content">
+
         {/* Hero Section */}
         <motion.section
           ref={heroRef}

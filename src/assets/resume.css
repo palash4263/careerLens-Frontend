@@ -44,11 +44,11 @@
 
 /* ====== Wrapper ====== */
 .resume-wrapper {
-  min-height: 100vh;
+  min-height: auto;
   background: var(--bg-primary);
   position: relative;
   overflow: hidden;
-  padding: 6.5rem 2.5rem 5rem;
+  padding: 5.5rem 2.5rem 1.5rem;
 }
 
 .resume-wrapper::before {
@@ -168,9 +168,183 @@
   color: var(--text-primary);
 }
 
-.header-stat-label {
-  font-size: 0.7rem;
-  color: var(--text-secondary);
+/* ====== ATS Search & Filter Bar ====== */
+.resume-search-filter-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.resume-search-box {
+  position: relative;
+  flex: 1;
+  min-width: 260px;
+}
+
+.resume-search-input {
+  width: 100%;
+  padding: 10px 16px 10px 40px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: #f8fafc;
+  font-size: 0.88rem;
+  outline: none;
+  transition: all 0.25s ease;
+}
+
+.resume-search-input:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.3);
+}
+
+.resume-search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.resume-filter-select {
+  padding: 10px 16px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: #cbd5e1;
+  font-size: 0.85rem;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.resume-filter-select:focus {
+  border-color: #6366f1;
+}
+
+/* ====== Pro ATS Compliance Checklist Widget ====== */
+.ats-checklist-widget {
+  margin-top: 24px;
+  margin-bottom: 0;
+  padding: 24px 28px;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.75) 0%, rgba(30, 41, 59, 0.75) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 20px;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 12px 32px -6px rgba(0, 0, 0, 0.3);
+}
+
+.ats-checklist-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.ats-checklist-title-group {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.ats-checklist-icon {
+  font-size: 1.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+.ats-checklist-title-group h3 {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #f8fafc;
+  margin: 0 0 2px;
+}
+
+.ats-checklist-title-group p {
+  font-size: 0.82rem;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.ats-checklist-action-btn {
+  padding: 8px 18px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: #ffffff;
+  font-size: 0.82rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+}
+
+.ats-checklist-action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+}
+
+.ats-checklist-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 768px) {
+  .ats-checklist-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ats-checklist-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+}
+
+.ats-check-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+  font-size: 0.75rem;
+  font-weight: 800;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.ats-checklist-item h4 {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #e2e8f0;
+  margin: 0 0 3px;
+}
+
+.ats-checklist-item p {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  line-height: 1.4;
+  margin: 0;
 }
 
 /* ====== Upload Card ====== */
@@ -1554,4 +1728,80 @@
   color: var(--cl-text-primary);
   margin: 0;
   white-space: nowrap;
+}
+
+/* ── Build from Scratch — header button ── */
+.rb-scratch-header-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #ffffff;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 18px rgba(99,102,241,0.35);
+  white-space: nowrap;
+}
+.rb-scratch-header-btn:hover {
+  opacity: 0.88;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(99,102,241,0.45);
+}
+
+/* ── Empty state upgraded ── */
+.empty-state-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.empty-state-build-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 28px;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.92rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 20px rgba(99,102,241,0.4);
+}
+.empty-state-build-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(99,102,241,0.5);
+}
+
+.empty-state-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 28px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.05);
+  color: #cbd5e1;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+.empty-state-upload-btn:hover {
+  background: rgba(255,255,255,0.09);
+  border-color: rgba(255,255,255,0.2);
+  color: #fff;
 }

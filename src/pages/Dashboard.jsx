@@ -1,5 +1,5 @@
 // Dashboard.jsx — Refactored for brevity
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import FeatureCard from "../components/FeatureCard";
@@ -7,6 +7,7 @@ import CtaFooter from "../components/CtaFooter";
 import { getResumes } from "../services/resumeService";
 import { getJobDescriptions } from "../services/jobDescriptionService";
 import api from "../api/axiosConfig";
+import { useGsapEntrance, useGsapCards, useGsapFloatingDock, gsap, ScrollTrigger } from "../hooks/useGsap";
 import "../assets/Dashboard.css";
 
 function Dashboard() {
@@ -16,6 +17,36 @@ function Dashboard() {
   const [user, setUser] = useState("John");
   const [scoreBar, setScoreBar] = useState(0);
   const [greeting, setGreeting] = useState("Good Morning");
+  const heroRef = useRef(null);
+
+  // ── GSAP Hero entrance ──
+  useGsapEntrance(heroRef, { delay: 0.15 });
+
+  // ── GSAP floating dock entrance ──
+  useGsapFloatingDock();
+
+  // ── GSAP ScrollTrigger: feature cards ──
+  useGsapCards(".db-feature-card", { stagger: 0.13 });
+
+  // ── GSAP ScrollTrigger: workspace items ──
+  useGsapCards(".db-workspace-item", { stagger: 0.1, duration: 0.65 });
+
+  // ── GSAP ScrollTrigger: stat circles ──
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        ".stat-circle",
+        { opacity: 0, scale: 0.5, y: 30 },
+        {
+          opacity: 1, scale: 1, y: 0,
+          duration: 0.7, ease: "elastic.out(1, 0.55)",
+          stagger: 0.1,
+          scrollTrigger: { trigger: ".db-stats-circles", start: "top 88%" },
+        }
+      );
+    });
+    return () => ctx.revert();
+  }, []);
 
   // Initialize user & greeting
   useEffect(() => {
@@ -181,20 +212,20 @@ function Dashboard() {
         {[1, 2, 3].map((i) => <div key={i} className={`db-orb db-orb-${i}`} />)}
         <div className="db-content">
           {/* Hero */}
-          <section className="db-hero">
-            <div className="db-hero-badge"><span className="db-badge-pulse" />AI-Powered Career Intelligence</div>
+          <section className="db-hero" ref={heroRef}>
+            <div className="db-hero-badge" data-gsap="badge"><span className="db-badge-pulse" />AI-Powered Career Intelligence</div>
             <div className="db-hero-body">
               <div className="db-hero-left">
-                <h1 className="db-hero-title">Supercharge Your Career Search with <span className="db-gradient-name">CareerLens AI</span></h1>
-                <p className="db-hero-sub">Welcome back, {user}. {greeting}. Our intelligent career engine is ready to analyze your resume. Here is your current overview.</p>
-                <div className="db-rings">{statRings.map((s) => <StatRing key={s.label} {...s} />)}</div>
+                <h1 className="db-hero-title" data-gsap="heading">Supercharge Your Career Search with <span className="db-gradient-name">CareerLens AI</span></h1>
+                <p className="db-hero-sub" data-gsap="sub">Welcome back, {user}. {greeting}. Our intelligent career engine is ready to analyze your resume. Here is your current overview.</p>
+                <div className="db-rings">{statRings.map((s) => <StatRing key={s.label} {...s} data-gsap="stat" />)}</div>
                 <div className="db-hero-cta">
-                  <button className="db-btn-primary" onClick={() => navigate("/resumes")}>↑ Upload Resume</button>
-                  <button className="db-btn-secondary" onClick={() => navigate("/optimizer")}>⚡ Optimize Now</button>
+                  <button className="db-btn-primary" data-gsap="cta" onClick={() => navigate("/resumes")}>↑ Upload Resume</button>
+                  <button className="db-btn-secondary" data-gsap="cta" onClick={() => navigate("/optimizer")}>⚡ Optimize Now</button>
                 </div>
               </div>
               <div className="db-hero-right">
-                <div className="db-mockup-container">
+                <div className="db-mockup-container" data-gsap="mockup">
                   <MockupCard icon="📄" badge="ATS OPTIMIZED" badgeColor="purple" title="Resume_PM_2026.pdf" subtitle="98% Match Potential" extra={<div className="db-mockup-score-bar"><div className="db-mockup-score-fill purple" style={{ width: "98%" }} /></div>} />
                   <MockupCard icon="🎤" badge="COACH READY" badgeColor="green" title="Mock Interview AI" subtitle="A+ Technical Rating" extra={<div className="db-mockup-dots">{[1,2,3,4].map((i) => <span key={i} className={`db-mockup-dot-item${i <= 3 ? " active" : ""}`} />)}</div>} />
                   <MockupCard icon="💼" badge="JOB MATCHED" badgeColor="blue" title="Product Lead" subtitle="Vercel · Remote" extra={<div className="db-mockup-match-pill">94% Fit</div>} />

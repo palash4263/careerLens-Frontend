@@ -161,11 +161,42 @@ export default function InterviewQuestionsModal({ isOpen, onClose, job }) {
           </AnimatePresence>
         </div>
 
+        {/* Platform Links */}
+        <div className="iqm-platforms">
+          <div className="iqm-platforms-label">
+            <ExternalLink size={13} />
+            <span>Practice more questions on</span>
+          </div>
+          <div className="iqm-platforms-links">
+            {[
+              { name: "LeetCode",      url: "https://leetcode.com/problemset/", color: "#f59e0b",  icon: "⚡" },
+              { name: "InterviewBit",  url: "https://www.interviewbit.com/",    color: "#38bdf8",  icon: "🎯" },
+              { name: "Glassdoor",     url: "https://www.glassdoor.com/Interview/index.htm", color: "#34d399", icon: "💬" },
+              { name: "Pramp",         url: "https://www.pramp.com/",           color: "#a78bfa",  icon: "🤝" },
+              { name: "GeeksForGeeks", url: "https://www.geeksforgeeks.org/interview-preparation-for-software-developer/", color: "#4ade80", icon: "📚" },
+              { name: "HackerRank",    url: "https://www.hackerrank.com/interview/preparation-kit", color: "#22d3ee", icon: "🏆" },
+            ].map(p => (
+              <a
+                key={p.name}
+                href={p.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="iqm-platform-chip"
+                style={{ "--chip-color": p.color }}
+              >
+                <span>{p.icon}</span>
+                <span>{p.name}</span>
+                <ExternalLink size={10} style={{ opacity: 0.6 }} />
+              </a>
+            ))}
+          </div>
+        </div>
+
         {/* Footer Bar */}
         <div className="iqm-footer">
           <div className="iqm-footer-left">
             <Award size={14} style={{ color: "#a3e635" }} />
-            <span>AI tailored to target job parameters</span>
+            <span>20 questions tailored to target job parameters</span>
           </div>
           <button className="iqm-btn-done" onClick={onClose}>
             <span>Done Reviewing</span>

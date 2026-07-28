@@ -11,6 +11,8 @@ import {
 import { useScrollReveal } from "../hooks/useScrollReveal";
 import AnimeHeroAnimation from "../components/common/AnimeHeroAnimation";
 import AiNeuralTerminalConsole from "../components/common/AiNeuralTerminalConsole";
+import AnimeBuildFromScratchBtn from "../components/common/AnimeBuildFromScratchBtn";
+import AiCareerToolsQuickBar from "../components/common/AiCareerToolsQuickBar";
 import { motion } from "framer-motion";
 import "../assets/resume.css";
 
@@ -26,6 +28,9 @@ function ResumePage() {
   const [pdfUrl, setPdfUrl] = useState(null);
   const [scanStep, setScanStep] = useState(0); 
   const fileInputRef = useRef(null);
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterType, setFilterType] = useState("all");
 
   const showToast = (message, type = "success") => {
     setToast({ message, type });
@@ -47,6 +52,14 @@ function ResumePage() {
   }, []);
 
   useScrollReveal([resumes]);
+
+  const filteredResumes = resumes.filter(r => {
+    const matchesSearch = (r.file_name || "").toLowerCase().includes(searchQuery.toLowerCase());
+    if (!matchesSearch) return false;
+    if (filterType === "high_ats") return (r.atsScore || 0) >= 80;
+    if (filterType === "needs_improvement") return (r.atsScore || 0) < 70;
+    return true;
+  });
 
   const handleFileChange = (file) => {
     if (!file) return;
@@ -106,7 +119,7 @@ function ResumePage() {
       await loadResumes();
     } catch (error) {
       console.error(error);
-      showToast("Delete failed.", "error");
+      showToast("Failed to delete resume.", "error");
     }
   };
 
@@ -118,46 +131,26 @@ function ResumePage() {
     }, 1100);
   };
 
-  const handleViewResume = async (resume) => {
-    setViewingResume(resume);
-    setPdfUrl(null);
+  const handleViewResume = async (resumeId) => {
     try {
-      const blob = await getResumeFile(resume.id);
+      setAnalyzingId(resumeId);
+      const blob = await getResumeFile(resumeId);
       const url = URL.createObjectURL(blob);
       setPdfUrl(url);
-    } catch (err) {
-      console.error(err);
-      showToast("Failed to fetch secure resume document", "error");
+      setViewingResume(resumeId);
+    } catch (error) {
+      console.error(error);
+      showToast("Failed to fetch resume file.", "error");
+    } finally {
+      setAnalyzingId(null);
     }
   };
 
-  const closeModal = () => {
+  const handleCloseModal = () => {
     setViewingResume(null);
     if (pdfUrl) {
       URL.revokeObjectURL(pdfUrl);
       setPdfUrl(null);
-    }
-  };
-
-  const handleDownload = () => {
-    if (!pdfUrl) {
-      showToast("PDF content is still loading...", "info");
-      return;
-    }
-    const link = document.createElement('a');
-    link.href = pdfUrl;
-    link.setAttribute('download', viewingResume.file_name || 'resume.pdf');
-    document.body.appendChild(link);
-    link.click();
-    link.parentNode.removeChild(link);
-    showToast("Download started!", "success");
-  };
-
-  const handleOpenNewTab = () => {
-    if (pdfUrl) {
-      window.open(pdfUrl, '_blank');
-    } else {
-      showToast("PDF content is still loading...", "info");
     }
   };
 
@@ -189,6 +182,7 @@ function ResumePage() {
               <span className="header-stat-value">{totalResumes}</span>
               <span className="header-stat-label">Total Resumes</span>
             </div>
+            <AnimeBuildFromScratchBtn onClick={() => navigate("/resume-builder")} />
           </div>
         </div>
 
@@ -322,8 +316,8 @@ function ResumePage() {
           </div>
         </div>
 
-        {/* Kinetic Anime.js Score & Matrix Animation */}
-        <AnimeHeroAnimation score={bestAtsScore || 98} label="Parsability Index" />
+        {/* AI Career Tools Quick Access Bar */}
+        <AiCareerToolsQuickBar />
 
         {/* Stats Overview */}
         <div className="stats-overview-premium scroll-reveal">
@@ -359,18 +353,54 @@ function ResumePage() {
         <section className="resume-list-premium scroll-reveal-3d">
           <div className="resume-list-header">
             <h2>Uploaded Resumes</h2>
-            <span className="resume-count">{resumes.length} resumes</span>
+            <span className="resume-count">{filteredResumes.length} of {resumes.length} resumes</span>
           </div>
 
-          {resumes.length === 0 ? (
+          <div className="resume-search-filter-row">
+            <div className="resume-search-box">
+              <span className="resume-search-icon">🔍</span>
+              <input
+                type="text"
+                className="resume-search-input"
+                placeholder="Search resume by name..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <select
+              className="resume-filter-select"
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value)}
+            >
+              <option value="all">All Resumes</option>
+              <option value="high_ats">High ATS Score (80%+)</option>
+              <option value="needs_improvement">Needs Improvement (&lt;70%)</option>
+            </select>
+          </div>
+
+          {filteredResumes.length === 0 ? (
             <div className="empty-state-premium">
               <div className="empty-state-icon">📭</div>
-              <h3>No resumes uploaded yet</h3>
-              <p>Upload your first resume to get started</p>
+              <h3>No matching resumes found</h3>
+              <p>Upload an existing PDF or build one from scratch with our guided builder.</p>
+              <div className="empty-state-actions">
+                <button
+                  className="empty-state-build-btn"
+                  onClick={() => navigate("/resume-builder")}
+                >
+                  ✦ Build from Scratch
+                </button>
+                <button
+                  className="empty-state-upload-btn"
+                  onClick={() => document.getElementById('resumeFile')?.click()}
+                >
+                  ↑ Upload PDF
+                </button>
+              </div>
             </div>
           ) : (
             <div className="resume-grid-premium">
-              {resumes.map((resume, index) => (
+              {filteredResumes.map((resume, index) => (
                 <div
                   className={`resume-card-premium ${analyzingId === resume.id ? "analyzing" : ""}`}
                   key={resume.id}
@@ -473,13 +503,45 @@ function ResumePage() {
                         <span className="tip">Customize for each job</span>
                       </div>
                     </div>
-                    <button className="view-all-tips">View All Tips →</button>
                   </div>
                 </div>
               ))}
             </div>
           )}
         </section>
+
+        {/* Pro ATS Compliance Checklist Widget */}
+        <div className="ats-checklist-widget scroll-reveal">
+          <div className="ats-checklist-header">
+            <div className="ats-checklist-title-group">
+              <span className="ats-checklist-icon">🛡️</span>
+              <div>
+                <h3>Pro ATS Compliance Checklist</h3>
+                <p>Ensure your resume passes 99%+ of Enterprise Applicant Tracking Systems</p>
+              </div>
+            </div>
+            <button className="ats-checklist-action-btn" onClick={() => navigate("/ats-score")}>
+              Test Your Resume →
+            </button>
+          </div>
+
+          <div className="ats-checklist-grid">
+            {[
+              { title: "Standard Section Headers", desc: "Use universal titles: Experience, Education, Skills, Summary", icon: "✓" },
+              { title: "Quantified Metrics", desc: "Include %, $, numbers for high impact (e.g., Reduced latency by 45%)", icon: "✓" },
+              { title: "Clean Single-Column Vector", desc: "Avoid graphics, text boxes, and multi-column tables", icon: "✓" },
+              { title: "Action Verbs & Keywords", desc: "Start bullet points with strong verbs (Architected, Optimized, Led)", icon: "✓" },
+            ].map((item, idx) => (
+              <div key={idx} className="ats-checklist-item">
+                <span className="ats-check-icon">{item.icon}</span>
+                <div>
+                  <h4>{item.title}</h4>
+                  <p>{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Secure Document Preview Overlay Frame */}

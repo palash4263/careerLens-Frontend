@@ -1,0 +1,227 @@
+/* src/components/CodeEditorSandbox.css */
+
+.ces-root {
+  width: 100%;
+  background: rgba(10, 16, 28, 0.9);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  margin-top: 14px;
+}
+
+/* Header */
+.ces-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: rgba(15, 23, 42, 0.8);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.ces-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: #38bdf8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ces-icon {
+  color: #38bdf8;
+}
+
+.ces-controls-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ces-lang-select {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: #f8fafc;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.ces-lang-select:hover {
+  border-color: #38bdf8;
+}
+
+.ces-action-icon-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #94a3b8;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ces-action-icon-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+  border-color: #38bdf8;
+}
+
+/* Editor Body */
+.ces-editor-body {
+  position: relative;
+  width: 100%;
+  min-height: 180px;
+  background: #080d16;
+}
+
+.ces-textarea {
+  width: 100%;
+  height: 200px;
+  padding: 16px;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #f1f5f9;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  resize: vertical;
+  tab-size: 2;
+  white-space: pre;
+}
+
+/* Footer Bar */
+.ces-footer-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: rgba(15, 23, 42, 0.8);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.ces-tab-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.ces-console-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #38bdf8;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.ces-run-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border: none;
+  border-radius: 8px;
+  color: #ffffff;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+}
+
+.ces-run-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(16, 185, 129, 0.5);
+  background: linear-gradient(135deg, #34d399, #10b981);
+}
+
+.ces-run-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Output Panel */
+.ces-output-panel {
+  padding: 14px 16px;
+  background: #040810;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ces-output-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ces-status-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.status-icon.success { color: #34d399; }
+.status-icon.error { color: #f87171; }
+
+.status-text.success { color: #34d399; }
+.status-text.error { color: #f87171; }
+
+.ces-meta-group {
+  display: flex;
+  gap: 14px;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+
+.ces-output-logs {
+  font-family: 'Fira Code', monospace;
+  font-size: 0.8rem;
+  color: #cbd5e1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 140px;
+  overflow-y: auto;
+  background: rgba(15, 23, 42, 0.4);
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.log-line {
+  display: flex;
+  gap: 8px;
+}
+
+.log-prefix {
+  color: #38bdf8;
+  font-weight: 800;
+}
+
+.log-line.error {
+  color: #f87171;
+}

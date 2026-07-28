@@ -252,8 +252,8 @@ function JobDescriptionPage() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
     >
-      <div className="jobs-page-content">
-        {/* Hero Section */}
+    <div className="jobs-page-content">
+      {/* Hero Section */}
         <section className="jobs-hero-premium">
           <div className="jobs-hero-glow"></div>
           <div className="jobs-hero-content">
@@ -418,10 +418,14 @@ function JobDescriptionPage() {
                         showToast("Please enter a role title or paste a description first!", "error");
                         return;
                       }
-                      setInterviewModalJob({
-                        title: formData.title || "Target Software Role",
-                        company: formData.company || "Target Company",
-                        description: formData.description
+                      navigate("/interview-prep", {
+                        state: {
+                          job: {
+                            title: formData.title || "Target Software Role",
+                            company: formData.company || "Target Company",
+                            description: formData.description
+                          }
+                        }
                       });
                     }}
                   >
@@ -713,7 +717,7 @@ function JobDescriptionPage() {
                           className="jobs-job-action-btn interview"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setInterviewModalJob(job);
+                            navigate(`/interview-prep/${job.id}`, { state: { job } });
                           }}
                           style={{
                             background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.25), rgba(124, 58, 237, 0.25))',
@@ -807,7 +811,7 @@ function JobDescriptionPage() {
                   onClick={() => {
                     const targetJob = selectedJob;
                     setSelectedJob(null);
-                    setInterviewModalJob(targetJob);
+                    navigate(`/interview-prep/${targetJob.id}`, { state: { job: targetJob } });
                   }}
                 >
                   🎯 Interview Questions

@@ -1,0 +1,133 @@
+/* AnimeBuildFromScratchBtn.css - Ultra High-End Anime.js Animated Button */
+
+.anime-scratch-btn-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Ambient Anime.js Breathing Glow */
+.anime-scratch-glow {
+  position: absolute;
+  inset: -6px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);
+  filter: blur(14px);
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: 0;
+  transition: opacity 0.3s ease;
+}
+
+/* Main Button Shell */
+.anime-scratch-btn {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  padding: 10px 18px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.95) 0%, rgba(139, 92, 246, 0.95) 50%, rgba(168, 85, 247, 0.95) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 14px;
+  color: #ffffff;
+  cursor: pointer;
+  outline: none;
+  box-shadow: 0 6px 20px -2px rgba(124, 58, 237, 0.35);
+  backdrop-filter: blur(12px);
+  overflow: hidden;
+  will-change: transform, box-shadow;
+}
+
+.anime-scratch-btn::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 70%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  transform: skewX(-20deg);
+  transition: left 0.75s ease;
+}
+
+.anime-scratch-btn:hover::before {
+  left: 140%;
+}
+
+.anime-scratch-content {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/* AI Badge Container */
+.anime-scratch-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.2);
+}
+
+.anime-scratch-sparkle {
+  color: #fbbf24;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.anime-scratch-ai-tag {
+  font-size: 0.62rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #e0e7ff;
+  margin-top: 2px;
+}
+
+/* Button Main Text */
+.anime-scratch-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.anime-scratch-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: #ffffff;
+  line-height: 1.2;
+}
+
+.anime-scratch-sub {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: rgba(238, 242, 255, 0.85);
+  line-height: 1.2;
+  margin-top: 2px;
+}
+
+/* Action Arrow Icon */
+.anime-scratch-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  transition: transform 0.25s ease, background 0.25s ease;
+}
+
+.anime-scratch-btn:hover .anime-scratch-arrow {
+  transform: translateX(4px);
+  background: rgba(255, 255, 255, 0.28);
+}

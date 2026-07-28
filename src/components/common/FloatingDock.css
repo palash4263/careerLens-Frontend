@@ -1,0 +1,260 @@
+/* src/components/common/FloatingDock.css */
+
+/* ─── Root ─── */
+.fd-root {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  pointer-events: none;
+}
+
+/* ─── Item list ─── */
+.fd-items {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(12px) scale(0.94);
+  transition: opacity 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+              transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.fd-items--open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: all;
+}
+.fd-items--open .fd-item {
+  animation: fd-item-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) var(--delay, 0ms) both;
+}
+@keyframes fd-item-pop {
+  from { opacity: 0; transform: scale(0.4) translateY(10px); }
+  to   { opacity: 1; transform: scale(1)   translateY(0); }
+}
+
+/* ─── Individual items ─── */
+.fd-item {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(15, 23, 42, 0.88);
+  backdrop-filter: blur(20px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.22s cubic-bezier(0.34,1.56,0.64,1), border-color 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  pointer-events: all;
+}
+.fd-item:hover {
+  transform: scale(1.2) translateX(-4px);
+  border-color: var(--item-color, #38bdf8);
+  box-shadow: 0 0 0 1px var(--item-color,#38bdf8), 0 8px 24px rgba(0,0,0,0.5);
+}
+.fd-item--active {
+  border-color: var(--item-color, #38bdf8);
+  box-shadow: 0 0 16px rgba(56,189,248,0.3);
+}
+.fd-item-icon { font-size: 1.15rem; user-select: none; }
+
+/* Active ring pulse */
+.fd-item-active-ring {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid var(--item-color,#38bdf8);
+  opacity: 0.55;
+  animation: fd-ring-pulse 2s ease-in-out infinite;
+}
+@keyframes fd-ring-pulse {
+  0%,100% { transform: scale(1);    opacity: 0.55; }
+  50%      { transform: scale(1.18); opacity: 0; }
+}
+
+/* Tooltip to the left */
+.fd-item-tooltip {
+  position: absolute;
+  right: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(15,23,42,0.95);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: #f8fafc;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.76rem;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 8px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+}
+.fd-item-tooltip::after {
+  content:'';
+  position: absolute;
+  left: 100%; top: 50%;
+  transform: translateY(-50%);
+  border: 5px solid transparent;
+  border-left-color: rgba(15,23,42,0.95);
+}
+.fd-item:hover .fd-item-tooltip { opacity: 1; }
+
+/* ─── Trigger row (label + button side by side) ─── */
+.fd-trigger-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  pointer-events: all;
+}
+
+/* ─── Always-visible label pill ─── */
+.fd-label-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: rgba(15,23,42,0.85);
+  border: 1px solid rgba(139,92,246,0.45);
+  border-radius: 99px;
+  backdrop-filter: blur(16px);
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #c4b5fd;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.4);
+  /* Gentle bounce-in on mount */
+  animation: fd-pill-enter 0.5s cubic-bezier(0.34,1.56,0.64,1) 0.3s both;
+}
+@keyframes fd-pill-enter {
+  from { opacity: 0; transform: translateX(12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.fd-label-pill:hover,
+.fd-label-pill--open {
+  border-color: rgba(239,68,68,0.55);
+  color: #fca5a5;
+}
+.fd-label-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: #a78bfa;
+  box-shadow: 0 0 8px #a78bfa;
+  animation: fd-dot-blink 2s ease-in-out infinite;
+}
+@keyframes fd-dot-blink {
+  0%,100% { opacity: 1; } 50% { opacity: 0.35; }
+}
+.fd-label-arrow {
+  font-size: 0.85rem;
+  animation: fd-arrow-bob 1.6s ease-in-out infinite;
+}
+@keyframes fd-arrow-bob {
+  0%,100% { transform: translateY(0); }
+  50%      { transform: translateY(-3px); }
+}
+
+/* ─── Main trigger button ─── */
+.fd-trigger {
+  position: relative;
+  width: 54px; height: 54px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+  transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.25s;
+  animation: fd-trigger-idle 3s ease-in-out infinite;
+}
+@keyframes fd-trigger-idle {
+  0%,100% { box-shadow: 0 0 0  0  rgba(139,92,246,0.5), 0 8px 30px rgba(0,0,0,0.5); }
+  50%      { box-shadow: 0 0 0 10px rgba(139,92,246,0),  0 8px 30px rgba(0,0,0,0.5); }
+}
+.fd-trigger:hover {
+  transform: scale(1.12);
+  animation: none;
+  box-shadow: 0 0 0 4px rgba(139,92,246,0.35), 0 12px 36px rgba(0,0,0,0.5);
+}
+.fd-trigger--open {
+  background: linear-gradient(135deg, #ef4444, #f97316);
+  animation: none;
+  transform: rotate(90deg);
+}
+.fd-trigger--open:hover { transform: scale(1.1) rotate(90deg); }
+
+.fd-trigger-icon {
+  font-size: 1.25rem;
+  color: #fff;
+  user-select: none;
+}
+
+/* Spinning ring */
+.fd-trigger-ring {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 2px solid rgba(139,92,246,0.35);
+  animation: fd-ring-spin 5s linear infinite;
+  pointer-events: none;
+}
+@keyframes fd-ring-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* Glow blob */
+.fd-trigger-glow {
+  position: absolute;
+  inset: -10px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(139,92,246,0.22) 0%, transparent 70%);
+  pointer-events: none;
+  animation: fd-glow-pulse 3s ease-in-out infinite;
+}
+@keyframes fd-glow-pulse {
+  0%,100% { opacity: 0.8; transform: scale(1); }
+  50%      { opacity: 0.3; transform: scale(1.3); }
+}
+
+/* ─── First-visit hint text ─── */
+.fd-hint-arrow {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #94a3b8;
+  text-align: right;
+  letter-spacing: 0.03em;
+  animation: fd-hint-fade 0.6s ease 3.5s both, fd-hint-bob 2s ease-in-out 4s infinite;
+  pointer-events: none;
+}
+@keyframes fd-hint-fade {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fd-hint-bob {
+  0%,100% { transform: translateY(0); }
+  50%      { transform: translateY(-3px); }
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+  .fd-root { bottom: 18px; right: 18px; }
+  .fd-label-pill { display: none; }
+}

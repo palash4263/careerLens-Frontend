@@ -845,3 +845,50 @@ h1, h2, h3, h4, h5, h6 {
   transform: translateX(0) scale(1);
   filter: blur(0);
 }
+
+/* ════════════════════════════════════════
+   GSAP UTILITY STYLES
+════════════════════════════════════════ */
+
+/* Word-split spans injected by useGsapEntrance */
+.gsap-word {
+  display: inline-block;
+  transform-style: preserve-3d;
+  will-change: transform, opacity;
+}
+
+/* Perspective wrapper for magnetic card tilt */
+.db-feature-card,
+.db-workspace-item {
+  transform-style: preserve-3d;
+  will-change: transform;
+  transition: box-shadow 0.3s ease;
+}
+
+/* Ensure GSAP-animated elements start invisible before JS runs */
+[data-gsap="badge"],
+[data-gsap="heading"],
+[data-gsap="sub"],
+[data-gsap="cta"],
+[data-gsap="stat"],
+[data-gsap="mockup"] {
+  will-change: transform, opacity;
+}
+
+/* ════════════════════════════════════════
+   THIRD-PARTY EXTENSION SUPPRESSOR
+════════════════════════════════════════ */
+[id*="careerflow"],
+[class*="careerflow"],
+[id*="Careerflow"],
+[class*="Careerflow"],
+[id*="cf-extension"],
+[class*="cf-extension"],
+iframe[src*="careerflow"],
+div[style*="z-index: 2147483647"],
+div[style*="z-index: 9999999"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}

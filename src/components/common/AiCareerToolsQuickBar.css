@@ -1,0 +1,265 @@
+/* AiCareerToolsQuickBar.css - Premium AI Career Tools Quick Access Grid */
+
+.quick-bar-wrapper {
+  margin: 28px 0;
+}
+
+.quick-bar-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.quick-bar-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.quick-bar-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 99px;
+  background: rgba(99, 102, 241, 0.12);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  color: #818cf8;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  width: fit-content;
+}
+
+.quick-bar-title {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #f8fafc;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.quick-bar-subtitle {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  margin: 0;
+}
+
+/* Grid Layout */
+.quick-bar-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 1200px) {
+  .quick-bar-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .quick-bar-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Individual Quick Card */
+.quick-card {
+  position: relative;
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 20px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: blur(12px);
+  display: flex;
+  flex-direction: column;
+}
+
+.quick-card-glow {
+  position: absolute;
+  inset: -20px;
+  border-radius: 50%;
+  opacity: 0;
+  filter: blur(28px);
+  pointer-events: none;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.quick-card-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+/* Top Section */
+.quick-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.quick-card-icon-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  transition: transform 0.3s ease;
+}
+
+.quick-card-tag {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+/* Main Section */
+.quick-card-main {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.quick-card-title {
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin: 0;
+  transition: color 0.25s ease;
+}
+
+.quick-card-desc {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Footer Section */
+.quick-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.quick-card-action-text {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #cbd5e1;
+  transition: color 0.25s ease;
+}
+
+.quick-card-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #94a3b8;
+  transition: all 0.3s ease;
+}
+
+/* Theme Variations */
+/* Cyan / ATS */
+.quick-card-cyan .quick-card-icon-box {
+  background: rgba(6, 182, 212, 0.12);
+  border: 1px solid rgba(6, 182, 212, 0.25);
+  color: #22d3ee;
+}
+.quick-card-cyan .quick-card-tag {
+  background: rgba(6, 182, 212, 0.1);
+  color: #38bdf8;
+}
+.quick-card-cyan .quick-card-glow {
+  background: radial-gradient(circle, rgba(6, 182, 212, 0.35) 0%, transparent 70%);
+}
+.quick-card-cyan:hover {
+  border-color: rgba(6, 182, 212, 0.45);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px -4px rgba(6, 182, 212, 0.25);
+}
+.quick-card-cyan:hover .quick-card-title { color: #38bdf8; }
+.quick-card-cyan:hover .quick-card-arrow { background: #06b6d4; color: #ffffff; transform: translate(2px, -2px); }
+
+/* Violet / Optimizer */
+.quick-card-violet .quick-card-icon-box {
+  background: rgba(139, 92, 246, 0.12);
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  color: #a78bfa;
+}
+.quick-card-violet .quick-card-tag {
+  background: rgba(139, 92, 246, 0.1);
+  color: #c084fc;
+}
+.quick-card-violet .quick-card-glow {
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.35) 0%, transparent 70%);
+}
+.quick-card-violet:hover {
+  border-color: rgba(139, 92, 246, 0.45);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px -4px rgba(139, 92, 246, 0.25);
+}
+.quick-card-violet:hover .quick-card-title { color: #c084fc; }
+.quick-card-violet:hover .quick-card-arrow { background: #8b5cf6; color: #ffffff; transform: translate(2px, -2px); }
+
+/* Emerald / Interview */
+.quick-card-emerald .quick-card-icon-box {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  color: #34d399;
+}
+.quick-card-emerald .quick-card-tag {
+  background: rgba(16, 185, 129, 0.1);
+  color: #6ee7b7;
+}
+.quick-card-emerald .quick-card-glow {
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.35) 0%, transparent 70%);
+}
+.quick-card-emerald:hover {
+  border-color: rgba(16, 185, 129, 0.45);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px -4px rgba(16, 185, 129, 0.25);
+}
+.quick-card-emerald:hover .quick-card-title { color: #34d399; }
+.quick-card-emerald:hover .quick-card-arrow { background: #10b981; color: #ffffff; transform: translate(2px, -2px); }
+
+/* Amber / Templates */
+.quick-card-amber .quick-card-icon-box {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  color: #fbbf24;
+}
+.quick-card-amber .quick-card-tag {
+  background: rgba(245, 158, 11, 0.1);
+  color: #fcd34d;
+}
+.quick-card-amber .quick-card-glow {
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.35) 0%, transparent 70%);
+}
+.quick-card-amber:hover {
+  border-color: rgba(245, 158, 11, 0.45);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px -4px rgba(245, 158, 11, 0.25);
+}
+.quick-card-amber:hover .quick-card-title { color: #fbbf24; }
+.quick-card-amber:hover .quick-card-arrow { background: #f59e0b; color: #ffffff; transform: translate(2px, -2px); }
+
+.quick-card:hover .quick-card-glow {
+  opacity: 1;
+}

@@ -747,10 +747,10 @@ async function generateSingleColumnPDF({
   col.y -= 18; 
 
   const sizes = {
-    sizeSectionTitle: 9.5, sizeEntryHeader: 9.0, sizeSubtitle: 8.0, sizeBody: 7.8,
-    lhBody: 10.5, lhEntryHeader: 11.5, lhSubtitle: 11.0, 
-    entrySpace: Number(sectionSpacing) * 0.6,
-    secSpace: Number(sectionSpacing) * 1.5,
+    sizeSectionTitle: 11.2, sizeEntryHeader: 10.2, sizeSubtitle: 9.5, sizeBody: 9.2,
+    lhBody: 13.8, lhEntryHeader: 15.2, lhSubtitle: 14.2, 
+    entrySpace: Math.max(6, Number(sectionSpacing) * 1.5),
+    secSpace: Math.max(12, Number(sectionSpacing) * 3.2),
   };
 
   for (const canonical of ['Summary', 'Skills', 'Experience', 'Projects', 'Education', 'Certifications', 'Languages']) {
@@ -870,18 +870,18 @@ export async function generateResumePDF({
   const fontScale = Number(baseFontSize) > 0 ? (Number(baseFontSize) / 10.0) : 1.0;
 
   const sizes = {
-    sizeName: Math.max(12, 16 * fontScale), 
-    sizeTitle: Math.max(7.5, 9.0 * fontScale), 
-    sizeContact: Math.max(5.8, 7.2 * fontScale),
-    sizeSection: Math.max(7.2, 9.0 * fontScale), 
-    sizeEntryHeader: Math.max(6.8, 8.5 * fontScale), 
-    sizeSubtitle: Math.max(6.2, 8.0 * fontScale), 
-    sizeBody: Math.max(5.8, 7.6 * fontScale), 
-    lhBody: Math.max(7.6, 10.5 * fontScale), 
-    lhEntryHeader: Math.max(8.8, 11.5 * fontScale),
-    lhSubtitle: Math.max(8.2, 11.0 * fontScale), 
-    secSpace: Math.max(5, Number(sectionSpacing) * 1.5 * fontScale), 
-    entrySpace: Number(sectionSpacing) * 0.6 * fontScale,
+    sizeName: Math.max(15, 19.5 * fontScale), 
+    sizeTitle: Math.max(9.5, 11.2 * fontScale), 
+    sizeContact: Math.max(7.2, 8.5 * fontScale),
+    sizeSection: Math.max(9.5, 11.2 * fontScale), 
+    sizeEntryHeader: Math.max(8.8, 10.2 * fontScale), 
+    sizeSubtitle: Math.max(8.0, 9.5 * fontScale), 
+    sizeBody: Math.max(7.8, 9.2 * fontScale), 
+    lhBody: Math.max(11.0, 13.8 * fontScale), 
+    lhEntryHeader: Math.max(12.5, 15.2 * fontScale),
+    lhSubtitle: Math.max(11.5, 14.2 * fontScale), 
+    secSpace: Math.max(10, Number(sectionSpacing) * 3.2 * fontScale), 
+    entrySpace: Math.max(6, Number(sectionSpacing) * 1.5 * fontScale),
   };
 
   if (templateType === 'two-column') {

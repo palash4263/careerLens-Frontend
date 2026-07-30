@@ -22,18 +22,25 @@ import api from "../api/axiosConfig";
 import "./ResumeEditorPage.css";
 
 const PREMIUM_THEMES = [
+  { name: "Pure Black", hex: "#000000" },
   { name: "Royal Blue", hex: "#1761c7" },
   { name: "Emerald Teal", hex: "#0f9f6e" },
   { name: "Amethyst Violet", hex: "#7c3aed" },
   { name: "Amber Orange", hex: "#d97706" },
   { name: "Crimson Rose", hex: "#e02424" },
-  { name: "Charcoal Slate", hex: "#475569" },
+  { name: "Pitch Charcoal", hex: "#0f172a" },
+  { name: "Slate Gray", hex: "#475569" },
 ];
 
 const PREMIUM_FONTS = [
-  { name: "Outfit", family: "'Outfit', sans-serif" },
-  { name: "Plus Jakarta", family: "'Plus Jakarta Sans', sans-serif" },
-  { name: "Inter", family: "'Inter', sans-serif" },
+  { name: "Inter (Modern Tech)", family: "'Inter', sans-serif" },
+  { name: "Georgia (Harvard Classic)", family: "Georgia, 'Times New Roman', serif" },
+  { name: "Outfit (SaaS Clean)", family: "'Outfit', sans-serif" },
+  { name: "Plus Jakarta Sans", family: "'Plus Jakarta Sans', sans-serif" },
+  { name: "Garamond (Executive Serif)", family: "'EB Garamond', Garamond, serif" },
+  { name: "Roboto (Clean Corporate)", family: "'Roboto', sans-serif" },
+  { name: "Merriweather (Editorial Serif)", family: "'Merriweather', serif" },
+  { name: "Fira Code (Dev Mono)", family: "'Fira Code', monospace" },
 ];
 
 const SECTION_ICONS = {
@@ -643,6 +650,7 @@ export default function ResumeEditorPage() {
         pageMargins,
         sectionSpacing,
         baseFontSize,                     // Scale font size dynamically to fit 1 page
+        fontFamily: selectedFont,
         mainSectionOrder,
         sideSectionOrder,
       });

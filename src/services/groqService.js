@@ -108,11 +108,11 @@ export async function groqOptimizeSection(sectionName, sectionText, jobDescripti
 /**
  * AI Summary Generator for Resume Builder
  */
-export async function generateAiSummary(title = 'Software Engineer', name = 'Candidate') {
+export async function generateAiSummary(title = 'Software Engineer', name = 'Candidate', customPrompt = '') {
   const apiKey = import.meta.env.VITE_GROQ_API_KEY || localStorage.getItem("groq_api_key");
 
   const systemPrompt = "You are a top-tier executive resume writer. Generate a 2-3 sentence impactful, ATS-optimized professional summary for a candidate. Focus on strong action verbs, technical skills, and quantitative business impact. Output ONLY the summary text, no quotes or intro.";
-  const userPrompt = `Target Role / Title: ${title}, Candidate Name: ${name}`;
+  const userPrompt = `Target Role / Title: ${title}, Candidate Name: ${name}${customPrompt ? `\n\nUSER CUSTOM PROMPT / INSTRUCTION: ${customPrompt}` : ''}`;
 
   if (apiKey) {
     try {
@@ -143,7 +143,7 @@ export async function generateAiSummary(title = 'Software Engineer', name = 'Can
     const res = await api.post("/optimization/optimize-section", null, {
       params: {
         section_name: "Summary",
-        prompt: `Generate a 2-3 sentence professional summary for a ${title}.`,
+        prompt: `Generate a 2-3 sentence professional summary for a ${title}. ${customPrompt}`,
       },
     });
     if (res?.data) {
@@ -171,7 +171,7 @@ export async function generateAiSummary(title = 'Software Engineer', name = 'Can
 /**
  * AI Experience Bullets Generator for Resume Builder
  */
-export async function generateAiExperienceBullets(role = 'Software Engineer', company = 'Tech Corp', existingBullets = []) {
+export async function generateAiExperienceBullets(role = 'Software Engineer', company = 'Tech Corp', existingBullets = [], customPrompt = '') {
   const apiKey = import.meta.env.VITE_GROQ_API_KEY || localStorage.getItem("groq_api_key");
   const existingStr = existingBullets.filter(Boolean).map(b => b.slice(0, 40)).join(' | ');
   const seed = Math.floor(Math.random() * 10000);
@@ -190,7 +190,7 @@ export async function generateAiExperienceBullets(role = 'Software Engineer', co
             },
             {
               role: 'user',
-              content: `Role: ${role} at ${company}, Seed: ${seed}${existingStr ? `. DO NOT repeat phrasing or concepts from existing bullets: [${existingStr}]` : ''}`
+              content: `Role: ${role} at ${company}, Seed: ${seed}${existingStr ? `. DO NOT repeat phrasing or concepts from existing bullets: [${existingStr}]` : ''}${customPrompt ? `\n\nUSER CUSTOM PROMPT / INSTRUCTION: ${customPrompt}` : ''}`
             }
           ],
           temperature: 0.85, max_tokens: 450,
@@ -240,7 +240,7 @@ export async function generateAiExperienceBullets(role = 'Software Engineer', co
 /**
  * AI Skills Recommendation Generator for Resume Builder
  */
-export async function generateAiSkills(title = 'Software Engineer') {
+export async function generateAiSkills(title = 'Software Engineer', customPrompt = '') {
   const apiKey = import.meta.env.VITE_GROQ_API_KEY || localStorage.getItem("groq_api_key");
   if (apiKey) {
     try {
@@ -251,7 +251,7 @@ export async function generateAiSkills(title = 'Software Engineer') {
           model: GROQ_MODEL,
           messages: [
             { role: 'system', content: 'Generate a JSON array of 10 relevant skills (tech and soft) for the given job title. Return ONLY valid JSON array of strings e.g. ["React", "Node.js"].' },
-            { role: 'user', content: `Title: ${title}` }
+            { role: 'user', content: `Title: ${title}${customPrompt ? `\n\nUSER CUSTOM PROMPT / INSTRUCTION: ${customPrompt}` : ''}` }
           ],
           temperature: 0.4, max_tokens: 250,
         }),
@@ -282,7 +282,7 @@ export async function generateAiSkills(title = 'Software Engineer') {
 /**
  * AI Project Idea & Description Generator for Resume Builder
  */
-export async function generateAiProject(title = 'Software Engineer', index = 0, existingNames = []) {
+export async function generateAiProject(title = 'Software Engineer', index = 0, existingNames = [], customPrompt = '') {
   const apiKey = import.meta.env.VITE_GROQ_API_KEY || localStorage.getItem("groq_api_key");
   const existingStr = existingNames.filter(Boolean).join(', ');
 
@@ -300,7 +300,7 @@ export async function generateAiProject(title = 'Software Engineer', index = 0, 
             },
             {
               role: 'user',
-              content: `Role: ${title}, Project Number: ${index + 1}${existingStr ? `, Avoid duplicate of: ${existingStr}` : ''}`
+              content: `Role: ${title}, Project Number: ${index + 1}${existingStr ? `, Avoid duplicate of: ${existingStr}` : ''}${customPrompt ? `\n\nUSER CUSTOM PROMPT / INSTRUCTION: ${customPrompt}` : ''}`
             }
           ],
           temperature: 0.7 + (index * 0.05),
@@ -403,7 +403,7 @@ export async function generateAiEducation(title = 'Software Engineer') {
 /**
  * AI Personal Information Generator for Resume Builder
  */
-export async function generateAiPersonal(title = 'Full Stack Engineer', currentName = 'Candidate Name') {
+export async function generateAiPersonal(title = 'Full Stack Engineer', currentName = 'Palash Mishra') {
   const apiKey = import.meta.env.VITE_GROQ_API_KEY || localStorage.getItem("groq_api_key");
   if (apiKey) {
     try {
@@ -413,7 +413,7 @@ export async function generateAiPersonal(title = 'Full Stack Engineer', currentN
         body: JSON.stringify({
           model: GROQ_MODEL,
           messages: [
-            { role: 'system', content: 'Generate sample personal contact details JSON for a resume. Return ONLY valid JSON e.g. {"title": "Senior Full Stack Engineer", "location": "Mumbai, India", "linkedin": "linkedin.com/in/candidate", "portfolio": "github.com/candidate"}' },
+            { role: 'system', content: 'Generate sample personal contact details JSON for a resume. Return ONLY valid JSON e.g. {"name": "Palash Mishra", "title": "Senior Full Stack Engineer", "email": "palash.mishra@email.com", "phone": "+91 98765 43210", "location": "Mumbai, India", "linkedin": "linkedin.com/in/palashmishra", "portfolio": "github.com/palashmishra"}' },
             { role: 'user', content: `Title: ${title}, Name: ${currentName}` }
           ],
           temperature: 0.4, max_tokens: 250,
@@ -424,7 +424,7 @@ export async function generateAiPersonal(title = 'Full Stack Engineer', currentN
         const text = data.choices?.[0]?.message?.content?.trim();
         if (text) {
           const parsed = JSON.parse(text.replace(/```json|```/g, '').trim());
-          if (parsed?.title || parsed?.location) return parsed;
+          if (parsed?.title || parsed?.location || parsed?.name) return parsed;
         }
       }
     } catch (e) {
@@ -438,10 +438,14 @@ export async function generateAiPersonal(title = 'Full Stack Engineer', currentN
   else if (roleLower.includes("backend") || roleLower.includes("node") || roleLower.includes("java")) suggestedTitle = "Backend Architect (Node.js & Java)";
   else if (roleLower.includes("data") || roleLower.includes("python")) suggestedTitle = "Lead Data Engineer";
 
-  const handleSlug = (currentName || "candidate").toLowerCase().replace(/\s+/g, "");
+  const handleSlug = (currentName && currentName !== 'Candidate Name' ? currentName : "palashmishra").toLowerCase().replace(/\s+/g, "");
+  const nameVal = (currentName && currentName !== 'Candidate Name') ? currentName : "Palash Mishra";
 
   return {
+    name: nameVal,
     title: suggestedTitle,
+    email: `${handleSlug}@email.com`,
+    phone: "+91 98765 43210",
     location: "Mumbai, India",
     linkedin: `linkedin.com/in/${handleSlug}`,
     portfolio: `github.com/${handleSlug}`,

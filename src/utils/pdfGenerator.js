@@ -299,11 +299,28 @@ const splitLabelAndDate = (text) => {
   return { label: label || t, date: label ? date : '' };
 };
 
-async function createFontKit(pdf) {
-  const font     = await pdf.embedFont(StandardFonts.Helvetica);
-  const bold     = await pdf.embedFont(StandardFonts.HelveticaBold);
-  const italic   = await pdf.embedFont(StandardFonts.HelveticaOblique);
-  const boldItal = await pdf.embedFont(StandardFonts.HelveticaBoldOblique);
+async function createFontKit(pdf, fontPreset = 'inter') {
+  let fontName = StandardFonts.Helvetica;
+  let boldName = StandardFonts.HelveticaBold;
+  let italName = StandardFonts.HelveticaOblique;
+  let boldItalName = StandardFonts.HelveticaBoldOblique;
+
+  if (fontPreset === 'serif') {
+    fontName = StandardFonts.TimesRoman;
+    boldName = StandardFonts.TimesRomanBold;
+    italName = StandardFonts.TimesRomanItalic;
+    boldItalName = StandardFonts.TimesRomanBoldItalic;
+  } else if (fontPreset === 'mono') {
+    fontName = StandardFonts.Courier;
+    boldName = StandardFonts.CourierBold;
+    italName = StandardFonts.CourierOblique;
+    boldItalName = StandardFonts.CourierBoldOblique;
+  }
+
+  const font     = await pdf.embedFont(fontName);
+  const bold     = await pdf.embedFont(boldName);
+  const italic   = await pdf.embedFont(italName);
+  const boldItal = await pdf.embedFont(boldItalName);
 
   const pickFont = ({ bold: b, italic: i } = {}) => (b && i) ? boldItal : b ? bold : i ? italic : font;
   
@@ -358,8 +375,8 @@ async function createFontKit(pdf) {
 }
 
 class Column {
-  constructor(pdf, dh, PRIMARY, { x, width, y, accentBar = false, pageMode = 'multi-page', minGap = 8, bulletIndent = 10, bulletSizeAdd = 0.5 }) {
-    Object.assign(this, { pdf, dh, PRIMARY, x, width, y, accentBar, pageMode, minGap, bulletIndent, bulletSizeAdd });
+  constructor(pdf, dh, PRIMARY, { x, width, y, accentBar = false, sidebarBg = null, sidebarW = 165, pageMode = 'multi-page', minGap = 8, bulletIndent = 10, bulletSizeAdd = 0.5 }) {
+    Object.assign(this, { pdf, dh, PRIMARY, x, width, y, accentBar, sidebarBg, sidebarW, pageMode, minGap, bulletIndent, bulletSizeAdd });
     this.page = pdf.getPages()[0];
   }
 
@@ -372,7 +389,10 @@ class Column {
     const curIdx = pages.indexOf(this.page);
     if (curIdx === pages.length - 1) {
       const newPage = this.pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-      if (this.accentBar) {
+      if (this.sidebarBg) {
+        newPage.drawRectangle({ x: 0, y: 0, width: this.sidebarW, height: PAGE_HEIGHT, color: this.sidebarBg });
+        newPage.drawLine({ start: { x: this.sidebarW, y: 0 }, end: { x: this.sidebarW, y: PAGE_HEIGHT }, thickness: 1, color: this.PRIMARY });
+      } else if (this.accentBar) {
         newPage.drawRectangle({ x: 0, y: PAGE_HEIGHT - 6, width: PAGE_WIDTH, height: 6, color: this.PRIMARY });
       }
       this.page = newPage;
@@ -417,15 +437,33 @@ class Column {
     return full[0];
   }
 
-  // Render a bullet point — pre-checks that enough space exists BEFORE writing dot+text.
-  bullet(str, size, lineHeight) {
-    // Ensure space for the bullet line BEFORE drawing (not after)
+  // Render a bullet point with vector circle dot & multi-line wrapping
+  bullet(str, size, lineHeight, opts = {}) {
+    const raw = safeText(str).trim();
+    if (!raw) return;
+
+    const bulletIndent = 12;
+    const availW = this.width - bulletIndent;
+    const lines = this.dh.wrapText(raw, availW, size, opts);
+    if (lines.length === 0) return;
+
+    // Draw vector bullet circle next to first line (immune to font encoding)
     this.ensure(lineHeight + this.minGap);
-    this.dh.drawText(this.page, '•', this.x + 2, this.y, size + this.bulletSizeAdd, { color: this.PRIMARY });
-    const availW = this.width - this.bulletIndent;
-    const oneLine = this.truncateToWidth(str, size, availW, { color: DARK_GRAY });
-    this.dh.drawText(this.page, oneLine, this.x + this.bulletIndent, this.y, size, { color: DARK_GRAY });
-    this.y -= lineHeight;
+    this.page.drawCircle({
+      x: this.x + 4,
+      y: this.y + (size * 0.32),
+      size: 1.8,
+      color: opts.bulletColor || this.PRIMARY,
+    });
+
+    // Draw all lines indented cleanly
+    for (let i = 0; i < lines.length; i++) {
+      if (i > 0) {
+        this.ensure(lineHeight + this.minGap);
+      }
+      this.dh.drawText(this.page, lines[i], this.x + bulletIndent, this.y, size, { color: DARK_GRAY, ...opts });
+      this.y -= lineHeight;
+    }
   }
 
   // Anti-Collision Text Wrapper Engine to completely solve header text/date overlap visual bugs
@@ -466,6 +504,16 @@ class Column {
 
 const DATE_REGEX = /\b((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|\d{4})\b.*?(?:[-–—].*?\b(?:Present|Current|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|\d{4}))?|\b\d{4}\b)/i;
 
+const formatDateRange = (str) => {
+  if (!str) return '';
+  let formatted = str.replace(/\b(\d{4})-(\d{2})\b/g, (_, y, m) => {
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const idx = parseInt(m, 10) - 1;
+    return (months[idx] || m) + " " + y;
+  });
+  return formatted.replace(/\s*-\s*/g, ' – ').replace(/\s*--\s*/g, ' – ').trim();
+};
+
 const parseEntryBlocks = (contentLines) => {
   const blocks = [];
   let currentHeader = null;
@@ -477,7 +525,7 @@ const parseEntryBlocks = (contentLines) => {
     if (currentHeader || currentBullets.length > 0) {
       blocks.push({
         header: currentHeader || '',
-        date: currentDate || '',
+        date: formatDateRange(currentDate),
         subtitle: currentSubtitle || '',
         bullets: currentBullets,
       });
@@ -496,6 +544,22 @@ const parseEntryBlocks = (contentLines) => {
 
     const isBulletChar = trimmed.startsWith('•') || trimmed.startsWith('-') || trimmed.startsWith('*') || trimmed.startsWith('+');
     const cleanLine = trimmed.replace(/^[•+\-\*]\s*/, '').trim();
+
+    // If line has '|' pipe delimiters e.g. "Role | Company | 2022-01 - 2024-05"
+    if (!isBulletChar && trimmed.includes('|')) {
+      const parts = trimmed.split('|').map(p => p.trim());
+      if (parts.length >= 2) {
+        if (currentHeader) flush();
+        
+        const role = parts[0];
+        const company = parts[1];
+        const rawDate = parts[2] || '';
+
+        currentHeader = `${role} — ${company}`;
+        currentDate = rawDate;
+        continue;
+      }
+    }
 
     const dateMatch = trimmed.match(DATE_REGEX);
     const hasHeaderSeparator = /—|\||-/.test(trimmed) && trimmed.length < 90;
@@ -542,15 +606,20 @@ const renderTimelineSection = (col, content, sizes) => {
 
   for (const blk of blocks) {
     if (blk.header) {
-      col.wrapped(blk.header, sizeEntryHeader, lhEntryHeader, { bold: true, color: BLACK });
-      col.y -= 1;
+      col.entryHeader(blk.header, blk.date, {
+        entrySpace: 3,
+        sizeEntryHeader: sizeEntryHeader,
+        sizeSubtitle: sizeSubtitle,
+        lhEntryHeader: lhEntryHeader,
+        minGap: 10
+      });
     }
-    const subParts = [blk.subtitle, blk.date].filter(Boolean);
-    if (subParts.length > 0) {
-      const subLine = subParts.join(' | ');
-      col.wrapped(subLine, sizeSubtitle, lhSubtitle, { italic: true, color: DARK_GRAY });
+
+    if (blk.subtitle) {
+      col.wrapped(blk.subtitle, sizeSubtitle, lhSubtitle, { italic: true, color: DARK_GRAY });
       col.y -= 2;
     }
+
     for (const b of blk.bullets) {
       col.bullet(b, sizeBody, lhBody);
     }
@@ -720,18 +789,17 @@ async function generateSingleColumnPDF({
 
   const col = new Column(pdf, dh, PRIMARY, { x: marginX, width: FULL_W, y: PAGE_HEIGHT - marginTop, pageMode: 'multi-page' });
 
-  const nameSize = 16;
-  col.text(id.name, (PAGE_WIDTH - dh.tw(id.name, nameSize, { bold: true })) / 2, nameSize, { bold: true, color: PRIMARY });
+  const nameSize = 18;
+  const upperName = id.name.toUpperCase();
+  col.text(upperName, (PAGE_WIDTH - dh.tw(upperName, nameSize, { bold: true })) / 2, nameSize, { bold: true, color: BLACK });
   col.y -= 18;
 
-  // Role omitted from PDF output
-
-  // Use raw header contact lines (matching preview) with fallback to regex-extracted fields
+  // Contact line with clean dot separators
   const contactParts = (id.contactLines && id.contactLines.length > 0)
     ? id.contactLines
-    : [id.phone, id.email, id.linkedin, id.github].filter(Boolean);
-  const contactStr = contactParts.map(l => safeText(l).replace(/^https?:\/\/(www\.)?/, '').trim()).filter(Boolean).join(' | ');
-  const contactSize = 7.5;
+    : [id.email, id.phone, id.location, id.linkedin, id.github].filter(Boolean);
+  const contactStr = contactParts.map(l => safeText(l).replace(/^https?:\/\/(www\.)?/, '').trim()).filter(Boolean).join('  •  ');
+  const contactSize = 8.2;
   if (contactStr) {
     col.text(contactStr, (PAGE_WIDTH - dh.tw(contactStr, contactSize)) / 2, contactSize, { color: DARK_GRAY });
     col.y -= 12;
@@ -847,6 +915,7 @@ export async function generateResumePDF({
   pageMargins = 1,
   sectionSpacing = 3,
   baseFontSize = 10,
+  fontFamily = 'inter',
   mainSectionOrder = ['Summary', 'Experience', 'Projects'],
   sideSectionOrder = ['Skills', 'Education', 'Certifications'],
 }) {
@@ -862,7 +931,7 @@ export async function generateResumePDF({
   const id = resolveIdentity(resumeText || '', fileName, { jobTitle, email, phone, linkedin, userName, headerText });
 
   const pdf = await PDFDocument.create();
-  const dh  = await createFontKit(pdf);
+  const dh  = await createFontKit(pdf, fontFamily);
   const p   = pdf.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
 
   const cleanFile = safeText(fileName).replace(/\.pdf$/i, '');
@@ -957,7 +1026,7 @@ export async function generateResumePDF({
     }
 
     // Left Sidebar Column for Skills, Education, Certifications
-    const sideCol = new Column(pdf, dh, WHITE, { x: 14, width: SIDEBAR_W - 28, y: sideY, pageMode: 'multi-page' });
+    const sideCol = new Column(pdf, dh, WHITE, { x: 14, width: SIDEBAR_W - 28, y: sideY, sidebarBg: SIDEBAR_BG, sidebarW: SIDEBAR_W, pageMode: 'multi-page' });
     sideCol.page = p;
 
     // Render Side Sections
@@ -993,7 +1062,7 @@ export async function generateResumePDF({
 
     // Main Right Column for Summary, Experience, Projects
     let mainY = PAGE_HEIGHT - 36;
-    const mainCol = new Column(pdf, dh, PRIMARY, { x: MAIN_X, width: MAIN_W, y: mainY, pageMode: 'multi-page', accentBar: true });
+    const mainCol = new Column(pdf, dh, PRIMARY, { x: MAIN_X, width: MAIN_W, y: mainY, sidebarBg: SIDEBAR_BG, sidebarW: SIDEBAR_W, pageMode: 'multi-page', accentBar: true });
     mainCol.page = p;
 
     for (const secKey of mainSectionOrder) {

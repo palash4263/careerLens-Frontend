@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b0f19" />
+      <stop offset="100%" stop-color="#1e1b4b" />
+    </linearGradient>
+
+    <!-- Glowing Purple-Indigo Gradient -->
+    <linearGradient id="purpleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#c084fc" />
+      <stop offset="100%" stop-color="#818cf8" />
+    </linearGradient>
+
+    <!-- Neon Cyan Gradient -->
+    <linearGradient id="cyanGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#22d3ee" />
+      <stop offset="100%" stop-color="#818cf8" />
+    </linearGradient>
+
+    <!-- Soft Glow Filter -->
+    <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="12" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Square Background -->
+  <rect width="512" height="512" rx="96" fill="url(#bgGrad)" />
+
+  <!-- Outer Stylized Lens Ring -->
+  <circle cx="256" cy="256" r="140" stroke="url(#purpleGrad)" stroke-width="14" fill="none" opacity="0.85" filter="url(#neonGlow)" />
+
+  <!-- Inner Cyan Aperture Ring -->
+  <circle cx="256" cy="256" r="90" stroke="url(#cyanGrad)" stroke-width="8" fill="none" stroke-dasharray="20 15 40 10" filter="url(#neonGlow)" />
+
+  <!-- Center Core Lens Sparkle -->
+  <circle cx="256" cy="256" r="28" fill="url(#cyanGrad)" filter="url(#neonGlow)" />
+
+  <!-- Abstract Lens Reflections / Aperture Blades -->
+  <path d="M 256 76 L 256 116" stroke="url(#cyanGrad)" stroke-width="6" stroke-linecap="round" />
+  <path d="M 256 396 L 256 436" stroke="url(#cyanGrad)" stroke-width="6" stroke-linecap="round" />
+  <path d="M 76 256 L 116 256" stroke="url(#purpleGrad)" stroke-width="6" stroke-linecap="round" />
+  <path d="M 396 256 L 436 256" stroke="url(#purpleGrad)" stroke-width="6" stroke-linecap="round" />
+</svg>

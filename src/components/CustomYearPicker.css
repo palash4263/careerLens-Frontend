@@ -1,0 +1,234 @@
+/* ─────────────────────────────────────────────
+   CUSTOM GLASSMORPHIC YEAR PICKER
+───────────────────────────────────────────── */
+.cyp-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.cyp-input-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 46px;
+  padding: 0 16px;
+  background: rgba(8, 15, 26, 0.85);
+  border: 1.5px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  color: #ffffff;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.92rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  user-select: none;
+}
+
+.cyp-input-box:hover:not(.disabled) {
+  border-color: rgba(168, 85, 247, 0.6);
+  background: rgba(15, 23, 42, 0.95);
+  box-shadow: 0 0 12px rgba(168, 85, 247, 0.2);
+}
+
+.cyp-input-box.open {
+  border-color: #a855f7;
+  box-shadow: 0 0 18px rgba(168, 85, 247, 0.35);
+  background: rgba(8, 15, 26, 0.98);
+}
+
+.cyp-input-box.disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  background: rgba(15, 23, 42, 0.4);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.cyp-value-text {
+  color: #f8fafc;
+  font-weight: 600;
+}
+
+.cyp-value-text.placeholder {
+  color: #64748b;
+  font-weight: 400;
+}
+
+.cyp-icon-area {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cyp-cal-icon {
+  color: #a855f7;
+  transition: transform 0.2s ease;
+}
+
+.cyp-input-box:hover .cyp-cal-icon {
+  transform: scale(1.15);
+}
+
+.cyp-clear-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.cyp-clear-btn:hover {
+  background: rgba(239, 68, 68, 0.25);
+  color: #ef4444;
+}
+
+/* Popover Drawer */
+.cyp-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 999;
+  width: 280px;
+  padding: 16px;
+  background: rgba(15, 23, 42, 0.97);
+  backdrop-filter: blur(20px);
+  border: 1.5px solid rgba(168, 85, 247, 0.4);
+  border-radius: 18px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 25px rgba(168, 85, 247, 0.15);
+  animation: cypFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes cypFadeIn {
+  from { opacity: 0; transform: translateY(-8px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Header Decade Nav */
+.cyp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.cyp-year-display {
+  font-family: 'Fira Code', monospace;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #f1f5f9;
+  letter-spacing: 0.05em;
+}
+
+.cyp-nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.cyp-nav-btn:hover {
+  background: rgba(168, 85, 247, 0.25);
+  border-color: #a855f7;
+  color: #ffffff;
+  transform: scale(1.08);
+}
+
+/* 3x4 Year Grid */
+.cyp-year-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.cyp-year-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.cyp-year-btn:hover {
+  background: rgba(168, 85, 247, 0.18);
+  border-color: rgba(168, 85, 247, 0.4);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.cyp-year-btn.selected {
+  background: linear-gradient(135deg, #a855f7, #6366f1);
+  border: none;
+  color: #ffffff;
+  font-weight: 800;
+  box-shadow: 0 4px 14px rgba(168, 85, 247, 0.4);
+}
+
+.cyp-year-btn.current:not(.selected) {
+  border-color: #38bdf8;
+  color: #38bdf8;
+}
+
+.cyp-check {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+}
+
+/* Footer Actions */
+.cyp-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.cyp-footer-btn {
+  background: transparent;
+  border: none;
+  color: #38bdf8;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.cyp-footer-btn:hover {
+  color: #7dd3fc;
+  text-decoration: underline;
+}
+
+.cyp-footer-btn.clear {
+  color: #94a3b8;
+}
+
+.cyp-footer-btn.clear:hover {
+  color: #f87171;
+}

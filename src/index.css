@@ -878,6 +878,11 @@ h1, h2, h3, h4, h5, h6 {
 /* ════════════════════════════════════════
    THIRD-PARTY EXTENSION SUPPRESSOR
 ════════════════════════════════════════ */
+footer,
+.cf-footer-root,
+[class*="footer"],
+[class*="Footer"],
+#footer,
 [id*="careerflow"],
 [class*="careerflow"],
 [id*="Careerflow"],
@@ -890,5 +895,9 @@ div[style*="z-index: 9999999"] {
   display: none !important;
   visibility: hidden !important;
   opacity: 0 !important;
+  height: 0 !important;
+  min-height: 0 !important;
+  max-height: 0 !important;
+  overflow: hidden !important;
   pointer-events: none !important;
 }

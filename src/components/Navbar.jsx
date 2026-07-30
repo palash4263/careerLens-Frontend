@@ -1,6 +1,9 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import PricingModal from "./common/PricingModal";
+import { getProStatus } from "../services/paymentService";
 import "./Navbar.css";
 import { useState, useEffect, useRef } from "react";
+
 export default function Navbar() {
   const navigate  = useNavigate();
   const location  = useLocation();
@@ -12,7 +15,16 @@ export default function Navbar() {
   const [notifOpen,    setNotifOpen]    = useState(false);
   const [time,         setTime]         = useState("");
   const [sidebarOpen,  setSidebarOpen]  = useState(false);
+  const [pricingOpen,  setPricingOpen]  = useState(false);
+  const [proStatus,    setProStatus]    = useState({ isPro: false });
   const notifRef = useRef(null);
+
+  useEffect(() => {
+    const updatePro = () => setProStatus(getProStatus());
+    updatePro();
+    window.addEventListener("pro_status_updated", updatePro);
+    return () => window.removeEventListener("pro_status_updated", updatePro);
+  }, []);
 
   const [notifications, setNotifications] = useState([
     { id: 1, text: "Your resume score improved by 17 points!", time: "2h ago",  read: false, type: "success" },
@@ -83,6 +95,7 @@ export default function Navbar() {
     { path: "/templates",        label: "Templates" },
     { path: "/ats-calculator",   label: "ATS Score" },
     { path: "/jobs",             label: "Jobs"      },
+    { path: "/interview-prep",   label: "AI Tutor & Interview" },
   ];
 
   return (
@@ -200,6 +213,14 @@ export default function Navbar() {
               )}
             </div>
 
+            {/* Pro Upgrade Button */}
+            <button
+              className={`nb-pro-btn ${proStatus.isPro ? "is-pro" : ""}`}
+              onClick={() => setPricingOpen(true)}
+            >
+              {proStatus.isPro ? "👑 Pro Active" : "💎 Upgrade to Pro"}
+            </button>
+
             {/* Divider */}
             <div className="nb-divider" />
 
@@ -273,6 +294,8 @@ export default function Navbar() {
           </button>
         </div>
       </aside>
+
+      <PricingModal isOpen={pricingOpen} onClose={() => setPricingOpen(false)} />
     </>
   );
 }

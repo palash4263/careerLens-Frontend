@@ -105,6 +105,15 @@ function Layout() {
           />
 
           <Route
+            path="/java-tutor"
+            element={
+              <ProtectedRoute>
+                <InterviewPrepPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
             path="/interview-prep/:jobId"
             element={
               <ProtectedRoute>

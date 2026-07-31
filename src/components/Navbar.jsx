@@ -235,6 +235,7 @@ export default function Navbar() {
                       className="nb-avatar-img"
                       referrerPolicy="no-referrer"
                       onError={() => setUserAvatar("")}
+                      style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%", display: "block" }}
                     />
                   ) : (
                     <span>{userInitials}</span>

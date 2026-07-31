@@ -229,7 +229,13 @@ export default function Navbar() {
               <div className="nb-hex-avatar">
                 <div className="nb-hex-inner">
                   {userAvatar?.startsWith("http") ? (
-                    <img src={userAvatar} alt="avatar" className="nb-avatar-img" />
+                    <img
+                      src={userAvatar}
+                      alt="avatar"
+                      className="nb-avatar-img"
+                      referrerPolicy="no-referrer"
+                      onError={() => setUserAvatar("")}
+                    />
                   ) : (
                     <span>{userInitials}</span>
                   )}
@@ -257,7 +263,13 @@ export default function Navbar() {
           <Link to="/profile" className="nb-sidebar-user" onClick={() => setSidebarOpen(false)}>
             <div className="nb-sidebar-avatar">
               {userAvatar?.startsWith("http") ? (
-                <img src={userAvatar} alt="avatar" style={{ width:"100%", height:"100%", borderRadius:"50%", objectFit:"cover" }} />
+                <img
+                  src={userAvatar}
+                  alt="avatar"
+                  referrerPolicy="no-referrer"
+                  onError={() => setUserAvatar("")}
+                  style={{ width:"100%", height:"100%", borderRadius:"50%", objectFit:"cover" }}
+                />
               ) : (
                 <span>{userInitials}</span>
               )}

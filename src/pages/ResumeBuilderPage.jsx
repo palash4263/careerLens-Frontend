@@ -12,6 +12,7 @@ import {
   generateAiPersonal
 } from "../services/groqService";
 import { generateResumePDF } from "../utils/pdfGenerator";
+import { uploadResume } from "../services/resumeService";
 import AiPromptModal from "../components/AiPromptModal";
 import CustomMonthPicker from "../components/CustomMonthPicker";
 import CustomYearPicker from "../components/CustomYearPicker";
@@ -455,9 +456,9 @@ export default function ResumeBuilderPage() {
 
       const computedSpacing = docFontSize >= 11 ? 4.5 : docFontSize >= 10 ? 3.8 : 3.0;
 
-      await generateResumePDF({
+      return await generateResumePDF({
         editedSections,
-        fileName: `${(personal.name || "Resume").replace(/\s+/g, "_")}_Resume`,
+        fileName: `${(personal.name || "Candidate").replace(/\s+/g, "_")}_${(personal.title || "Software_Engineer").replace(/\s+/g, "_")}_Resume`,
         templateType: docTemplateType,
         primaryColor: docThemeColor,
         pageMargins: 1,
@@ -646,12 +647,23 @@ export default function ResumeBuilderPage() {
     setStep(s => s + 1);
   };
 
-  const handleSubmitSuccess = () => {
+  const handleSubmitSuccess = async () => {
     setSubmitSuccess(true);
+    try {
+      const fileName = `${(personal.name || "Resume").replace(/\s+/g, "_")}_Resume.pdf`;
+      const pdfBytes = await handlePrint();
+      if (pdfBytes) {
+        const blob = new Blob([pdfBytes], { type: "application/pdf" });
+        const file = new File([blob], fileName, { type: "application/pdf" });
+        await uploadResume(file);
+      }
+    } catch (e) {
+      console.error("Failed to upload auto-generated resume:", e);
+    }
     setTimeout(() => {
-      handlePrint();
-      setTimeout(() => setSubmitSuccess(false), 3000);
-    }, 400);
+      setSubmitSuccess(false);
+      navigate("/resumes");
+    }, 1500);
   };
 
   const renderStepPersonal = () => (

@@ -857,7 +857,7 @@ export default function ResumeOptimizationPage() {
     setDownloading(true);
     try {
       const fileName = resumes.find(r => r.id === Number(selectedResume))?.file_name || 'resume';
-      const jobTitle = jobDescriptions.find(j => j.id === Number(selectedJobDescription))?.title || 'Professional Resume';
+      const jobTitle = jobDescriptions.find(j => j.id === Number(selectedJobDescription))?.title || 'Full_Stack_Engineer';
       const userData = getUserData();
 
       const isSectionsEmpty = !editedSections || Object.values(editedSections).every(v => !v || !v.trim());
@@ -866,10 +866,14 @@ export default function ResumeOptimizationPage() {
       const cleanedHeaderName = rawHeaderName.replace(/\b(full\s*stack|fullstack|full-stack|software|backend|frontend|web|mobile|devops|data|cloud|ml|ai|qa|ui\/ux|lead|senior|junior|principal|staff)?\s*(developer|engineer|intern|analyst|consultant|architect|manager|designer|specialist|sde)\b/gi, '').replace(/\s+/g, ' ').trim();
       const resolvedName = (cleanedHeaderName && cleanedHeaderName.split(' ').length > 1) ? cleanedHeaderName : userData.name;
 
+      const cleanName = resolvedName.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+      const cleanRole = jobTitle.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+      const customFileName = `${cleanName}_${cleanRole}_Resume`;
+
       await generateResumePDF({
         resumeText: isSectionsEmpty ? (result.optimizedText || '') : '',
         editedSections: isSectionsEmpty ? null : editedSections,
-        fileName: fileName,
+        fileName: customFileName,
         score: result.optimizedScore || 0,
         jobTitle: jobTitle,
         email: userData.email,

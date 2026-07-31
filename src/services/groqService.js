@@ -452,5 +452,55 @@ export async function generateAiPersonal(title = 'Full Stack Engineer', currentN
   };
 }
 
+export async function groqSuggestJobMatches(resumeName, title = 'Software Engineer') {
+  const apiKey = import.meta.env.VITE_GROQ_API_KEY;
+  if (!apiKey) {
+    return {
+      title: title || "Software Engineer",
+      skills: ["React.js", "Node.js", "JavaScript", "SQL", "Git", "REST APIs"],
+      roles: ["Frontend Developer", "Full Stack Engineer", "React Developer", "Software Engineer"]
+    };
+  }
+
+  try {
+    const response = await fetch(GROQ_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: GROQ_MODEL,
+        messages: [
+          {
+            role: 'system',
+            content: 'You are an AI job match assistant. Given a resume name or job title, return a JSON object with: 1) "title" (cleaned primary role title), 2) "skills" (array of 6 key technical skills/keywords), and 3) "roles" (array of 4 related job titles). Return ONLY the raw JSON string.'
+          },
+          {
+            role: 'user',
+            content: `Resume Name: ${resumeName}, Primary Title Hint: ${title}`
+          }
+        ],
+        temperature: 0.3,
+        response_format: { type: "json_object" }
+      }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const content = data.choices?.[0]?.message?.content;
+      return JSON.parse(content);
+    }
+  } catch (e) {
+    console.error("Groq job suggestion error, returning fallbacks:", e);
+  }
+
+  return {
+    title: title || "Software Engineer",
+    skills: ["React.js", "Node.js", "JavaScript", "SQL", "Git", "REST APIs"],
+    roles: ["Frontend Developer", "Full Stack Engineer", "React Developer", "Software Engineer"]
+  };
+}
+
 
 

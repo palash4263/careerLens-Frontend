@@ -219,7 +219,13 @@ export default function ProfilePage() {
                 style={{ width: "120px", height: "120px", borderRadius: "50%", background: "linear-gradient(135deg, #7c3aed, #3b82f6)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2.5rem", fontWeight: "800", color: "#fff", border: "4px solid #0d121f", boxShadow: "0 10px 25px rgba(0,0,0,0.4)", cursor: "pointer", overflow: "hidden", position: "relative", fontFamily: "Outfit, sans-serif" }}
               >
                 {user.avatar && user.avatar.startsWith("http") ? (
-                  <img src={user.avatar} alt="avatar" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
+                  <img
+                    src={user.avatar}
+                    alt="avatar"
+                    referrerPolicy="no-referrer"
+                    onError={() => setUser({ ...user, avatar: "" })}
+                    style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
+                  />
                 ) : (
                   <span>{userInitials}</span>
                 )}

@@ -13,6 +13,7 @@ import AnimeHeroAnimation from "../components/common/AnimeHeroAnimation";
 import AiNeuralTerminalConsole from "../components/common/AiNeuralTerminalConsole";
 import AnimeBuildFromScratchBtn from "../components/common/AnimeBuildFromScratchBtn";
 import AiCareerToolsQuickBar from "../components/common/AiCareerToolsQuickBar";
+import JobMatchModal from "../components/JobMatchModal";
 import { motion } from "framer-motion";
 import "../assets/resume.css";
 
@@ -27,6 +28,8 @@ function ResumePage() {
   const [viewingResume, setViewingResume] = useState(null); 
   const [pdfUrl, setPdfUrl] = useState(null);
   const [scanStep, setScanStep] = useState(0); 
+  const [jobMatchResume, setJobMatchResume] = useState(null);
+  const [isJobMatchOpen, setIsJobMatchOpen] = useState(false);
   const fileInputRef = useRef(null);
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -131,13 +134,13 @@ function ResumePage() {
     }, 1100);
   };
 
-  const handleViewResume = async (resumeId) => {
+  const handleViewResume = async (resume) => {
     try {
-      setAnalyzingId(resumeId);
-      const blob = await getResumeFile(resumeId);
+      setAnalyzingId(resume.id);
+      const blob = await getResumeFile(resume.id);
       const url = URL.createObjectURL(blob);
       setPdfUrl(url);
-      setViewingResume(resumeId);
+      setViewingResume(resume);
     } catch (error) {
       console.error(error);
       showToast("Failed to fetch resume file.", "error");
@@ -152,6 +155,23 @@ function ResumePage() {
       URL.revokeObjectURL(pdfUrl);
       setPdfUrl(null);
     }
+  };
+
+  const closeModal = handleCloseModal;
+
+  const handleDownload = () => {
+    if (!pdfUrl || !viewingResume) return;
+    const link = document.createElement("a");
+    link.href = pdfUrl;
+    link.download = viewingResume.file_name || "resume.pdf";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleOpenNewTab = () => {
+    if (!pdfUrl) return;
+    window.open(pdfUrl, "_blank");
   };
 
   const totalResumes = resumes.length;
@@ -480,6 +500,16 @@ function ResumePage() {
                         )}
                       </button>
                       <button
+                        className="resume-action-btn primary"
+                        style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)", color: "#ffffff", border: "1px solid rgba(168,85,247,0.3)" }}
+                        onClick={() => {
+                          setJobMatchResume(resume);
+                          setIsJobMatchOpen(true);
+                        }}
+                      >
+                        <span>🔍</span> Match Jobs
+                      </button>
+                      <button
                         className="resume-action-btn secondary"
                         onClick={() => navigate(`/resume-optimizer?resumeId=${resume.id}`)}
                       >
@@ -585,13 +615,18 @@ function ResumePage() {
 
               <div className="resume-modal-preview" style={{ minHeight: '400px', display: 'flex', flexDirection: 'column', gap: '1rem', background: '#09090e', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '16px', padding: '12px', overflow: 'hidden' }}>
                 {pdfUrl ? (
-                  <iframe 
-                    src={pdfUrl} 
-                    width="100%" 
-                    height="450px" 
-                    title="Resume Preview" 
-                    style={{ border: 'none', borderRadius: '12px' }} 
-                  />
+                  <object
+                    data={pdfUrl}
+                    type="application/pdf"
+                    width="100%"
+                    height="450px"
+                    style={{ border: 'none', borderRadius: '12px' }}
+                  >
+                    <div style={{ padding: '2rem', textColor: '#94a3b8', textAlign: 'center' }}>
+                      <p>Your browser doesn't support PDF previews.</p>
+                      <a href={pdfUrl} target="_blank" rel="noreferrer" style={{ color: '#c084fc', textDecoration: 'underline' }}>Click here to view/download the PDF</a>
+                    </div>
+                  </object>
                 ) : (
                   <div className="pdf-preview-placeholder" style={{ margin: 'auto', textAlign: 'center', padding: '3rem 1.5rem' }}>
                     <div className="spinner" style={{ margin: '0 auto 1.5rem auto', width: '32px', height: '32px', border: '3px solid rgba(124, 59, 237, 0.2)', borderTopColor: '#7C3AED', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
@@ -676,6 +711,12 @@ function ResumePage() {
           <p className="toast-message">{toast.message}</p>
         </div>
       )}
+
+      <JobMatchModal
+        isOpen={isJobMatchOpen}
+        onClose={() => setIsJobMatchOpen(false)}
+        resume={jobMatchResume}
+      />
     </motion.div>
   );
 }

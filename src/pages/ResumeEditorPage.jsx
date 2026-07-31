@@ -635,27 +635,32 @@ export default function ResumeEditorPage() {
   const handleDownloadPDF = async () => {
     try {
       setDownloading(true);
-      const docName = resumes.find(r => r.id === Number(selectedResume))?.file_name || "optimized_resume";
-      const cleanedDocName = docName.replace(/\.[^/.]+$/, "");
 
-      // Use the text-based PDF generator (pdfGenerator.js) which correctly
-      // calculates block boundaries BEFORE rendering, ensuring no line is ever
-      // split mid-content. The old html2canvas approach sliced the page at a
-      // fixed 842px pixel boundary, cutting text wherever it happened to fall.
+      // Extract Candidate Name & Role Applied To
+      const headerLines = (editedSections?.Header || '').split('\n').map(l => l.trim()).filter(Boolean);
+      const rawHeaderName = headerLines[0] || localStorage.getItem('userName') || 'Candidate';
+      const candidateName = cleanCandidateName(rawHeaderName) || 'Palash_Mishra';
+
+      const targetJob = jobDescriptions.find(j => String(j.id) === String(selectedJobDescription));
+      const roleTitle = targetJob?.title || 'Full_Stack_Engineer';
+
+      const cleanName = candidateName.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+      const cleanRole = roleTitle.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+
+      const customFileName = `${cleanName}_${cleanRole}_Resume`;
+
       await generateResumePDF({
-        editedSections,                   // Pass sections directly — mirrors live editor exactly
-        fileName: cleanedDocName,
-        templateType: selectedTemplate,   // 'two-column' or 'single-column'
+        editedSections,
+        fileName: customFileName,
+        templateType: selectedTemplate,
         primaryColor: selectedColor,
         pageMargins,
         sectionSpacing,
-        baseFontSize,                     // Scale font size dynamically to fit 1 page
+ baseFontSize,
         fontFamily: selectedFont,
         mainSectionOrder,
         sideSectionOrder,
       });
-
-      setShowCompletionModal(true);
     } catch (err) {
       console.error("Failed to download PDF in full-page editor:", err);
       alert("Failed to build PDF. Please try again.");

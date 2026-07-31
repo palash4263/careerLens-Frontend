@@ -1165,5 +1165,6 @@ export async function generateResumePDF({
   }
 
   const pdfBytes = await pdf.save();
-  saveAs(new Blob([pdfBytes], { type: 'application/pdf' }), `${cleanFile}_optimized.pdf`);
+  saveAs(new Blob([pdfBytes], { type: 'application/pdf' }), `${cleanFile}.pdf`);
+  return pdfBytes;
 }

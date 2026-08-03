@@ -2,11 +2,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence, useInView, useMotionValue, useSpring, useReducedMotion, animate } from "framer-motion";
-import { Copy, Check, Sparkles, TrendingUp, FileText, Eye, Zap, Target, ChartBar as BarChart3, ArrowRight, Star, Clock, Download, Wand as Wand2 } from "lucide-react";
+import { Copy, Check, Sparkles, TrendingUp, FileText, Eye, Zap, Target, ChartBar as BarChart3, ArrowRight, Star, Clock, Download, Wand as Wand2, MessageSquare } from "lucide-react";
 import "./ResumeOptimizationPage.css";
 import { getResumes } from "../services/resumeService";
 import { getJobDescriptions } from "../services/jobDescriptionService";
 import { optimizeResume, optimizeSection } from "../services/resumeOptimizationService";
+import { generateAiCoverLetter } from "../services/groqService";
 import { generateResumePDF } from "../utils/pdfGenerator";
 import { animate as animeAnimate } from "animejs";
 import PremiumDropdown from "../components/resume/PremiumDropdown";
@@ -58,6 +59,34 @@ const copyToClipboard = async (text, setCopySuccess) => {
   }
 };
 
+const calculateDynamicATSScore = (resumeText = '', jdText = '') => {
+  if (!resumeText || !jdText) return 65;
+  
+  const TECH_LIST = [
+    "react", "angular", "vue", "node", "express", "python", "django", "flask", 
+    "java", "spring", "spring boot", "oracle", "pl/sql", "postgresql", "sql", "mysql", "mongodb", "redis", 
+    "aws", "docker", "kubernetes", "ci/cd", "git", "typescript", "graphql", 
+    "rest api", "rest", "pandas", "numpy", "machine learning", "data science", "azure", "gcp", 
+    "devops", "jira", "agile", "scrum", "microservices", "html", "css", "javascript", "apex"
+  ];
+
+  const jdLower = jdText.toLowerCase();
+  const resLower = resumeText.toLowerCase();
+
+  const jdKws = TECH_LIST.filter(tech => jdLower.includes(tech));
+  if (jdKws.length === 0) return 72;
+
+  const foundKws = jdKws.filter(tech => resLower.includes(tech));
+  const kwRatio = foundKws.length / jdKws.length;
+
+  const baseScore = Math.round(45 + kwRatio * 45);
+  const hasExp = resLower.includes("experience") || resLower.includes("projects");
+  const hasEdu = resLower.includes("education");
+  const structureBonus = (hasExp ? 4 : 0) + (hasEdu ? 4 : 0);
+
+  return Math.min(96, Math.max(52, baseScore + structureBonus));
+};
+
 const getSectionIcon = (sectionKey) => {
   switch (sectionKey) {
     case 'Header': return '👤';
@@ -102,6 +131,34 @@ const sanitizeSections = (sectionsObj) => {
     }
 
     cleaned.Education = validEduLines.join('\n').trim();
+  }
+
+  if (cleaned.Summary && typeof cleaned.Summary === 'string') {
+    const lines = cleaned.Summary.split('\n');
+    const filteredLines = lines.filter(line => {
+      const t = line.trim();
+      const lower = t.toLowerCase();
+      if (!t) return false;
+      if (/^[a-z]{1,3}$/i.test(t)) return false; // PM, J
+      if (lower === 'contact' || lower === 'contact info' || lower === 'personal info' || lower === 'personal information' || lower === 'portfolio') return false;
+      return true;
+    });
+
+    let cleanedText = filteredLines.join('\n');
+    cleanedText = cleanedText.replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/gi, '');
+    cleanedText = cleanedText.replace(/https?:\/\/(www\.)?(linkedin|github)\.com\/\S*/gi, '');
+    cleanedText = cleanedText.replace(/\b(linkedin|github)\.com\/in\/\S*/gi, '');
+    cleanedText = cleanedText.replace(/\b(linkedin|github)\.com\/\w+\/?/gi, '');
+    cleanedText = cleanedText.replace(/\+?\d[\d\s\-()]{7,15}\d/g, '');
+    cleanedText = cleanedText.replace(/\|\s*\|/g, '')
+                             .replace(/\|\s*$/gm, '')
+                             .replace(/^\s*\|/gm, '')
+                             .replace(/\s*\|\s*/g, ' ')
+                             .replace(/\s*,\s*$/gm, '')
+                             .replace(/  +/g, ' ')
+                             .trim();
+
+    cleaned.Summary = cleanedText;
   }
 
   for (const key of Object.keys(cleaned)) {
@@ -479,6 +536,73 @@ function ScanningTerminal({ resumeName, jobTitle }) {
   );
 }
 
+// ====== COMPETITOR STYLE CHECKLIST SCANNING SUB-COMPONENT ======
+function LoadingChecklist() {
+  const [step, setStep] = useState(0);
+  const steps = [
+    { label: "Identifying core sections..." },
+    { label: "Identifying your work experiences..." },
+    { label: "Identifying other experiences..." },
+    { label: "Evaluating resume length..." }
+  ];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setStep(prev => (prev < steps.length ? prev + 1 : prev));
+    }, 1200);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="rw-loading-screen">
+      <div className="rw-loading-glow" />
+      <div className="rw-loading-container">
+        {steps.map((s, idx) => {
+          const isCompleted = idx < step;
+          const isActive = idx === step;
+          const isPending = idx > step;
+
+          return (
+            <motion.div 
+              key={idx} 
+              className={`rw-loading-item ${isCompleted ? 'completed' : isActive ? 'active' : 'pending'}`}
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.1, duration: 0.4 }}
+            >
+              <div className="rw-checkmark-wrapper">
+                {isCompleted ? (
+                  <motion.div 
+                    className="rw-circle-checked"
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", stiffness: 200, damping: 12 }}
+                  >
+                    <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                  </motion.div>
+                ) : isActive ? (
+                  <div className="rw-circle-active">
+                    <motion.div 
+                      className="rw-pulse"
+                      animate={{ scale: [1, 1.4, 1], opacity: [0.6, 0, 0.6] }}
+                      transition={{ duration: 1.5, repeat: Infinity }}
+                    />
+                  </div>
+                ) : (
+                  <div className="rw-circle-pending" />
+                )}
+              </div>
+              <span className="rw-step-label">{s.label}</span>
+            </motion.div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function AutoGrowingTextarea({ value, onChange, placeholder, style }) {
   const textareaRef = useRef(null);
 
@@ -537,6 +661,9 @@ export default function ResumeOptimizationPage() {
   const [selectedTemplate, setSelectedTemplate] = useState('single-column');
   const [selectedColor, setSelectedColor] = useState('#1761c7');
   const [selectedFont, setSelectedFont] = useState('Rubik');
+  const [coverLetter, setCoverLetter] = useState("");
+  const [generatingCoverLetter, setGeneratingCoverLetter] = useState(false);
+  const [coverLetterCopySuccess, setCoverLetterCopySuccess] = useState(false);
   const [searchParams] = useSearchParams();
 
   // Sync state values to localStorage
@@ -813,9 +940,12 @@ export default function ResumeOptimizationPage() {
 
       const missingKws = calculateMissingKeywords(origText, selectedJdText);
 
+      const calcOrigScore = response.current_score || calculateDynamicATSScore(origText, selectedJdText);
+      const calcOptScore = response.estimated_new_score || Math.min(97, Math.max(calcOrigScore + 9, calculateDynamicATSScore(optText, selectedJdText)));
+
       const normalized = {
-        originalScore: response.current_score || 71,
-        optimizedScore: response.estimated_new_score || 88,
+        originalScore: calcOrigScore,
+        optimizedScore: calcOptScore,
         originalText: origText,
         optimizedText: optText,
         keywords: missingKws.length > 0 ? missingKws : (response.improvements?.added_skills || response.improvements?.missing_skills || []),
@@ -897,6 +1027,29 @@ export default function ResumeOptimizationPage() {
   const delta = result && result.optimizedScore != null && result.originalScore != null
     ? result.optimizedScore - result.originalScore
     : null;
+
+  const handleGenerateCoverLetter = async () => {
+    if (!result?.optimizedText) {
+      alert("Please optimize your resume first.");
+      return;
+    }
+    const selectedJdText = jobDescriptions.find(j => j.id === Number(selectedJobDescription))?.description || "";
+    if (!selectedJdText) {
+      alert("No job description found.");
+      return;
+    }
+    setGeneratingCoverLetter(true);
+    setCoverLetter("");
+    try {
+      const generated = await generateAiCoverLetter(result.optimizedText, selectedJdText);
+      setCoverLetter(generated);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to generate cover letter. Please try again.");
+    } finally {
+      setGeneratingCoverLetter(false);
+    }
+  };
 
   const renderResumeContent = () => {
     const displayText = liveEditorText || result?.optimizedText;
@@ -1305,35 +1458,19 @@ export default function ResumeOptimizationPage() {
               exit={{ opacity: 0 }}
             >
               <div className="loading-container-modern">
-                <div className="scan-deck">
-                  <div className="scan-item scan-resume">
-                    <div className="scan-item-icon">📄</div>
-                    <span>{resumes.find(r => r.id === Number(selectedResume))?.file_name || "Resume.pdf"}</span>
-                  </div>
-                  <div className="scan-beam-wrapper">
-                    <div className="scan-beam-line" />
-                    <div className="scan-beam-ray" />
-                    <span className="scan-beam-ai-badge">AI MATCHING</span>
-                  </div>
-                  <div className="scan-item scan-job">
-                    <div className="scan-item-icon">🎯</div>
-                    <span>{jobDescriptions.find(j => j.id === Number(selectedJobDescription))?.title || "Job Target"}</span>
-                  </div>
-                </div>
+                <LoadingChecklist />
 
-                <ScanningTerminal
-                  resumeName={resumes.find(r => r.id === Number(selectedResume))?.file_name}
-                  jobTitle={jobDescriptions.find(j => j.id === Number(selectedJobDescription))?.title}
-                />
-
-                <div className="loading-content-modern">
-                  <h3>Executing Optimization Coefficients</h3>
-                  <div className="loading-progress-modern">
+                <div className="loading-content-modern" style={{ marginTop: '10px' }}>
+                  <h3 style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: '13.5px', fontWeight: 500, letterSpacing: '0.02em', marginBottom: '12px' }}>
+                    Personalizing CareerLens Optimization Nodes...
+                  </h3>
+                  <div className="loading-progress-modern" style={{ height: '3px', background: 'rgba(255,255,255,0.03)' }}>
                     <motion.div
                       className="loading-progress-bar-modern"
                       initial={{ width: '5%' }}
-                      animate={{ width: '95%' }}
-                      transition={{ duration: 6, ease: [0.16, 1, 0.3, 1] }}
+                      animate={{ width: '98%' }}
+                      transition={{ duration: 5.5, ease: [0.16, 1, 0.3, 1] }}
+                      style={{ background: 'linear-gradient(90deg, #7c3aed, #10b981)', boxShadow: '0 0 15px rgba(124, 58, 237, 0.3)' }}
                     />
                   </div>
                 </div>
@@ -1385,7 +1522,7 @@ export default function ResumeOptimizationPage() {
                     <Check size={16} />
                     Optimization Complete
                   </motion.span>
-                  <h2>Your resume is now <span className="gradient-text shimmer-text">2x stronger</span></h2>
+                  <h2>Your resume is now <span className="gradient-text shimmer-text">{((result.optimizedScore || 88) / Math.max(1, result.originalScore || 70)).toFixed(1)}x stronger</span></h2>
                   <p>AI-powered improvements that get you noticed</p>
                 </div>
                 <div className="results-header-right">
@@ -1401,6 +1538,25 @@ export default function ResumeOptimizationPage() {
                       <span className="delta-label">Improvement</span>
                     </motion.div>
                   )}
+
+                  <MagneticButton
+                    className={`download-btn-modern ${generatingCoverLetter ? 'loading' : ''}`}
+                    onClick={handleGenerateCoverLetter}
+                    disabled={generatingCoverLetter}
+                    style={{ background: 'linear-gradient(135deg, #10b981, #059669)', boxShadow: '0 8px 24px rgba(16, 185, 129, 0.25)' }}
+                  >
+                    {generatingCoverLetter ? (
+                      <>
+                        <span className="spinner-modern"></span>
+                        Drafting...
+                      </>
+                    ) : (
+                      <>
+                        <MessageSquare size={16} />
+                        Generate Cover Letter
+                      </>
+                    )}
+                  </MagneticButton>
 
                   <MagneticButton
                     className={`download-btn-modern ${downloading ? 'loading' : ''}`}
@@ -1574,6 +1730,34 @@ export default function ResumeOptimizationPage() {
                   </div>
                 </Reveal>
               )}
+
+              {/* Cover Letter Panel */}
+              {coverLetter && (
+                <Reveal className="cover-letter-panel" delay={0.2}>
+                  <div className="cover-letter-header">
+                    <h3><MessageSquare size={18} /> AI-Generated Cover Letter</h3>
+                    <motion.button
+                      className={`copy-btn-modern ${coverLetterCopySuccess ? 'copied' : ''}`}
+                      onClick={() => copyToClipboard(coverLetter, setCoverLetterCopySuccess)}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+                    >
+                      {coverLetterCopySuccess ? (
+                        <><Check size={14} /> Copied!</>
+                      ) : (
+                        <><Copy size={14} /> Copy</>
+                      )}
+                    </motion.button>
+                  </div>
+                  <div className="cover-letter-content">
+                    {coverLetter.split('\n').map((paragraph, idx) => (
+                      <p key={idx}>{paragraph}</p>
+                    ))}
+                  </div>
+                </Reveal>
+              )}
+
             </motion.section>
           </AnimatePresence>
         )}

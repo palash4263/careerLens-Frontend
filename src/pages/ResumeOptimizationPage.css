@@ -3204,3 +3204,118 @@
   flex-direction: column;
   height: 100%;
 }
+
+/* ====== COMPETITOR CHECKLIST SCANNING SCREEN ====== */
+.rw-loading-screen {
+  position: relative;
+  width: 100%;
+  max-width: 580px;
+  margin: 40px auto;
+  padding: 40px 30px;
+  background: radial-gradient(100% 100% at 50% 0%, rgba(30, 27, 75, 0.45) 0%, rgba(15, 23, 42, 0.95) 100%);
+  border: 1px solid rgba(124, 58, 237, 0.12);
+  border-radius: 24px;
+  backdrop-filter: blur(15px);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+  z-index: 2;
+  text-align: left;
+}
+
+.rw-loading-glow {
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 250px;
+  height: 120px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%);
+  filter: blur(20px);
+  pointer-events: none;
+}
+
+.rw-loading-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.rw-loading-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 0;
+  transition: all 0.3s ease;
+}
+
+.rw-checkmark-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+}
+
+.rw-circle-checked {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #10b981;
+  color: #ffffff;
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.35);
+}
+
+.rw-circle-active {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2.5px solid #ffffff;
+  background: #ffffff;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+}
+
+.rw-pulse {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+}
+
+.rw-circle-pending {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  background: transparent;
+}
+
+.rw-step-label {
+  font-family: 'Outfit', sans-serif;
+  font-size: 15.5px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.rw-loading-item.completed .rw-step-label {
+  color: rgba(255, 255, 255, 0.35);
+  text-decoration: none;
+}
+
+.rw-loading-item.active .rw-step-label {
+  color: #ffffff;
+  font-weight: 600;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.25);
+  transform: translateX(4px);
+}
+
+.rw-loading-item.pending .rw-step-label {
+  color: rgba(255, 255, 255, 0.15);
+}

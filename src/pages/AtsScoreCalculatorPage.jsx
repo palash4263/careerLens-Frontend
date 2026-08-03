@@ -653,9 +653,10 @@ export default function AtsScoreCalculatorPage() {
 
           {/* 1. Resume Select / Upload */}
           <div className="ats-calc-form-group">
-            <label className="ats-calc-label">Choose Resume</label>
+            <label className="ats-calc-label" htmlFor="resume-select">Choose Resume</label>
             {resumes.length > 0 ? (
               <select 
+                id="resume-select"
                 className="ats-calc-select"
                 value={selectedResumeId}
                 onChange={(e) => setSelectedResumeId(e.target.value)}
@@ -712,8 +713,9 @@ export default function AtsScoreCalculatorPage() {
 
           {/* 2. Job Description Selection */}
           <div className="ats-calc-form-group">
-            <label className="ats-calc-label">Target Job Description</label>
+            <label className="ats-calc-label" htmlFor="job-select">Target Job Description</label>
             <select 
+              id="job-select"
               className="ats-calc-select"
               value={selectedJobId}
               onChange={(e) => setSelectedJobId(e.target.value)}
@@ -778,7 +780,7 @@ export default function AtsScoreCalculatorPage() {
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px", margin: "16px 0" }}>
                   <div className="mono-readout-score">
                     <span>{scoreResult.score}</span>
-                    <span style={{ fontSize: "1.2rem", color: "#64748b" }}>/ 100</span>
+                    <span style={{ fontSize: "1.2rem", color: "#cbd5e1" }}>/ 100</span>
                   </div>
                   <span className={`ats-calc-badge ${scoreResult.gradeClass}`} style={{ fontFamily: "'Fira Code', monospace" }}>
                     GRADE: {scoreResult.grade}

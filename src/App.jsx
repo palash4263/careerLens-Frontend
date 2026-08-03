@@ -23,6 +23,7 @@ import TemplatesPage from "./pages/TemplatesPage";
 import AtsScoreCalculatorPage from "./pages/AtsScoreCalculatorPage";
 import InterviewPrepPage from "./pages/InterviewPrepPage";
 import ResumeBuilderPage from "./pages/ResumeBuilderPage";
+import SkillRoadmapPage from "./pages/SkillRoadmapPage";
 import api from "./api/axiosConfig";
 
 function ProtectedRoute({ children }) {
@@ -136,6 +137,15 @@ function Layout() {
             element={
               <ProtectedRoute>
                 <ResumeOptimizationPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/skill-roadmap"
+            element={
+              <ProtectedRoute>
+                <SkillRoadmapPage />
               </ProtectedRoute>
             }
           />

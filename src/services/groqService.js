@@ -11,46 +11,52 @@ const GROQ_MODEL   = 'llama-3.3-70b-versatile'; // fast and high quality
  */
 function buildSystemPrompt(sectionName) {
   const baseRules = `
-You are an elite resume coach specializing in ATS optimization and FAANG-style resumes.
-Your ONLY task is to rewrite the provided resume section.
+You are an elite FAANG resume writer and ATS optimization expert.
+Your ONLY task is to rewrite the provided resume section text to be highly impactful, concise, and ATS-friendly.
 
-CRITICAL FORMATTING RULES:
-- Output ONLY the improved section text. No preamble, no explanations, no markdown headers.
-- Use • as the bullet character for all bullet points.
-- Keep each bullet to ONE crisp line (under 110 characters).
-- Start every bullet with a strong action verb (Architected, Built, Optimized, Engineered…).
-- Add quantified metrics where they are missing (e.g., "reducing latency by 40%", "supporting 10K+ users").
-- Preserve ALL company names, dates, project names, and tech stack mentions exactly as given.
-- Do NOT invent new experiences or projects that weren't in the original text.
+CRITICAL INSTRUCTIONS & NEGATIVE CONSTRAINTS:
+1. OUTPUT RAW TEXT ONLY. Do NOT include conversational filler, pleasantries, preambles, or markdown formatting blocks (like \`\`\` text).
+2. DO NOT say "Here is the rewritten section:" or "Sure, I can help with that." Start immediately with the actual resume content.
+3. PRESERVE the exact structure of headers, company names, dates, and project titles exactly as provided.
+4. DO NOT hallucinate or invent new jobs, degrees, or projects not mentioned in the source text.
+5. Use "• " (bullet followed by a space) for all bullet points. Do not use asterisks (*) or hyphens (-).
+6. Apply the XYZ format for bullets: "Accomplished [X] as measured by [Y], by doing [Z]".
+7. Start every bullet with a strong, diverse action verb (e.g., Spearheaded, Engineered, Orchestrated, Optimized).
+8. If a Target Job Description is provided, naturally weave in its exact keywords and phrases without keyword stuffing.
 `.trim();
 
   const sectionRules = {
     Summary: `
 Additional rules for Summary:
-- Write 2-3 tight sentences in flowing prose (no bullets).
-- Lead with seniority + domain + key tech stack.
-- End with a value proposition (what you deliver for the company).
+- Write exactly 2-3 concise sentences in flowing prose. NO BULLET POINTS.
+- First sentence: State your seniority, core domain/title, and primary tech stack.
+- Second/Third sentence: Highlight a major career achievement or your unique value proposition.
+- Eliminate first-person pronouns (I, me, my).
 `.trim(),
     Experience: `
 Additional rules for Experience:
-- Preserve the company name + date header lines exactly.
-- Each bullet must follow: Action verb + what + result/metric.
+- CRITICAL: Preserve the "Company Name | Job Title | Dates" header lines exactly. Do not modify them.
+- Transform responsibilities into achievements.
+- Ensure every bullet has a quantifiable metric (e.g., %, $, time saved, scale of users) where logically possible.
+- Keep bullets to a single crisp line (max 120 characters) when rendered.
 `.trim(),
     Projects: `
 Additional rules for Projects:
-- Preserve the project name | tech stack | date header lines exactly.
-- Each bullet: what you built + how + measurable outcome.
+- CRITICAL: Preserve the "Project Name | Tech Stack | Dates" header lines exactly. Do not modify them.
+- Focus on the technical complexity, architecture, and the problem solved.
+- Mention the specific technologies from the header in the context of how they were used (e.g., "Engineered a scalable backend using Node.js...").
 `.trim(),
     Skills: `
 Additional rules for Skills:
-- Output as categorized lines: "Category: skill1, skill2, skill3"
-- Categories: Languages, Frameworks & Libraries, Cloud & DevOps, Tools & Databases
-- Add any keywords from the job description that are relevant but missing.
+- Group skills logically into categories. Output format MUST be "Category: Skill 1, Skill 2, Skill 3".
+- Use exactly these categories if applicable: "Languages", "Frameworks & Libraries", "Databases", "Cloud & DevOps", "Tools".
+- Prioritize and prominently feature skills found in the Target Job Description.
+- Remove redundant or extremely basic skills (e.g., Microsoft Word, Windows) unless explicitly required.
 `.trim(),
     Education: `
 Additional rules for Education:
-- Preserve institution name, degree, and dates.
-- Only add CGPA or honours if already present.
+- Preserve the Institution Name, Degree, Field of Study, and Dates.
+- Keep it clean and minimal. Do not add bullets unless there are significant academic achievements (e.g., Dean's List, 3.9/4.0 GPA, relevant coursework matching the JD).
 `.trim(),
   };
 
@@ -502,5 +508,149 @@ export async function groqSuggestJobMatches(resumeName, title = 'Software Engine
   };
 }
 
+export async function extractSkillsFromResume(resumeText) {
+  const apiKey = import.meta.env.VITE_GROQ_API_KEY || localStorage.getItem("groq_api_key");
+  if (!apiKey) {
+    throw new Error("GROQ API key is required to extract skills.");
+  }
+  const response = await fetch(GROQ_API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: GROQ_MODEL,
+      messages: [
+        {
+          role: 'system',
+          content: 'You are an AI career analyst. Analyze the provided resume text and extract the top 10-15 key technical and soft skills. Return the result as a raw JSON array of strings.'
+        },
+        {
+          role: 'user',
+          content: `Resume Text:\n\n${resumeText}`
+        }
+      ],
+      temperature: 0.2,
+      response_format: { type: "json_object" }
+    }),
+  });
 
+  if (response.ok) {
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content;
+    try {
+      const parsed = JSON.parse(content);
+      return Array.isArray(parsed) ? parsed : (parsed.skills || Object.values(parsed)[0]);
+    } catch (e) {
+      console.error("Failed to parse skills JSON", e);
+      return [];
+    }
+  }
+  return [];
+}
 
+export async function generateSkillRoadmap(skill, resumeContext = "") {
+  const apiKey = import.meta.env.VITE_GROQ_API_KEY || localStorage.getItem("groq_api_key");
+  if (!apiKey) {
+    throw new Error("GROQ API key is required to generate a roadmap.");
+  }
+
+  const prompt = `
+Create a detailed, modern, step-by-step learning roadmap for mastering "${skill}".
+${resumeContext ? `Tailor the roadmap considering the user's existing resume background: ${resumeContext.substring(0, 500)}...` : ""}
+Use Markdown formatting. Include:
+1. **Introduction**: Brief overview of the skill.
+2. **Prerequisites**: What to know before starting.
+3. **Step-by-Step Learning Path**: 3-5 distinct phases (e.g., Fundamentals, Intermediate, Advanced) with bullet points of topics.
+4. **Key Projects**: 2 practical project ideas to build.
+5. **Top Resources**: Links or mentions of best places to learn.
+Keep it concise, highly structured, and actionable. Do not use generic filler text.
+`;
+
+  const response = await fetch(GROQ_API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: GROQ_MODEL,
+      messages: [
+        {
+          role: 'system',
+          content: 'You are an elite AI technical mentor who creates highly actionable, accurate, and structured learning roadmaps using beautiful Markdown.'
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      temperature: 0.5,
+      max_tokens: 1500,
+    }),
+  });
+
+  if (response.ok) {
+    const data = await response.json();
+    return data.choices?.[0]?.message?.content || "";
+  }
+  throw new Error("Failed to generate roadmap from Groq.");
+}
+
+/**
+ * AI Cover Letter Generator based on Resume and JD
+ */
+export async function generateAiCoverLetter(resumeText, jobDescription) {
+  const apiKey = import.meta.env.VITE_GROQ_API_KEY || localStorage.getItem("groq_api_key");
+  if (!apiKey) {
+    throw new Error("GROQ API key is required to generate a cover letter.");
+  }
+
+  const prompt = `
+Generate a highly professional, modern, and concise cover letter tailored to the following Job Description, using my Resume as the background experience.
+
+--- TARGET JOB DESCRIPTION ---
+${jobDescription.substring(0, 3000)}
+
+--- MY RESUME BACKGROUND ---
+${resumeText.substring(0, 3000)}
+
+Instructions:
+1. Do not use generic filler (e.g. "I am writing to express my interest..."). Open with a strong, hook-driven first sentence.
+2. Structure it into exactly 3-4 paragraphs.
+3. Highlight specific overlaps between the job requirements and my resume achievements.
+4. Close with a clear, confident call to action.
+5. Provide ONLY the body of the cover letter (no address headers, no "Dear Hiring Manager", no sign-offs like "Sincerely, [Name]" - I will add those myself in the UI).
+6. Do NOT wrap the output in quotes or markdown code blocks.
+`;
+
+  const response = await fetch(GROQ_API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: GROQ_MODEL,
+      messages: [
+        {
+          role: 'system',
+          content: 'You are an elite executive career coach and technical recruiter. Generate highly persuasive, succinct, and metric-driven cover letter bodies.'
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      temperature: 0.65,
+      max_tokens: 800,
+    }),
+  });
+
+  if (response.ok) {
+    const data = await response.json();
+    return data.choices?.[0]?.message?.content?.trim() || "";
+  }
+  throw new Error("Failed to generate cover letter from Groq.");
+}

@@ -9,6 +9,8 @@ import {
   Award, Globe, Briefcase, GraduationCap, ChevronRight, Undo2, Redo2, Type, Layers, Bot, Upload, Palette,
   Eye, EyeOff, User, Lightbulb, Save, Box
 } from "lucide-react";
+import html2canvas from "html2canvas";
+import { jsPDF } from "jspdf";
 import { getResumes } from "../services/resumeService";
 import { getJobDescriptions } from "../services/jobDescriptionService";
 import { optimizeSection } from "../services/resumeOptimizationService";
@@ -148,6 +150,34 @@ const sanitizeSections = (sectionsObj) => {
     cleaned.Education = validEduLines.join('\n').trim();
   }
 
+  if (cleaned.Summary && typeof cleaned.Summary === 'string') {
+    const lines = cleaned.Summary.split('\n');
+    const filteredLines = lines.filter(line => {
+      const t = line.trim();
+      const lower = t.toLowerCase();
+      if (!t) return false;
+      if (/^[a-z]{1,3}$/i.test(t)) return false; // PM, J
+      if (lower === 'contact' || lower === 'contact info' || lower === 'personal info' || lower === 'personal information' || lower === 'portfolio') return false;
+      return true;
+    });
+
+    let cleanedText = filteredLines.join('\n');
+    cleanedText = cleanedText.replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/gi, '');
+    cleanedText = cleanedText.replace(/https?:\/\/(www\.)?(linkedin|github)\.com\/\S*/gi, '');
+    cleanedText = cleanedText.replace(/\b(linkedin|github)\.com\/in\/\S*/gi, '');
+    cleanedText = cleanedText.replace(/\b(linkedin|github)\.com\/\w+\/?/gi, '');
+    cleanedText = cleanedText.replace(/\+?\d[\d\s\-()]{7,15}\d/g, '');
+    cleanedText = cleanedText.replace(/\|\s*\|/g, '')
+                             .replace(/\|\s*$/gm, '')
+                             .replace(/^\s*\|/gm, '')
+                             .replace(/\s*\|\s*/g, ' ')
+                             .replace(/\s*,\s*$/gm, '')
+                             .replace(/  +/g, ' ')
+                             .trim();
+
+    cleaned.Summary = cleanedText;
+  }
+
   // Sanitize all section keys: remove standalone section headers and merge orphaned metric lines
   for (const key of Object.keys(cleaned)) {
     if (cleaned[key] && typeof cleaned[key] === 'string') {
@@ -178,6 +208,7 @@ export default function ResumeEditorPage() {
   const navigate = useNavigate();
   const livePreviewRef = useRef(null);
   const [resumes, setResumes] = useState([]);
+  const [activeEditBlock, setActiveEditBlock] = useState(null);
   const [jobDescriptions, setJobDescriptions] = useState([]);
   const [selectedResume, setSelectedResume] = useState(() => localStorage.getItem("cl_selected_resume") || "");
   const [selectedJobDescription, setSelectedJobDescription] = useState(() => localStorage.getItem("cl_selected_jd") || "");
@@ -314,6 +345,14 @@ export default function ResumeEditorPage() {
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    const handleGlobalClick = () => {
+      setActiveEditBlock(null);
+    };
+    window.addEventListener('click', handleGlobalClick);
+    return () => window.removeEventListener('click', handleGlobalClick);
   }, []);
 
 
@@ -649,18 +688,68 @@ export default function ResumeEditorPage() {
 
       const customFileName = `${cleanName}_${cleanRole}_Resume`;
 
-      await generateResumePDF({
-        editedSections,
-        fileName: customFileName,
-        templateType: selectedTemplate,
-        primaryColor: selectedColor,
-        pageMargins,
-        sectionSpacing,
- baseFontSize,
-        fontFamily: selectedFont,
-        mainSectionOrder,
-        sideSectionOrder,
-      });
+      // Export using html2canvas to match preview 100% exactly pixel-for-pixel
+      const canvasEl = livePreviewRef.current;
+      if (canvasEl) {
+        // Clone the element to render it in an isolated, absolute layout context
+        const clone = canvasEl.cloneNode(true);
+        
+        // Remove contentEditable attributes to prevent outline borders from showing
+        clone.querySelectorAll('[contenteditable]').forEach(el => {
+          el.removeAttribute('contenteditable');
+        });
+
+        // Set absolute styling on the clone to guarantee exact A4 pixel layout and bypass mobile responsive scaling/margins
+        clone.style.setProperty('width', '595px', 'important');
+        clone.style.setProperty('max-width', '595px', 'important');
+        clone.style.setProperty('min-height', '842px', 'important');
+        clone.style.setProperty('position', 'absolute', 'important');
+        clone.style.setProperty('left', '-9999px', 'important');
+        clone.style.setProperty('top', '-9999px', 'important');
+        clone.style.setProperty('box-shadow', 'none', 'important');
+        clone.style.setProperty('background', '#ffffff', 'important');
+        clone.style.setProperty('transform', 'none', 'important');
+        clone.style.setProperty('transform-origin', 'unset', 'important');
+        clone.style.setProperty('margin', '0', 'important');
+        clone.style.setProperty('margin-bottom', '0', 'important');
+
+        // Append clone to body so html2canvas can measure and render it
+        document.body.appendChild(clone);
+
+        const canvas = await html2canvas(clone, {
+          scale: 2.0, // Reduced from 2.5 to ensure PDF remains under 2MB
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff',
+          logging: false,
+          width: 595,
+          windowWidth: 595, // Force html2canvas window layout width to 595px
+        });
+
+        // Remove the clone immediately
+        document.body.removeChild(clone);
+
+        const imgWidth = 595;
+        const imgHeight = (canvas.height / canvas.width) * imgWidth;
+        const pageHeight = 842;
+        let heightLeft = imgHeight;
+
+        // Dynamic multi-page sliding window PDF generation using jsPDF with compression enabled
+        const pdf = new jsPDF({ orientation: 'p', unit: 'pt', format: 'a4', compress: true });
+        let position = 0;
+
+        pdf.addImage(canvas, 'JPEG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+        heightLeft -= pageHeight;
+
+        while (heightLeft > 0) {
+          position = heightLeft - imgHeight;
+          pdf.addPage();
+          pdf.addImage(canvas, 'JPEG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+          heightLeft -= pageHeight;
+        }
+
+        pdf.save(`${customFileName}.pdf`);
+      }
     } catch (err) {
       console.error("Failed to download PDF in full-page editor:", err);
       alert("Failed to build PDF. Please try again.");
@@ -763,136 +852,243 @@ export default function ResumeEditorPage() {
       .filter(s => s.length > 0);
   };
 
-  const renderSkillsSection = (text, themeColor) => {
-    if (!text) return null;
-    const rawLines = text.split('\n').map(l => l.trim()).filter(Boolean);
-    const validLines = rawLines.filter(l => l.toLowerCase() !== 'skills');
+const renderSkillsSection = (text, themeColor) => {
+  if (!text) return null;
+  const rawLines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  const validLines = rawLines.filter(l => l.toLowerCase() !== 'skills');
 
-    // Parse categories (e.g. Category Name followed by items or Category: items)
-    const categories = [];
-    let currentCat = null;
-    let currentItems = [];
+  // Split a category's value into individual skill tokens, trying delimiters
+  // from most to least reliable.
+  const splitSkillItems = (val) => {
+    let items = val.split(/[,|•·]/).map(s => s.trim()).filter(Boolean);
+    if (items.length > 1) return items;
 
-    for (let i = 0; i < validLines.length; i++) {
-      const line = validLines[i];
-      if (line.includes(':')) {
-        if (currentCat && currentItems.length > 0) {
-          categories.push({ cat: currentCat, items: currentItems });
-        }
-        const [cat, val] = line.split(':');
-        currentCat = cat.trim();
-        currentItems = val.split(',').map(s => s.trim()).filter(Boolean);
-      } else if (!line.includes(',') && line.length < 40 && i + 1 < validLines.length && validLines[i + 1].includes(',')) {
-        if (currentCat && currentItems.length > 0) {
-          categories.push({ cat: currentCat, items: currentItems });
-        }
-        currentCat = line;
-        currentItems = [];
-      } else {
-        const items = line.split(',').map(s => s.trim()).filter(Boolean);
-        currentItems.push(...items);
+    // No comma/pipe/bullet found — try runs of 2+ spaces (common when a
+    // generator pads between terms)
+    items = val.split(/\s{2,}/).map(s => s.trim()).filter(Boolean);
+    if (items.length > 1) return items;
+
+    // Last resort: single spaces. This can incorrectly split multi-word
+    // skill names (e.g. "Spring Boot" -> "Spring", "Boot"), but guarantees
+    // every token still renders as its own box rather than one giant blob.
+    return val.split(/\s+/).map(s => s.trim()).filter(Boolean);
+  };
+
+  const categories = [];
+  let currentCat = null;
+  let currentItems = [];
+
+  for (let i = 0; i < validLines.length; i++) {
+    const line = validLines[i];
+    if (line.includes(':')) {
+      if (currentCat && currentItems.length > 0) {
+        categories.push({ cat: currentCat, items: currentItems });
       }
+      const [cat, ...rest] = line.split(':');
+      currentCat = cat.trim();
+      currentItems = splitSkillItems(rest.join(':'));
+    } else if (!line.includes(',') && line.length < 40 && i + 1 < validLines.length && validLines[i + 1].includes(',')) {
+      if (currentCat && currentItems.length > 0) {
+        categories.push({ cat: currentCat, items: currentItems });
+      }
+      currentCat = line;
+      currentItems = [];
+    } else {
+      currentItems.push(...splitSkillItems(line));
     }
-    if (currentCat && currentItems.length > 0) {
-      categories.push({ cat: currentCat, items: currentItems });
-    }
+  }
+  if (currentCat && currentItems.length > 0) {
+    categories.push({ cat: currentCat, items: currentItems });
+  }
 
-    // Render formatted category groups if found
-    if (categories.length > 0) {
-      return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-          {categories.slice(0, 8).map((group, idx) => (
-            <div key={idx} className="ecv-skill-group" style={{ fontSize: '0.62em', lineHeight: 1.4, color: themeColor === '#ffffff' ? 'rgba(255,255,255,0.9)' : '#334155' }}>
-              <strong style={{ color: themeColor === '#ffffff' ? '#ffffff' : '#0f172a', marginRight: '5px' }}>{group.cat}:</strong>
-              <span>{group.items.join(', ')}</span>
-            </div>
-          ))}
-        </div>
-      );
-    }
+  const isWhite = themeColor === '#ffffff';
+  const badgeStyle = {
+    padding: '3px 9px',
+    marginRight: '5px',
+    marginBottom: '5px',
+    borderRadius: '5px',
+    background: isWhite ? 'rgba(255,255,255,0.12)' : 'rgba(124, 58, 237, 0.08)',
+    border: isWhite ? '1px solid rgba(255,255,255,0.25)' : '1px solid rgba(124, 58, 237, 0.28)',
+    color: isWhite ? '#ffffff' : '#5b21b6',
+    fontSize: '0.62em',
+    fontWeight: '600',
+    display: 'inline-block',
+  };
 
-    // Fallback: render clean flex tags (max 24)
-    const allSkills = text.split(/[,\n]/).map(s => s.trim()).filter(Boolean).filter(s => s.toLowerCase() !== 'skills');
+  if (categories.length > 0) {
     return (
-      <div className="ecv-skills-wrap">
-        {allSkills.slice(0, 24).map((skill, i) => (
-          <div key={i} className="ecv-skill-item">
-            <span className="ecv-skill-dot" style={{ backgroundColor: themeColor || 'currentColor' }} />
-            <span className="ecv-skill-label" style={{ color: themeColor === '#ffffff' ? 'rgba(255,255,255,0.88)' : '#334155' }}>{skill}</span>
+      <div>
+        {categories.slice(0, 8).map((group, idx) => (
+          <div key={idx} className="ecv-skill-group" style={{ marginBottom: '8px' }}>
+            <strong style={{ fontSize: '0.65em', color: isWhite ? '#ffffff' : '#6d28d9', display: 'block', marginBottom: '4px' }}>
+              {group.cat}:
+            </strong>
+            <div style={{ display: 'flex', flexWrap: 'wrap' }}>
+              {group.items.map((item, i) => (
+                <span key={i} style={badgeStyle}>{item}</span>
+              ))}
+            </div>
           </div>
         ))}
       </div>
     );
-  };
+  }
 
-  const parseEntryBlocks = (text) => {
-    if (!text) return [];
-    const contentLines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  const allSkills = splitSkillItems(text.replace(/\n/g, ' '))
+    .filter(s => s.toLowerCase() !== 'skills');
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap' }}>
+      {allSkills.slice(0, 24).map((skill, i) => (
+        <span key={i} style={badgeStyle}>{skill}</span>
+      ))}
+    </div>
+  );
+};
+
+  const parseEntryBlocks = (contentLinesOrText) => {
+    if (!contentLinesOrText) return [];
+
+    const rawLines = Array.isArray(contentLinesOrText)
+      ? contentLinesOrText.map(l => (typeof l === 'string' ? l : '').trim()).filter(Boolean)
+      : contentLinesOrText.split('\n').map(l => l.trim()).filter(Boolean);
+
     const blocks = [];
-    let currentHeader = null;
-    let currentDate = '';
-    let currentSubtitle = '';
-    let currentBullets = [];
+
+    const DATE_REGEX = /\b(?:(?:(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sept?(?:ember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?,?\s+)|(?:(?:0?[1-9]|1[0-2])[/\-]\s*))?(?:19|20)\d{2}\s*[-–—]\s*(?:(?:(?:(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sept?(?:ember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?,?\s+)|(?:(?:0?[1-9]|1[0-2])[/\-]\s*))?(?:19|20)\d{2}|Present|Current|Till\s+Date|Now)|\b(?:(?:(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sept?(?:ember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?,?\s+)|(?:(?:0?[1-9]|1[0-2])[/\-]\s*))?(?:19|20)\d{2}\b|\b(?:Present|Current|Till\s+Date|Now)\b/i;
+
+    const isJunkLine = (str) => {
+      if (!str) return true;
+      const s = str.trim();
+      if (/^\d{1,2}$/.test(s)) return true;
+      if (/^\d{1,2}\s*[-–—/]\s*\d{1,2}$/.test(s)) return true;
+      if (/^\d+%\.?$/.test(s)) return true;
+      return false;
+    };
+
+    const ACTION_VERBS = /^(architected|designed|developed|built|engineered|utilized|containerized|improved|tuned|worked|created|lead|managed|spearheaded|collaborated|championed|delivered|accelerated|streamlined|integrated|optimizing|implementing|achieving|reducing|increasing|ensuring|maintaining|executing|automating|deploying)\b/i;
+    const JOB_TITLE_REGEX = /\b(?:engineer|developer|architect|lead|manager|consultant|analyst|specialist|administrator|designer|director|vp|head|intern|associate|trainee|officer|executive|coordinator|contractor|freelance|full\s*stack|front\s*end|back\s*end|software|senior|junior|principal|staff|sde|swe|devops|qa|tester|scrum\s*master|product\s*manager|project\s*manager)\b/i;
+
+    let currentBlock = {
+      header: '',
+      subtitle: '',
+      date: '',
+      bullets: []
+    };
 
     const flush = () => {
-      if (currentHeader || currentBullets.length > 0) {
+      if (currentBlock.header || currentBlock.subtitle || currentBlock.date || currentBlock.bullets.length > 0) {
+        let h = (currentBlock.header || '').trim();
+        let s = (currentBlock.subtitle || '').trim();
+        let d = (currentBlock.date || '').trim();
+
+        if (h && !s && (h.includes(' | ') || h.includes(' - '))) {
+          const sep = h.includes(' | ') ? ' | ' : ' - ';
+          const parts = h.split(sep);
+          h = parts[0].trim();
+          s = parts.slice(1).join(sep).trim();
+        }
+
+        if (h && s && JOB_TITLE_REGEX.test(h) && !JOB_TITLE_REGEX.test(s)) {
+          const temp = h;
+          h = s;
+          s = temp;
+        }
+
         blocks.push({
-          header: currentHeader || '',
-          date: currentDate || '',
-          subtitle: currentSubtitle || '',
-          bullets: currentBullets,
+          header: h,
+          subtitle: s,
+          date: d,
+          bullets: currentBlock.bullets,
         });
-        currentHeader = null;
-        currentDate = '';
-        currentSubtitle = '';
-        currentBullets = [];
+
+        currentBlock = { header: '', subtitle: '', date: '', bullets: [] };
       }
     };
 
-    const DATE_REGEX = /\b((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|\d{4})\b.*?(?:[-–—].*?\b(?:Present|Current|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|\d{4}))?|\b\d{4}\b)/i;
-
-    for (let i = 0; i < contentLines.length; i++) {
-      const raw = contentLines[i];
+    for (let i = 0; i < rawLines.length; i++) {
+      const raw = rawLines[i];
       const trimmed = raw.trim();
-      if (!trimmed) continue;
-      if (/^\s*\d+%\.?\s*$/.test(trimmed)) continue;
 
-      const isBulletChar = trimmed.startsWith('•') || trimmed.startsWith('-') || trimmed.startsWith('*') || trimmed.startsWith('+');
-      const cleanLine = trimmed.replace(/^[•+\-\*]\s*/, '').trim();
-
-      const dateMatch = trimmed.match(DATE_REGEX);
-      const hasHeaderSeparator = /—|\||-/.test(trimmed) && trimmed.length < 90;
-
-      const isNewHeader = !currentHeader || 
-        (dateMatch && currentBullets.length > 0) || 
-        (hasHeaderSeparator && !isBulletChar && currentBullets.length > 0 && trimmed.length < 80);
-
-      if (isNewHeader) {
-        if (currentHeader) flush();
-
-        if (dateMatch) {
-          currentDate = dateMatch[0].trim();
-          const nonDatePart = trimmed.replace(dateMatch[0], '').replace(/[-–—,|]\s*$/, '').replace(/^[-–—,|]\s*/, '').trim();
-          currentHeader = nonDatePart || trimmed;
-        } else {
-          currentHeader = cleanLine;
+      if (!trimmed) {
+        if (currentBlock.bullets.length > 0 || (currentBlock.header && currentBlock.subtitle)) {
+          flush();
         }
         continue;
       }
 
-      if (currentHeader && !currentSubtitle && !currentDate && currentBullets.length === 0 && !isBulletChar) {
-        if (dateMatch) {
-          currentDate = dateMatch[0].trim();
-          const nonDatePart = trimmed.replace(dateMatch[0], '').replace(/[-–—,|]\s*$/, '').replace(/^[-–—,|]\s*/, '').trim();
-          if (nonDatePart) currentSubtitle = nonDatePart;
-          continue;
-        } else if (trimmed.length < 90 && !/^(architected|designed|developed|built|engineered|utilized|containerized|improved|tuned|worked|created|lead|managed)\b/i.test(trimmed)) {
-          currentSubtitle = cleanLine;
+      if (isJunkLine(trimmed)) continue;
+
+      const isBulletChar = /^[•+\-\*]/.test(trimmed);
+      const cleanLine = trimmed.replace(/^[•+\-\*]\s*/, '').trim();
+      if (isJunkLine(cleanLine)) continue;
+
+      const dateMatch = trimmed.match(DATE_REGEX);
+      const hasPipe = !isBulletChar && trimmed.includes('|');
+
+      const isNewEntryHeader = (hasPipe || dateMatch) && (currentBlock.bullets.length > 0 || (currentBlock.header && currentBlock.subtitle));
+      if (isNewEntryHeader) {
+        flush();
+      }
+
+      if (!isBulletChar && trimmed.includes('|')) {
+        const parts = trimmed.split('|').map(p => p.trim());
+        if (parts.length >= 2) {
+          if (!currentBlock.header) {
+            currentBlock.header = parts[0];
+            const rest = parts.slice(1).join(' | ');
+            const dMatch = rest.match(DATE_REGEX);
+            if (dMatch) {
+              currentBlock.date = dMatch[0].trim();
+              currentBlock.subtitle = rest.replace(dMatch[0], '').replace(/^[\s|,\-_]+|[\s|,\-_]+$/g, '').trim();
+            } else {
+              currentBlock.subtitle = rest;
+            }
+          } else {
+            const dMatch = trimmed.match(DATE_REGEX);
+            if (dMatch) {
+              currentBlock.date = dMatch[0].trim();
+              currentBlock.subtitle = trimmed.replace(dMatch[0], '').replace(/^[\s|,\-_]+|[\s|,\-_]+$/g, '').trim();
+            } else {
+              currentBlock.subtitle = trimmed;
+            }
+          }
           continue;
         }
       }
 
-      currentBullets.push(cleanLine);
+      if (dateMatch) {
+        if (!currentBlock.date) {
+          currentBlock.date = dateMatch[0].trim();
+        } else if (!currentBlock.date.includes(dateMatch[0].trim())) {
+          currentBlock.date = `${currentBlock.date} – ${dateMatch[0].trim()}`;
+        }
+        const nonDate = trimmed.replace(dateMatch[0], '').replace(/^[\s|,\-_]+|[\s|,\-_]+$/g, '').trim();
+        if (nonDate && !isJunkLine(nonDate)) {
+          if (!currentBlock.header) {
+            currentBlock.header = nonDate;
+          } else if (!currentBlock.subtitle) {
+            currentBlock.subtitle = nonDate;
+          }
+        }
+        continue;
+      }
+
+      const isActionVerb = ACTION_VERBS.test(cleanLine);
+
+      if (isBulletChar || isActionVerb) {
+        currentBlock.bullets.push(cleanLine);
+        continue;
+      }
+
+      if (!currentBlock.header) {
+        currentBlock.header = cleanLine;
+      } else if (!currentBlock.subtitle) {
+        currentBlock.subtitle = cleanLine;
+      } else if (currentBlock.bullets.length > 0) {
+        currentBlock.bullets[currentBlock.bullets.length - 1] += ' ' + cleanLine;
+      } else {
+        currentBlock.bullets.push(cleanLine);
+      }
     }
 
     flush();
@@ -903,51 +1099,153 @@ export default function ResumeEditorPage() {
     if (!text) return null;
     const blocks = parseEntryBlocks(text);
 
-    return blocks.map((blk, idx) => (
-      <div key={idx} className="nvo-entry-block-wrapper enhancv-entry-block">
-        {/* Novoresume Hover Action Handles */}
-        <div className="nvo-block-action-bar">
-          <button className="nvo-action-btn" title="Add entry block" onClick={() => addBlockToSection(sectionKey)}>
-            <Plus size={12} />
-          </button>
-          {idx > 0 && (
-            <button className="nvo-action-btn" title="Move entry up" onClick={() => moveBlockInSection(sectionKey, idx, -1)}>
-              <ArrowUp size={12} />
-            </button>
-          )}
-          {idx < blocks.length - 1 && (
-            <button className="nvo-action-btn" title="Move entry down" onClick={() => moveBlockInSection(sectionKey, idx, 1)}>
-              <ArrowDown size={12} />
-            </button>
-          )}
-          <button className="nvo-action-btn btn-ai" title="AI Personalize entry" onClick={() => handleOptimizeSection(sectionKey)}>
-            <Sparkles size={12} />
-          </button>
-          <button className="nvo-action-btn btn-del" title="Delete entry block" onClick={() => deleteBlockFromSection(sectionKey, idx)}>
-            <Trash2 size={12} />
-          </button>
-        </div>
+    return blocks.map((blk, idx) => {
+      const isEditing = activeEditBlock && activeEditBlock.sectionKey === sectionKey && activeEditBlock.index === idx;
 
-        {blk.header && (
-          <div className="enhancv-entry-header">
-            <span className="enhancv-entry-title nvo-editable-text" contentEditable suppressContentEditableWarning>{blk.header}</span>
+      const getBlockRawText = () => {
+        const parts = [];
+        if (blk.header) {
+          let headerLine = blk.header;
+          if (blk.subtitle || blk.date) {
+            const subParts = [];
+            if (blk.subtitle) subParts.push(blk.subtitle);
+            if (blk.date) subParts.push(blk.date);
+            headerLine += ` | ${subParts.join(' | ')}`;
+          }
+          parts.push(headerLine);
+        }
+        if (blk.bullets && blk.bullets.length > 0) {
+          blk.bullets.forEach(b => {
+            parts.push(`• ${b}`);
+          });
+        }
+        return parts.join('\n');
+      };
+
+      const handleBlockSave = (newText) => {
+        const updatedBlocksText = blocks.map((b, i) => {
+          if (i === idx) {
+            return newText.trim();
+          }
+          const parts = [];
+          if (b.header) {
+            let headerLine = b.header;
+            if (b.subtitle || b.date) {
+              const subParts = [];
+              if (b.subtitle) subParts.push(b.subtitle);
+              if (b.date) subParts.push(b.date);
+              headerLine += ` | ${subParts.join(' | ')}`;
+            }
+            parts.push(headerLine);
+          }
+          if (b.bullets && b.bullets.length > 0) {
+            b.bullets.forEach(bulletText => {
+              parts.push(`• ${bulletText}`);
+            });
+          }
+          return parts.join('\n');
+        });
+
+        const fullText = updatedBlocksText.filter(Boolean).join('\n\n');
+        updateSectionsWithHistory({ ...editedSections, [sectionKey]: fullText });
+        setActiveEditBlock(null);
+      };
+
+      return (
+        <div 
+          key={idx} 
+          className={`nvo-entry-block-wrapper experience-entry ${isEditing ? 'editing-active' : ''}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (!isEditing) {
+              setActiveEditBlock({ sectionKey, index: idx });
+            }
+          }}
+        >
+          {/* Action Bar */}
+          <div className="nvo-block-action-bar">
+            <button className="nvo-action-btn" title="Add entry block" onClick={(e) => { e.stopPropagation(); addBlockToSection(sectionKey); }}>
+              <Plus size={12} />
+            </button>
+            {idx > 0 && (
+              <button className="nvo-action-btn" title="Move entry up" onClick={(e) => { e.stopPropagation(); moveBlockInSection(sectionKey, idx, -1); }}>
+                <ArrowUp size={12} />
+              </button>
+            )}
+            {idx < blocks.length - 1 && (
+              <button className="nvo-action-btn" title="Move entry down" onClick={(e) => { e.stopPropagation(); moveBlockInSection(sectionKey, idx, 1); }}>
+                <ArrowDown size={12} />
+              </button>
+            )}
+            <button className="nvo-action-btn btn-ai" title="AI Personalize entry" onClick={(e) => { e.stopPropagation(); handleOptimizeSection(sectionKey); }}>
+              <Sparkles size={12} />
+            </button>
+            <button className="nvo-action-btn btn-del" title="Delete entry block" onClick={(e) => { e.stopPropagation(); deleteBlockFromSection(sectionKey, idx); }}>
+              <Trash2 size={12} />
+            </button>
           </div>
-        )}
-        {(blk.subtitle || blk.date) && (
-          <div className="enhancv-entry-subtitle nvo-editable-text" contentEditable suppressContentEditableWarning style={{ color: '#475569', fontSize: '0.66rem', fontStyle: 'italic', fontWeight: '500', marginBottom: '3px' }}>
-            {[blk.subtitle, blk.date].filter(Boolean).join(' | ')}
-          </div>
-        )}
-        <div className="enhancv-bullet-list">
-          {blk.bullets.map((bullet, bIdx) => (
-            <div key={bIdx} className="red-tmpl-bullet-row">
-              <span className="red-tmpl-bullet-dot" style={{ backgroundColor: themeColor }} />
-              <span className="red-tmpl-bullet-text nvo-editable-text" contentEditable suppressContentEditableWarning>{bullet}</span>
+
+          {isEditing ? (
+            <div 
+              className="red-entry-block-editor"
+              contentEditable
+              suppressContentEditableWarning
+              onBlur={(e) => handleBlockSave(e.target.innerText)}
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  e.currentTarget.blur();
+                }
+              }}
+              style={{
+                width: '100%',
+                outline: 'none',
+                fontFamily: 'inherit',
+                fontSize: 'inherit',
+                color: 'inherit',
+                lineHeight: '1.6',
+                whiteSpace: 'pre-wrap',
+                background: 'rgba(59, 130, 246, 0.03)',
+                border: '1px dashed #3b82f6',
+                borderRadius: '6px',
+                padding: '8px',
+                minHeight: '60px',
+                boxShadow: '0 4px 12px rgba(59, 130, 246, 0.06)'
+              }}
+            >
+              {getBlockRawText()}
             </div>
-          ))}
+          ) : (
+            <>
+              {/* Company Name and Date - Two Column Layout */}
+              <div className="experience-header-row">
+                <div className="experience-company-info">
+                  {blk.header && (
+                    <span className="experience-company-name">{blk.header}</span>
+                  )}
+                  {blk.subtitle && (
+                    <span className="experience-job-title">{blk.subtitle}</span>
+                  )}
+                </div>
+                {blk.date && (
+                  <span className="experience-date">{blk.date}</span>
+                )}
+              </div>
+              
+              {/* Bullet Points */}
+              <div className="experience-bullets">
+                {blk.bullets.map((bullet, bIdx) => (
+                  <div key={bIdx} className="experience-bullet-row">
+                    <span className="experience-bullet-dot" style={{ backgroundColor: themeColor }} />
+                    <span className="experience-bullet-text">{bullet}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
-      </div>
-    ));
+      );
+    });
   };
 
   const renderSectionByKey = (sectionKey, isSidebar = false) => {
@@ -1366,14 +1664,6 @@ export default function ResumeEditorPage() {
                             <div className="ecv-sidebar-identity" style={getSectionFontSize('Header')}>
                               <h2 className="ecv-sidebar-name">{editedSections.Header.split('\n')[0] || 'Your Name'}</h2>
                               <p className="ecv-sidebar-role">{editedSections.Header.split('\n')[1] || 'Professional Role'}</p>
-                            </div>
-                            <div className="ecv-sidebar-section" style={getSectionFontSize('Header')}>
-                              <div className="ecv-sidebar-heading">CONTACT</div>
-                              <div>
-                                {editedSections.Header.split('\n').slice(2).map((line, i) => (
-                                  <p key={i} className="ecv-sidebar-line">{line}</p>
-                                ))}
-                              </div>
                             </div>
                             {sideSectionOrder.map(key => renderSectionByKey(key, true))}
                           </div>
@@ -1907,25 +2197,6 @@ export default function ResumeEditorPage() {
                           updateSectionsWithHistory({ ...editedSections, Header: lines.join('\n') });
                         }}
                       >{editedSections.Header.split('\n')[1] || 'Professional Role'}</p>
-                    </div>
-
-                    {/* Contact */}
-                    <div className="ecv-sidebar-section" style={getSectionFontSize('Header')}>
-                      <div className="ecv-sidebar-heading">CONTACT</div>
-                      <div 
-                        className="nvo-editable-text"
-                        contentEditable
-                        suppressContentEditableWarning
-                        onBlur={(e) => {
-                          const topLines = (editedSections.Header || '').split('\n').slice(0, 2);
-                          const contactText = e.target.innerText;
-                          updateSectionsWithHistory({ ...editedSections, Header: topLines.join('\n') + '\n' + contactText });
-                        }}
-                      >
-                        {editedSections.Header.split('\n').slice(2).map((line, i) => (
-                          <p key={i} className="ecv-sidebar-line">{line}</p>
-                        ))}
-                      </div>
                     </div>
 
                     {/* Dynamic Sidebar Sections (Drag & Drop Reorderable) */}

@@ -1,0 +1,298 @@
+/* src/assets/skillRoadmap.css */
+
+.roadmap-page {
+  min-height: 100vh;
+  padding: 40px 20px;
+  background-color: #020617; /* Deep Midnight Slate */
+  font-family: 'Inter', sans-serif;
+  color: #f8fafc;
+}
+
+.roadmap-container {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.roadmap-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.roadmap-header h1 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 2.8rem;
+  font-weight: 800;
+  margin-bottom: 12px;
+  color: #f8fafc; /* Solid color, no gradient text per impeccable */
+  letter-spacing: -0.03em;
+}
+
+.roadmap-header p {
+  color: #94a3b8;
+  font-size: 1.1rem;
+}
+
+/* Card Styles */
+.glass-card {
+  background: rgba(15, 23, 42, 0.85); /* Slate Card Panel */
+  border: 1px solid rgba(255, 255, 255, 0.06); /* Subtle semi-transparent lines */
+  border-radius: 16px; /* Reduced from 20px per impeccable rules */
+  padding: 30px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.25); /* Deep shadow per design.md */
+  margin-bottom: 30px;
+}
+
+.glass-card h2 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #e2e8f0;
+}
+
+/* Select Resume List */
+.resume-select-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.resume-select-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  color: #f1f5f9;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.resume-select-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(124, 58, 237, 0.3); /* Interactive Primary Accent */
+}
+
+.resume-select-btn.selected {
+  background: rgba(124, 58, 237, 0.1);
+  border-color: #7c3aed;
+  color: #c4b5fd;
+}
+
+/* Skills Grid */
+.skills-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.skill-pill {
+  padding: 8px 16px;
+  background: rgba(168, 85, 247, 0.1);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  border-radius: 99px;
+  color: #d8b4fe;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.skill-pill:hover {
+  background: rgba(168, 85, 247, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.2);
+}
+
+.skill-pill.selected {
+  background: #a855f7;
+  color: #fff;
+  border-color: #a855f7;
+}
+
+/* Roadmap Result */
+.roadmap-result {
+  margin-top: 30px;
+}
+
+.roadmap-markdown {
+  line-height: 1.7;
+  color: #cbd5e1;
+  font-size: 1rem;
+}
+
+.roadmap-markdown h1,
+.roadmap-markdown h2,
+.roadmap-markdown h3 {
+  font-family: 'Outfit', sans-serif;
+  color: #f8fafc;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+.roadmap-markdown h1 {
+  font-size: 2rem;
+  color: #38bdf8;
+}
+
+.roadmap-markdown h2 {
+  font-size: 1.5rem;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  padding-bottom: 8px;
+}
+
+.roadmap-markdown h3 {
+  font-size: 1.2rem;
+  color: #a855f7;
+}
+
+.roadmap-markdown ul,
+.roadmap-markdown ol {
+  margin-bottom: 1.5em;
+  padding-left: 1.5em;
+}
+
+.roadmap-markdown li {
+  margin-bottom: 0.5em;
+}
+
+.roadmap-markdown strong {
+  color: #f1f5f9;
+}
+
+.roadmap-markdown code {
+  background: rgba(255,255,255,0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.9em;
+  color: #38bdf8;
+}
+
+.roadmap-markdown a {
+  color: #34d399;
+  text-decoration: none;
+}
+
+.roadmap-markdown a:hover {
+  text-decoration: underline;
+}
+
+/* Loading state */
+.roadmap-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 0;
+  color: #94a3b8;
+  gap: 16px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(168, 85, 247, 0.2);
+  border-top-color: #a855f7;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Premium Markdown Rendering */
+.rm-h1 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 2.2rem;
+  font-weight: 800;
+  margin: 2rem 0 1rem;
+  color: #f8fafc; /* Solid text */
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.rm-icon {
+  -webkit-text-fill-color: initial;
+}
+
+.rm-h2 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin: 2.5rem 0 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  padding-bottom: 12px;
+}
+
+.rm-step-badge {
+  font-family: 'Fira Code', monospace;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.15);
+  padding: 4px 10px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.rm-h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #a855f7;
+  margin: 1.5rem 0 0.75rem;
+}
+
+.rm-p {
+  color: #94a3b8;
+  font-size: 1rem;
+  line-height: 1.7;
+  margin-bottom: 1rem;
+}
+
+.rm-strong {
+  color: #f8fafc;
+  font-weight: 600;
+}
+
+.rm-li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+  color: #94a3b8;
+  line-height: 1.6;
+}
+
+.rm-li-dot {
+  min-width: 8px;
+  height: 8px;
+  background: #a855f7;
+  border-radius: 50%;
+  margin-top: 8px;
+  box-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+}
+
+.rm-spacer {
+  height: 12px;
+}
+

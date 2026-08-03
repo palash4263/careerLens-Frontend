@@ -203,7 +203,8 @@ function Dashboard() {
   const workspaceItems = [
     { icon: "◧", color: "#a78bfa", bg: "rgba(124,58,237,0.12)", title: "Recent Resumes", desc: "3 resumes · last edited 2h ago", badge: "31", progress: 62, path: "/resumes" },
     { icon: "◈", color: "#60a5fa", bg: "rgba(14,165,233,0.12)", title: "Saved Jobs", desc: "14 jobs · 4 deadlines this week", badge: "14", progress: 45, path: "/jobs" },
-    { icon: "⚡", color: "#34d399", bg: "rgba(16,185,129,0.12)", title: "AI Recommendations", desc: "8 new matches · 94% fit score", badge: "New", progress: 85, path: "/resume-optimizer", highlight: true },
+    { icon: "⚡", color: "#34d399", bg: "rgba(16,185,129,0.12)", title: "AI Recommendations", desc: "8 new matches · 94% fit score", badge: "New", progress: 85, path: "/resume-optimizer" },
+    { icon: "🗺️", color: "#f472b6", bg: "rgba(236,72,153,0.12)", title: "Skill Roadmap", desc: "Generate a custom learning path", badge: "Hot", progress: 10, path: "/skill-roadmap", highlight: true },
   ];
 
   return (
@@ -301,7 +302,7 @@ function Dashboard() {
                     </div>
                   ))}
                 </div>
-                <button className="db-view-all-btn">Explore All →</button>
+                <button className="db-view-all-btn" onClick={() => navigate("/resume-optimizer")}>Explore All →</button>
               </div>
             </div>
             <div className="db-features-grid">{features.map((c, i) => <FeatureCard key={c.id} {...c} index={i} />)}</div>
@@ -338,7 +339,7 @@ function Dashboard() {
               <div className="db-wgt-actions">
                 <span className="db-wgt-section-label">Quick Actions</span>
                 <div className="db-wgt-btns">
-                  {[{ label: "Upload Resume", icon: "↑", action: "/resumes" }, { label: "Optimize", icon: "⚡", action: "/resume-optimizer" }, { label: "Find Jobs", icon: "◈", action: "/jobs" }].map((a) => (
+                  {[{ label: "Upload", icon: "↑", action: "/resumes" }, { label: "Optimize", icon: "⚡", action: "/resume-optimizer" }, { label: "Find Jobs", icon: "◈", action: "/jobs" }, { label: "Roadmap", icon: "🗺️", action: "/skill-roadmap" }].map((a) => (
                     <button key={a.label} className="db-wgt-btn" onClick={() => navigate(a.action)}>
                       <span className="db-wgt-btn-icon">{a.icon}</span>
                       <span>{a.label}</span>

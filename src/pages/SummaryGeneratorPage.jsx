@@ -166,8 +166,8 @@ export default function SummaryGeneratorPage() {
 
     try {
       const promptText = toneInstruction 
-        ? `Write a professional 3-4 sentence resume summary statement. Custom instruction: ${toneInstruction}`
-        : "Write a professional 3-4 sentence resume summary statement highlighting key matching skills.";
+        ? `Write a professional 1-2 sentence resume summary statement. Custom instruction: ${toneInstruction}`
+        : "Write a professional 1-2 sentence resume summary statement highlighting key matching skills from the resume and job description. Focus on clarity, impact, and relevance to the target role.";
 
       const response = await optimizeSection(
         selectedResumeId,

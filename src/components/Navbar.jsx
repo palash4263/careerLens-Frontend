@@ -96,6 +96,7 @@ export default function Navbar() {
     { path: "/ats-calculator",   label: "ATS Score" },
     { path: "/jobs",             label: "Jobs"      },
     { path: "/interview-prep",   label: "AI Tutor & Interview" },
+    { path: "/skill-roadmap",    label: "Roadmap"   },
   ];
 
   return (

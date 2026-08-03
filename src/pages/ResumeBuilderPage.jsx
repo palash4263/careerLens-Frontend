@@ -70,14 +70,14 @@ export default function ResumeBuilderPage() {
     name: "", title: "", email: "", phone: "", location: "", linkedin: "", portfolio: "",
   });
   const [summary, setSummary] = useState(savedData?.summary ?? "");
-  const [experiences, setExperiences] = useState(savedData?.experiences || [defaultExperience()]);
+  const [experiences, setExperiences] = useState(savedData?.experiences || [defaultExperience(), defaultExperience()]);
   const [educations, setEducations] = useState(savedData?.educations || [defaultEducation()]);
   const [skills, setSkills] = useState(savedData?.skills || [
     "JavaScript", "TypeScript", "React.js", "Node.js", "Express.js",
     "HTML5/CSS3", "Tailwind CSS", "MongoDB", "PostgreSQL", "RESTful APIs",
     "Git & GitHub", "Docker", "AWS", "Agile/Scrum", "Problem Solving", "Team Leadership"
   ]);
-  const [projects, setProjects] = useState(savedData?.projects || [defaultProject()]);
+  const [projects, setProjects] = useState(savedData?.projects || [defaultProject(), defaultProject()]);
   const [docFontSize, setDocFontSize] = useState(savedData?.docFontSize || 10);
   const [docThemeColor, setDocThemeColor] = useState(savedData?.docThemeColor || "#6366f1");
   const [docFontFamily, setDocFontFamily] = useState(savedData?.docFontFamily || "inter");
@@ -103,10 +103,10 @@ export default function ResumeBuilderPage() {
       localStorage.removeItem(SESSION_KEY);
       setPersonal({ name: "", title: "", email: "", phone: "", location: "", linkedin: "", portfolio: "" });
       setSummary("");
-      setExperiences([defaultExperience()]);
+      setExperiences([defaultExperience(), defaultExperience()]);
       setEducations([defaultEducation()]);
       setSkills(["JavaScript", "React.js", "Node.js"]);
-      setProjects([defaultProject()]);
+      setProjects([defaultProject(), defaultProject()]);
       setStep(0);
     }
   };

@@ -8,8 +8,10 @@ import {
 } from "../services/jobDescriptionService";
 import { useScrollReveal } from "../hooks/useScrollReveal";
 import { motion } from "framer-motion";
+import { Search } from "lucide-react";
 import InterviewQuestionsModal from "../components/jobs/InterviewQuestionsModal";
 import AnimeLayoutGrid from "../components/common/AnimeLayoutGrid";
+import CtaFooter from "../components/CtaFooter";
 import "../assets/jobDescription.css";
 
 function JobDescriptionPage() {
@@ -38,10 +40,25 @@ function JobDescriptionPage() {
     const techKeywords = [
       "react", "javascript", "typescript", "node", "python", "java", "sql", "aws", 
       "docker", "kubernetes", "git", "rest api", "graphql", "css", "html", "mongodb",
-      "postgresql", "c++", "c#", "ruby", "go", "rust", "cicd", "agile", "scrum", "cloud"
+      "postgresql", "c++", "c#", "ruby", "go", "rust", "cicd", "agile", "scrum", "cloud",
+      "tcp/ip", "databases", "usb", "ethernet", "operating systems", "computer networks",
+      "serial communication", "linux", "unix", "windows", "machine learning", "ai", 
+      "artificial intelligence", "data structures", "algorithms", "system design",
+      "troubleshooting", "analytical", "backend", "frontend", "fullstack", "devops",
+      "spring boot", "microservices", "angular", "nosql", "gcp", "azure", "mysql", "junit", "testng"
     ];
-    const words = text.toLowerCase();
-    return techKeywords.filter(kw => words.includes(kw)).map(kw => {
+    
+    const lowerText = text.toLowerCase();
+    const strictBoundaryWords = ['go', 'c', 'c++', 'c#', 'ai'];
+
+    return techKeywords.filter(kw => {
+      if (strictBoundaryWords.includes(kw)) {
+        const escapedKw = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(`(^|[^a-zA-Z0-9_])(${escapedKw})([^a-zA-Z0-9_]|$)`, 'i');
+        return regex.test(text);
+      }
+      return lowerText.includes(kw);
+    }).map(kw => {
       if (kw === "rest api") return "REST API";
       if (kw === "aws") return "AWS";
       if (kw === "sql") return "SQL";
@@ -51,7 +68,10 @@ function JobDescriptionPage() {
       if (kw === "css") return "CSS";
       if (kw === "html") return "HTML";
       if (kw === "cicd") return "CI/CD";
-      return kw.charAt(0).toUpperCase() + kw.slice(1);
+      if (kw === "tcp/ip") return "TCP/IP";
+      if (kw === "usb") return "USB";
+      if (kw === "ai") return "AI";
+      return kw.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
     });
   };
 
@@ -99,9 +119,9 @@ function JobDescriptionPage() {
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       result = result.filter(job => 
-        job.title.toLowerCase().includes(term) ||
-        job.company.toLowerCase().includes(term) ||
-        job.description.toLowerCase().includes(term)
+        (job.title || "").toLowerCase().includes(term) ||
+        (job.company || "").toLowerCase().includes(term) ||
+        (job.description || "").toLowerCase().includes(term)
       );
     }
     
@@ -114,8 +134,8 @@ function JobDescriptionPage() {
     if (selectedSkill) {
       const skillLower = selectedSkill.toLowerCase();
       result = result.filter(job => 
-        job.description.toLowerCase().includes(skillLower) || 
-        job.title.toLowerCase().includes(skillLower)
+        (job.description || "").toLowerCase().includes(skillLower) || 
+        (job.title || "").toLowerCase().includes(skillLower)
       );
     }
     
@@ -128,7 +148,7 @@ function JobDescriptionPage() {
         result.sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
         break;
       case "alphabetical":
-        result.sort((a, b) => a.title.localeCompare(b.title));
+        result.sort((a, b) => (a.title || "").localeCompare(b.title || ""));
         break;
       default:
         break;
@@ -523,7 +543,7 @@ function JobDescriptionPage() {
         {/* Search & Filter Bar */}
         <div className="jobs-search-bar">
           <div className="search-wrapper">
-            <span className="search-icon">🔍</span>
+            <Search className="search-icon" size={16} />
             <input
               type="text"
               placeholder="Search jobs by title, company, or keywords..."
@@ -542,7 +562,7 @@ function JobDescriptionPage() {
               onChange={(e) => setFilterCompany(e.target.value)}
             >
               <option value="all">All Companies</option>
-              {[...new Set(jobDescriptions.map(j => j.company))].map(c => (
+              {[...new Set(jobDescriptions.map(j => j.company).filter(Boolean))].map(c => (
                 <option key={c} value={c}>{c}</option>
               ))}
             </select>
@@ -863,6 +883,8 @@ function JobDescriptionPage() {
           <p className="toast-message">{toast.message}</p>
         </div>
       )}
+
+      <CtaFooter />
     </motion.div>
   );
 }

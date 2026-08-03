@@ -244,11 +244,15 @@ const parseResumeSections = (text, userData = {}) => {
   ].filter(Boolean).map(s => s.toLowerCase());
 
   const isRedundantContactLine = (raw) => {
-    const lower = stripMarkdown(raw).toLowerCase();
+    const trimmed = stripMarkdown(raw).trim();
+    const lower = trimmed.toLowerCase();
+    if (/^[a-z]{1,3}$/i.test(trimmed)) return true; // Initials like PM
+    if (lower === 'contact' || lower === 'contact info' || lower === 'personal info') return true;
     if (lower.includes('envelope') || lower.includes('phone-alt') || lower.includes('map-marker')) return true;
     if (/^(email|phone|mobile|linkedin|contact|location|address)\s*:/i.test(lower)) return true;
-    if (lower.includes('@') && lower.includes('|')) return true;
-    if (filters.length > 0 && filters.some(f => lower === f)) return true;
+    if (lower.includes('@') || lower.includes('linkedin.com') || lower.includes('github.com')) return true;
+    if (/^\+?\d[\d\s\-()]{7,}$/.test(trimmed)) return true;
+    if (filters.length > 0 && filters.some(f => f && f.length > 3 && lower.includes(f))) return true;
     return false;
   };
 
@@ -493,16 +497,19 @@ class Column {
   }
 
   sectionHeader(title, size, { gapBefore = 6, gapAfter = 12, minGap = 14, lineThickness = 0.75, lineColor = this.PRIMARY } = {}) {
+    const lineGapBelowText = Math.max(6, Math.round(size * 0.45));
+    const contentGapBelowLine = Math.max(14, Math.round(gapAfter * (size / 10.0)));
+
     this.y -= gapBefore;
     this.ensure(minGap);
     this.text(title.toUpperCase(), this.x, size, { bold: true, color: this.PRIMARY });
-    this.y -= 5; 
+    this.y -= lineGapBelowText; 
     this.page.drawLine({ start: { x: this.x, y: this.y }, end: { x: this.x + this.width, y: this.y }, thickness: lineThickness, color: lineColor });
-    this.y -= (gapAfter + 4); 
+    this.y -= contentGapBelowLine; 
   }
 }
 
-const DATE_REGEX = /\b((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|\d{4})\b.*?(?:[-–—].*?\b(?:Present|Current|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|\d{4}))?|\b\d{4}\b)/i;
+const DATE_REGEX = /\b(?:(?:(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sept?(?:ember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?,?\s+)|(?:(?:0?[1-9]|1[0-2])[/\-]\s*))?(?:19|20)\d{2}\s*[-–—]\s*(?:(?:(?:(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sept?(?:ember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?,?\s+)|(?:(?:0?[1-9]|1[0-2])[/\-]\s*))?(?:19|20)\d{2}|Present|Current|Till\s+Date|Now)|\b(?:(?:(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sept?(?:ember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?,?\s+)|(?:(?:0?[1-9]|1[0-2])[/\-]\s*))?(?:19|20)\d{2}\b|\b(?:Present|Current|Till\s+Date|Now)\b/i;
 
 const formatDateRange = (str) => {
   if (!str) return '';
@@ -511,89 +518,156 @@ const formatDateRange = (str) => {
     const idx = parseInt(m, 10) - 1;
     return (months[idx] || m) + " " + y;
   });
+  formatted = formatted.replace(/\b(0?[1-9]|1[0-2])[\/](\d{4})\b/g, (_, m, y) => {
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const idx = parseInt(m, 10) - 1;
+    return (months[idx] || m) + " " + y;
+  });
   return formatted.replace(/\s*-\s*/g, ' – ').replace(/\s*--\s*/g, ' – ').trim();
 };
 
-const parseEntryBlocks = (contentLines) => {
+const parseEntryBlocks = (contentLinesOrText) => {
+  if (!contentLinesOrText) return [];
+
+  const rawLines = Array.isArray(contentLinesOrText)
+    ? contentLinesOrText.map(l => safeText(l).trim()).filter(Boolean)
+    : safeText(contentLinesOrText).split('\n').map(l => l.trim()).filter(Boolean);
+
   const blocks = [];
-  let currentHeader = null;
-  let currentDate = '';
-  let currentSubtitle = '';
-  let currentBullets = [];
+
+  const isJunkLine = (str) => {
+    if (!str) return true;
+    const s = str.trim();
+    if (/^\d{1,2}$/.test(s)) return true;
+    if (/^\d{1,2}\s*[-–—/]\s*\d{1,2}$/.test(s)) return true;
+    if (/^\d+%\.?$/.test(s)) return true;
+    return false;
+  };
+
+  const ACTION_VERBS = /^(architected|designed|developed|built|engineered|utilized|containerized|improved|tuned|worked|created|lead|managed|spearheaded|collaborated|championed|delivered|accelerated|streamlined|integrated|optimizing|implementing|achieving|reducing|increasing|ensuring|maintaining|executing|automating|deploying)\b/i;
+  const JOB_TITLE_REGEX = /\b(?:engineer|developer|architect|lead|manager|consultant|analyst|specialist|administrator|designer|director|vp|head|intern|associate|trainee|officer|executive|coordinator|contractor|freelance|full\s*stack|front\s*end|back\s*end|software|senior|junior|principal|staff|sde|swe|devops|qa|tester|scrum\s*master|product\s*manager|project\s*manager)\b/i;
+
+  let currentBlock = {
+    header: '',
+    subtitle: '',
+    date: '',
+    bullets: []
+  };
 
   const flush = () => {
-    if (currentHeader || currentBullets.length > 0) {
+    if (currentBlock.header || currentBlock.subtitle || currentBlock.date || currentBlock.bullets.length > 0) {
+      let h = (currentBlock.header || '').trim();
+      let s = (currentBlock.subtitle || '').trim();
+      let d = (currentBlock.date || '').trim();
+
+      if (h && !s && (h.includes(' | ') || h.includes(' - '))) {
+        const sep = h.includes(' | ') ? ' | ' : ' - ';
+        const parts = h.split(sep);
+        h = parts[0].trim();
+        s = parts.slice(1).join(sep).trim();
+      }
+
+      if (h && s && JOB_TITLE_REGEX.test(h) && !JOB_TITLE_REGEX.test(s)) {
+        const temp = h;
+        h = s;
+        s = temp;
+      }
+
       blocks.push({
-        header: currentHeader || '',
-        date: formatDateRange(currentDate),
-        subtitle: currentSubtitle || '',
-        bullets: currentBullets,
+        header: h,
+        subtitle: s,
+        date: formatDateRange(d),
+        bullets: currentBlock.bullets,
       });
-      currentHeader = null;
-      currentDate = '';
-      currentSubtitle = '';
-      currentBullets = [];
+
+      currentBlock = { header: '', subtitle: '', date: '', bullets: [] };
     }
   };
 
-  for (let i = 0; i < contentLines.length; i++) {
-    const raw = contentLines[i];
-    const trimmed = safeText(raw).trim();
-    if (!trimmed) continue;
-    if (/^\s*\d+%\.?\s*$/.test(trimmed)) continue;
+  for (let i = 0; i < rawLines.length; i++) {
+    const raw = rawLines[i];
+    const trimmed = raw.trim();
 
-    const isBulletChar = trimmed.startsWith('•') || trimmed.startsWith('-') || trimmed.startsWith('*') || trimmed.startsWith('+');
-    const cleanLine = trimmed.replace(/^[•+\-\*]\s*/, '').trim();
-
-    // If line has '|' pipe delimiters e.g. "Role | Company | 2022-01 - 2024-05"
-    if (!isBulletChar && trimmed.includes('|')) {
-      const parts = trimmed.split('|').map(p => p.trim());
-      if (parts.length >= 2) {
-        if (currentHeader) flush();
-        
-        const role = parts[0];
-        const company = parts[1];
-        const rawDate = parts[2] || '';
-
-        currentHeader = `${role} — ${company}`;
-        currentDate = rawDate;
-        continue;
-      }
-    }
-
-    const dateMatch = trimmed.match(DATE_REGEX);
-    const hasHeaderSeparator = /—|\||-/.test(trimmed) && trimmed.length < 90;
-
-    const isNewHeader = !currentHeader || 
-      (dateMatch && currentBullets.length > 0) || 
-      (hasHeaderSeparator && !isBulletChar && currentBullets.length > 0 && trimmed.length < 80);
-
-    if (isNewHeader) {
-      if (currentHeader) flush();
-
-      if (dateMatch) {
-        currentDate = dateMatch[0].trim();
-        const nonDatePart = trimmed.replace(dateMatch[0], '').replace(/[-–—,|]\s*$/, '').replace(/^[-–—,|]\s*/, '').trim();
-        currentHeader = nonDatePart || trimmed;
-      } else {
-        currentHeader = cleanLine;
+    if (!trimmed) {
+      if (currentBlock.bullets.length > 0 || (currentBlock.header && currentBlock.subtitle)) {
+        flush();
       }
       continue;
     }
 
-    if (currentHeader && !currentSubtitle && !currentDate && currentBullets.length === 0 && !isBulletChar) {
-      if (dateMatch) {
-        currentDate = dateMatch[0].trim();
-        const nonDatePart = trimmed.replace(dateMatch[0], '').replace(/[-–—,|]\s*$/, '').replace(/^[-–—,|]\s*/, '').trim();
-        if (nonDatePart) currentSubtitle = nonDatePart;
-        continue;
-      } else if (trimmed.length < 90 && !/^(architected|designed|developed|built|engineered|utilized|containerized|improved|tuned|worked|created|lead|managed)\b/i.test(trimmed)) {
-        currentSubtitle = cleanLine;
+    if (isJunkLine(trimmed)) continue;
+
+    const isBulletChar = /^[•+\-\*]/.test(trimmed);
+    const cleanLine = trimmed.replace(/^[•+\-\*]\s*/, '').trim();
+    if (isJunkLine(cleanLine)) continue;
+
+    const dateMatch = trimmed.match(DATE_REGEX);
+    const hasPipe = !isBulletChar && trimmed.includes('|');
+
+    const isNewEntryHeader = (hasPipe || dateMatch) && (currentBlock.bullets.length > 0 || (currentBlock.header && currentBlock.subtitle));
+    if (isNewEntryHeader) {
+      flush();
+    }
+
+    if (!isBulletChar && trimmed.includes('|')) {
+      const parts = trimmed.split('|').map(p => p.trim());
+      if (parts.length >= 2) {
+        if (!currentBlock.header) {
+          currentBlock.header = parts[0];
+          const rest = parts.slice(1).join(' | ');
+          const dMatch = rest.match(DATE_REGEX);
+          if (dMatch) {
+            currentBlock.date = dMatch[0].trim();
+            currentBlock.subtitle = rest.replace(dMatch[0], '').replace(/^[\s|,\-_]+|[\s|,\-_]+$/g, '').trim();
+          } else {
+            currentBlock.subtitle = rest;
+          }
+        } else {
+          const dMatch = trimmed.match(DATE_REGEX);
+          if (dMatch) {
+            currentBlock.date = dMatch[0].trim();
+            currentBlock.subtitle = trimmed.replace(dMatch[0], '').replace(/^[\s|,\-_]+|[\s|,\-_]+$/g, '').trim();
+          } else {
+            currentBlock.subtitle = trimmed;
+          }
+        }
         continue;
       }
     }
 
-    currentBullets.push(cleanLine);
+    if (dateMatch) {
+      if (!currentBlock.date) {
+        currentBlock.date = dateMatch[0].trim();
+      } else if (!currentBlock.date.includes(dateMatch[0].trim())) {
+        currentBlock.date = `${currentBlock.date} – ${dateMatch[0].trim()}`;
+      }
+      const nonDate = trimmed.replace(dateMatch[0], '').replace(/^[\s|,\-_]+|[\s|,\-_]+$/g, '').trim();
+      if (nonDate && !isJunkLine(nonDate)) {
+        if (!currentBlock.header) {
+          currentBlock.header = nonDate;
+        } else if (!currentBlock.subtitle) {
+          currentBlock.subtitle = nonDate;
+        }
+      }
+      continue;
+    }
+
+    const isActionVerb = ACTION_VERBS.test(cleanLine);
+
+    if (isBulletChar || isActionVerb) {
+      currentBlock.bullets.push(cleanLine);
+      continue;
+    }
+
+    if (!currentBlock.header) {
+      currentBlock.header = cleanLine;
+    } else if (!currentBlock.subtitle) {
+      currentBlock.subtitle = cleanLine;
+    } else if (currentBlock.bullets.length > 0) {
+      currentBlock.bullets[currentBlock.bullets.length - 1] += ' ' + cleanLine;
+    } else {
+      currentBlock.bullets.push(cleanLine);
+    }
   }
 
   flush();
@@ -691,48 +765,77 @@ const renderSkillBadges = (col, dh, skillsList, sizeBody) => {
   }
 };
 
-// Render skills using grouped text style matching live preview
+// Render skills using clean inline boxed badges matching modern executive styling
 const renderSkillsSection = (col, dh, content, sizeSubtitle, sizeBody, lhSubtitle, lhBody) => {
+  const LIGHT_BOX_BG = rgb(0.95, 0.96, 0.98);
+  const LIGHT_BOX_BORDER = rgb(0.84, 0.87, 0.92);
+  const TEXT_COLOR = rgb(0.18, 0.24, 0.32);
+  const CAT_COLOR = rgb(0.12, 0.16, 0.25);
+
   for (const rawLine of content) {
     let trimmed = safeText(rawLine).trim();
     if (!trimmed) continue;
     trimmed = trimmed.replace(/^[•\-\*\s]+/, '').trim();
     if (!trimmed) continue;
 
-    // Category lines with colon, e.g., "Languages: Java, Python..."
+    let category = null;
+    let skillItems = [];
+
     if (trimmed.includes(':')) {
       const colonIdx = trimmed.indexOf(':');
-      const category = trimmed.slice(0, colonIdx).trim();
+      category = trimmed.slice(0, colonIdx).trim();
       const value = trimmed.slice(colonIdx + 1).trim();
-      const fragments = value.split(',').map(s => s.trim()).filter(Boolean);
-      if (fragments.length > 0) {
-        col.ensure(lhSubtitle + 4);
-        const fullLine = `${category}: ${fragments.join(', ')}`;
-        const lines = dh.wrapText(fullLine, col.width, sizeBody, {});
-        for (let i = 0; i < lines.length; i++) {
-          col.ensure(lhBody + col.minGap);
-          if (i === 0 && lines[i].startsWith(`${category}:`)) {
-            const catPrefix = `${category}:`;
-            const catW = dh.tw(catPrefix, sizeBody, { bold: true });
-            dh.drawText(col.page, catPrefix, col.x, col.y, sizeBody, { bold: true, color: BLACK });
-            const rest = lines[i].slice(catPrefix.length);
-            dh.drawText(col.page, rest, col.x + catW, col.y, sizeBody, { color: DARK_GRAY });
-          } else {
-            dh.drawText(col.page, lines[i], col.x, col.y, sizeBody, { color: DARK_GRAY });
-          }
-          col.y -= lhBody;
-        }
-        col.y -= 2;
-      }
-      continue;
+      skillItems = value.split(/[,|]/).map(s => s.trim()).filter(Boolean);
+    } else {
+      skillItems = trimmed.split(/[,|]/).map(s => s.trim()).filter(Boolean);
     }
 
-    const fragments = trimmed.split(',').map(s => s.trim()).filter(Boolean);
-    if (fragments.length > 0) {
-      const line = fragments.join(', ');
-      col.wrapped(line, sizeBody, lhBody, { color: DARK_GRAY });
-      col.y -= 2;
+    if (skillItems.length === 0) continue;
+
+    // Render Category Title if present
+    if (category) {
+      col.ensure(lhSubtitle + 4);
+      col.text(`${category}:`, col.x, sizeSubtitle, { bold: true, color: CAT_COLOR });
+      col.y -= (lhSubtitle + 2);
     }
+
+    // Render each skill as a clean boxed pill badge
+    const badgeHeight = sizeBody + 4;
+    const paddingX = 6;
+    const gapX = 5;
+    const rowGapY = 4;
+
+    let curX = col.x;
+    for (const skill of skillItems) {
+      if (!skill) continue;
+      const textW = dh.tw(skill, sizeBody, { bold: true });
+      const badgeW = textW + (paddingX * 2);
+
+      if (curX + badgeW > col.x + col.width && curX > col.x) {
+        curX = col.x;
+        col.y -= (badgeHeight + rowGapY);
+      }
+
+      col.ensure(badgeHeight + rowGapY + col.minGap);
+
+      // Draw subtle boxed badge background & border
+      col.page.drawRectangle({
+        x: curX,
+        y: col.y - 2,
+        width: badgeW,
+        height: badgeHeight,
+        color: LIGHT_BOX_BG,
+        borderColor: LIGHT_BOX_BORDER,
+        borderWidth: 0.5,
+      });
+
+      // Draw skill text inside box
+      dh.drawText(col.page, skill, curX + paddingX, col.y + 1, sizeBody, { bold: true, color: TEXT_COLOR });
+
+      curX += badgeW + gapX;
+    }
+
+    col.y -= (badgeHeight + rowGapY + 4);
   }
 };
 
@@ -1001,30 +1104,7 @@ export async function generateResumePDF({
     // Role/Title — render as preview: ecv-sidebar-role = Header.split('\n')[1]
     // Role omitted from PDF output
 
-    // Sidebar Contact — mirror preview ecv-sidebar-line (Header lines 2+)
-    // Prefer raw contactLines from header (same data as preview), fallback to extracted fields
-    const rawContactLines = (id.contactLines && id.contactLines.length > 0)
-      ? id.contactLines
-      : [id.phone, id.email, id.linkedin, id.github].filter(Boolean);
-
-    if (rawContactLines.length > 0) {
-      dh.drawText(p, 'CONTACT', 14, sideY, 8.0, { bold: true, color: PRIMARY });
-      p.drawLine({ start: { x: 14, y: sideY - 3 }, end: { x: SIDEBAR_W - 14, y: sideY - 3 }, thickness: 0.6, color: PRIMARY });
-      sideY -= 14;
-
-      for (const line of rawContactLines) {
-        const clean = safeText(line).replace(/^https?:\/\/(www\.)?/, '').trim();
-        if (!clean) continue;
-        // Wrap long contact lines to sidebar width
-        const cLines = dh.wrapText(clean, SIDEBAR_W - 28, 6.5, {});
-        for (const cl of cLines) {
-          dh.drawText(p, cl, 14, sideY, 6.5, { color: LIGHT_TEXT });
-          sideY -= 10;
-        }
-      }
-      sideY -= 8;
-    }
-
+    // Sidebar Contact removed per user request
     // Left Sidebar Column for Skills, Education, Certifications
     const sideCol = new Column(pdf, dh, WHITE, { x: 14, width: SIDEBAR_W - 28, y: sideY, sidebarBg: SIDEBAR_BG, sidebarW: SIDEBAR_W, pageMode: 'multi-page' });
     sideCol.page = p;
@@ -1037,18 +1117,8 @@ export async function generateResumePDF({
       sideCol.sectionHeader(secKey.toUpperCase(), 8.5, { gapBefore: 6, gapAfter: 10 });
 
       if (secKey === 'Skills') {
-        const lines = secText.split('\n').filter(Boolean);
-        for (const line of lines) {
-          const cleanLine = safeText(line).trim();
-          if (!cleanLine) continue;
-          if (cleanLine.includes(':')) {
-            const [cat, val] = cleanLine.split(':');
-            sideCol.wrapped(cat.trim() + ':', 7.0, 9.5, { color: PRIMARY });
-            sideCol.wrapped(val.trim(), 6.5, 9.0, { color: LIGHT_TEXT });
-          } else {
-            sideCol.wrapped(`• ${cleanLine}`, 6.5, 9.0, { color: LIGHT_TEXT });
-          }
-        }
+        const skillsLines = secText.split('\n').filter(Boolean);
+        renderSkillsSection(sideCol, dh, skillsLines, 7.5, 6.8, 10.0, 9.5);
       } else {
         const lines = parseBulletPoints(secText);
         for (const line of lines) {
@@ -1073,6 +1143,9 @@ export async function generateResumePDF({
 
       if (secKey === 'Summary') {
         mainCol.wrapped(safeText(secText).trim(), sizes.sizeBody, sizes.lhBody, { color: DARK_GRAY });
+      } else if (secKey === 'Skills') {
+        const skillsLines = secText.split('\n').filter(Boolean);
+        renderSkillsSection(mainCol, dh, skillsLines, sizes.sizeSubtitle, sizes.sizeBody, sizes.lhSubtitle, sizes.lhBody);
       } else {
         const lines = secText.split('\n').filter(Boolean);
         renderTimelineSection(mainCol, lines, sizes, secKey === 'Projects');

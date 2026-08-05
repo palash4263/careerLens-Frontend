@@ -654,3 +654,98 @@ Instructions:
   }
   throw new Error("Failed to generate cover letter from Groq.");
 }
+
+/**
+ * AI URL Auto-Fill: Fetch job post HTML via proxy and parse with Groq
+ */
+export async function extractJobFromUrl(url) {
+  const apiKey = import.meta.env.VITE_GROQ_API_KEY || localStorage.getItem("groq_api_key");
+  if (!apiKey) {
+    throw new Error("GROQ API key is required to extract job details.");
+  }
+
+  // 1. Fetch raw HTML via CORS proxy
+  let rawHtml = '';
+  try {
+    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+    const res = await fetch(proxyUrl);
+    if (!res.ok) throw new Error("Proxy fetch failed");
+    const data = await res.json();
+    rawHtml = data.contents || '';
+  } catch (err) {
+    console.error("Proxy fetch error:", err);
+    throw new Error("Failed to access the provided URL. It might be blocked by bot protection.");
+  }
+
+  // 2. Strip tags to reduce tokens
+  const cleanText = rawHtml
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, ' ')
+    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s{2,}/g, ' ')
+    .substring(0, 12000); // Send max ~12k characters to Groq to avoid token limits
+
+  if (!cleanText.trim()) {
+    throw new Error("No readable text found on the page.");
+  }
+
+  // 3. Prompt Groq to extract JSON
+  const prompt = `
+You are an expert Data Extractor.
+Extract the Job Title, Company Name, and the full Job Description from the following scraped web page text.
+
+Respond ONLY with a valid JSON object in this exact format:
+{
+  "title": "Extracted Job Title",
+  "company": "Extracted Company Name",
+  "description": "The full detailed job description text. Clean up messy spacing but keep all the important requirements, responsibilities, and qualifications."
+}
+
+Do NOT wrap the JSON in markdown blocks like \`\`\`json. Just output the raw JSON object starting with { and ending with }.
+
+--- SCRAPED TEXT ---
+${cleanText}
+`;
+
+  const response = await fetch(GROQ_API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: GROQ_MODEL,
+      messages: [
+        {
+          role: 'system',
+          content: 'You are an AI that strictly outputs JSON.'
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      temperature: 0.1,
+      max_tokens: 2000,
+    }),
+  });
+
+  if (response.ok) {
+    const data = await response.json();
+    let content = data.choices?.[0]?.message?.content?.trim() || "";
+    // Clean up potential markdown blocks if the model ignored instructions
+    if (content.startsWith("```json")) {
+      content = content.replace(/^```json/, "").replace(/```$/, "").trim();
+    } else if (content.startsWith("```")) {
+      content = content.replace(/^```/, "").replace(/```$/, "").trim();
+    }
+    
+    try {
+      return JSON.parse(content);
+    } catch (e) {
+      console.error("Failed to parse Groq JSON:", content);
+      throw new Error("AI failed to extract structured data. Please copy-paste manually.");
+    }
+  }
+  throw new Error("Failed to extract data from Groq.");
+}

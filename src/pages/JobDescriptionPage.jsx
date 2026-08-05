@@ -6,12 +6,14 @@ import {
   deleteJobDescription,
   getJobDescriptions,
 } from "../services/jobDescriptionService";
+import { extractJobFromUrl } from "../services/groqService";
 import { useScrollReveal } from "../hooks/useScrollReveal";
 import { motion } from "framer-motion";
 import { Search } from "lucide-react";
 import InterviewQuestionsModal from "../components/jobs/InterviewQuestionsModal";
 import AnimeLayoutGrid from "../components/common/AnimeLayoutGrid";
 import CtaFooter from "../components/CtaFooter";
+import SubNav from "../components/common/SubNav";
 import "../assets/jobDescription.css";
 
 function JobDescriptionPage() {
@@ -32,6 +34,8 @@ function JobDescriptionPage() {
     company: "",
     description: "",
   });
+  const [urlInput, setUrlInput] = useState("");
+  const [isExtractingUrl, setIsExtractingUrl] = useState(false);
   const [loading, setLoading] = useState(false);
 
   // Extract tech keywords dynamically for live analyzer panel
@@ -45,7 +49,9 @@ function JobDescriptionPage() {
       "serial communication", "linux", "unix", "windows", "machine learning", "ai", 
       "artificial intelligence", "data structures", "algorithms", "system design",
       "troubleshooting", "analytical", "backend", "frontend", "fullstack", "devops",
-      "spring boot", "microservices", "angular", "nosql", "gcp", "azure", "mysql", "junit", "testng"
+      "spring boot", "microservices", "angular", "nosql", "gcp", "azure", "mysql", "junit", "testng",
+      "programming", "software development", "software engineering", "software design",
+      "software engineer", "software solutions", "research"
     ];
     
     const lowerText = text.toLowerCase();
@@ -108,6 +114,26 @@ function JobDescriptionPage() {
   useEffect(() => {
     loadJobDescriptions();
   }, []);
+
+  const handleUrlExtract = async () => {
+    if (!urlInput) return;
+    setIsExtractingUrl(true);
+    try {
+      const extracted = await extractJobFromUrl(urlInput);
+      setFormData({
+        title: extracted.title || "",
+        company: extracted.company || "",
+        description: extracted.description || ""
+      });
+      showToast("Job details successfully extracted via AI!", "success");
+      setUrlInput("");
+    } catch (err) {
+      console.error(err);
+      showToast(err.message || "Failed to extract job details. Please paste manually.", "error");
+    } finally {
+      setIsExtractingUrl(false);
+    }
+  };
 
   useScrollReveal([jobDescriptions, filteredJobs]);
 
@@ -273,6 +299,7 @@ function JobDescriptionPage() {
       transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
     >
     <div className="jobs-page-content">
+      <SubNav type="career" />
       {/* Hero Section */}
         <section className="jobs-hero-premium">
           <div className="jobs-hero-glow"></div>
@@ -359,6 +386,36 @@ function JobDescriptionPage() {
               </div>
 
                <form onSubmit={handleSubmit} className="jobs-form">
+
+                {/* AI URL Auto-Fill */}
+                <div className="jobs-field" style={{ background: 'rgba(168, 85, 247, 0.05)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(168, 85, 247, 0.2)', marginBottom: '24px' }}>
+                  <label style={{ color: '#c084fc', display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                    <span>
+                      <span className="field-label-icon">✨</span>
+                      AI URL Auto-Fill
+                    </span>
+                    <span style={{ fontSize: '11px', background: '#c084fc', color: '#0f172a', padding: '2px 8px', borderRadius: '12px', fontWeight: 'bold' }}>BETA</span>
+                  </label>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <input
+                      type="url"
+                      placeholder="Paste job link here (e.g. LinkedIn, Naukri)..."
+                      value={urlInput}
+                      onChange={(e) => setUrlInput(e.target.value)}
+                      className="jobs-input"
+                      style={{ flex: 1, borderColor: 'rgba(168, 85, 247, 0.3)', margin: 0 }}
+                    />
+                    <button 
+                      type="button" 
+                      onClick={handleUrlExtract}
+                      disabled={!urlInput || isExtractingUrl}
+                      className="jobs-submit-btn" 
+                      style={{ width: 'auto', padding: '0 20px', background: 'linear-gradient(135deg, #a855f7, #7c3aed)', margin: 0, minHeight: '44px' }}
+                    >
+                      {isExtractingUrl ? <span className="spinner" style={{ margin: 0 }}></span> : 'Extract'}
+                    </button>
+                  </div>
+                </div>
 
 
                 <div className="jobs-field">

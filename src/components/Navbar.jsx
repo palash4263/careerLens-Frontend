@@ -89,14 +89,9 @@ export default function Navbar() {
   };
 
   const navLinks = [
-    { path: "/dashboard",        label: "Dashboard" },
-    { path: "/resumes",          label: "Resumes"   },
-    { path: "/resume-optimizer", label: "Optimizer" },
-    { path: "/templates",        label: "Templates" },
-    { path: "/ats-calculator",   label: "ATS Score" },
-    { path: "/jobs",             label: "Jobs"      },
-    { path: "/interview-prep",   label: "AI Tutor & Interview" },
-    { path: "/skill-roadmap",    label: "Roadmap"   },
+    { path: "/dashboard", label: "Dashboard" },
+    { path: "/resumes", label: "Resume Studio" },
+    { path: "/jobs", label: "Career Hub" },
   ];
 
   return (
@@ -154,7 +149,15 @@ export default function Navbar() {
           {/* ── Nav links ── */}
           <div className="nb-links">
             {navLinks.map((link) => {
-              const active = location.pathname === link.path;
+              // Mark active if we are on any subpage
+              let active = location.pathname === link.path;
+              if (link.path === "/resumes" && (location.pathname.includes("resume") || location.pathname.includes("template") || location.pathname.includes("ats"))) {
+                active = true;
+              }
+              if (link.path === "/jobs" && (location.pathname.includes("job") || location.pathname.includes("interview") || location.pathname.includes("roadmap"))) {
+                active = true;
+              }
+              
               return (
                 <Link key={link.path} to={link.path} className={`nb-link${active ? " nb-active" : ""}`}>
                   <span className="nb-link-label">{link.label}</span>
@@ -286,11 +289,16 @@ export default function Navbar() {
         </div>
         <div className="nb-sidebar-body">
           <nav className="nb-sidebar-links">
-            {navLinks.map(link => {
-              const active = location.pathname === link.path;
+            {navLinks.map((link) => {
+              let active = location.pathname === link.path;
+              if (link.path === "/resumes" && (location.pathname.includes("resume") || location.pathname.includes("template") || location.pathname.includes("ats"))) {
+                active = true;
+              }
+              if (link.path === "/jobs" && (location.pathname.includes("job") || location.pathname.includes("interview") || location.pathname.includes("roadmap"))) {
+                active = true;
+              }
               return (
                 <Link key={link.path} to={link.path} className={`nb-sidebar-link${active ? " active" : ""}`} onClick={() => setSidebarOpen(false)}>
-                  <span className="nb-sidebar-link-icon">{link.icon}</span>
                   <span className="nb-sidebar-link-label">{link.label}</span>
                 </Link>
               );

@@ -15,6 +15,7 @@ import AiNeuralTerminalConsole from "../components/common/AiNeuralTerminalConsol
 import AnimeBuildFromScratchBtn from "../components/common/AnimeBuildFromScratchBtn";
 import AiCareerToolsQuickBar from "../components/common/AiCareerToolsQuickBar";
 import JobMatchModal from "../components/JobMatchModal";
+import SubNav from "../components/common/SubNav";
 import { motion } from "framer-motion";
 import "../assets/resume.css";
 
@@ -289,6 +290,7 @@ function ResumePage() {
       transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
     >
       <div className="resume-page-content">
+        <SubNav type="resume" />
         {/* Page Header */}
         <div className="resume-page-header">
           <div className="header-left">

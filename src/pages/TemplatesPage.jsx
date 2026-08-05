@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Grid, Eye, Check, AlertCircle, Award } from "lucide-react";
+import SubNav from "../components/common/SubNav";
 import "./TemplatesPage.css";
 
 const CATEGORIES = ["All", "Top Picks", "ATS-Friendly", "Modern", "Single Column", "Double Column"];
@@ -111,6 +112,7 @@ export default function TemplatesPage() {
 
   return (
     <div className="tp-container">
+      <SubNav type="resume" />
       {/* Grid Dot background layer */}
       <div className="tp-grid-dots" />
 

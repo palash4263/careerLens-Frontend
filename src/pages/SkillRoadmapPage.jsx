@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Map, Target, Briefcase, ChevronRight, ChevronDown, BookOpen, CheckCircle2, Circle, Download, RotateCcw, FileText, Brain, Zap, TrendingUp, Award, ArrowRight } from 'lucide-react';
 import { getResumes } from '../services/resumeService';
 import { extractSkillsFromResume, generateSkillRoadmap } from '../services/groqService';
+import SubNav from '../components/common/SubNav';
 import '../assets/skillRoadmap.css';
 import CtaFooter from '../components/CtaFooter';
 
@@ -193,7 +194,7 @@ export default function SkillRoadmapPage() {
   return (
     <div className="roadmap-page">
       <div className="roadmap-container">
-        
+        <SubNav type="career" />
         {/* Enhanced Header */}
         <div className="roadmap-header">
           <motion.div

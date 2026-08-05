@@ -666,3 +666,105 @@
     display: none;
   }
 }
+
+/* ════════════════════════════
+   DROPDOWN MENUS (DESKTOP)
+════════════════════════════ */
+.nb-link-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.nb-link-parent {
+  cursor: default;
+}
+
+.nb-dropdown-icon {
+  margin-left: 2px;
+  opacity: 0.6;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
+}
+
+.nb-link-group:hover .nb-dropdown-icon {
+  transform: rotate(180deg);
+  opacity: 1;
+}
+
+.nb-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(12px);
+  padding-top: 14px; /* Invisible hover bridge */
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 100;
+  pointer-events: none;
+}
+
+.nb-link-group:hover .nb-dropdown-menu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+  pointer-events: auto;
+}
+
+.nb-dropdown-menu-inner {
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 12px;
+  padding: 8px;
+  min-width: 180px;
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.6), 
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.nb-dropdown-item {
+  color: #94a3b8;
+  text-decoration: none;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 10px 14px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.nb-dropdown-item:hover {
+  background: rgba(56, 189, 248, 0.08);
+  color: #f8fafc;
+}
+
+.nb-dropdown-item.active {
+  background: rgba(139, 92, 246, 0.15);
+  color: #e879f9;
+}
+
+/* ════════════════════════════
+   SIDEBAR GROUPS (MOBILE)
+════════════════════════════ */
+.nb-sidebar-group {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.nb-sidebar-group-label {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #64748b;
+  padding: 8px 16px 4px 16px;
+}

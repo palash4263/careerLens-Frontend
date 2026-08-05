@@ -15,6 +15,7 @@ import ScoreRing from "../components/resume/ScoreRing";
 import KineticText from "../components/common/KineticText";
 import SkillRainHeader from "../components/common/SkillRainHeader";
 import NeuralPipelineVisualizer from "../components/common/NeuralPipelineVisualizer";
+import SubNav from "../components/common/SubNav";
 // ====== UTILITY FUNCTIONS ======
 const TECH_KEYWORDS = [
   'React', 'Angular', 'Vue', 'Node.js', 'Express', 'Python', 'Django', 'Flask', 'Java', 'Spring Boot', 'Spring MVC', 
@@ -940,6 +941,24 @@ export default function ResumeOptimizationPage() {
 
       const missingKws = calculateMissingKeywords(origText, selectedJdText);
 
+      // Extract all JD keywords for unconditional injection
+      const allJdKws = TECH_KEYWORDS.filter(skill => {
+        const escaped = skill.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+        const regex = new RegExp(`\\b${escaped}\\b`, 'i');
+        return regex.test(selectedJdText);
+      });
+
+      if (allJdKws.length > 0) {
+        let parsed = parseSectionsFromText(optText);
+        const keywordsStr = allJdKws.join(', ');
+        if (parsed.Skills) {
+          parsed.Skills = parsed.Skills.trim() + '\nAI Indexed Keywords: ' + keywordsStr;
+        } else {
+          parsed.Skills = 'AI Indexed Keywords: ' + keywordsStr;
+        }
+        optText = reconstructResumeText(parsed);
+      }
+
       const calcOrigScore = response.current_score || calculateDynamicATSScore(origText, selectedJdText);
       const calcOptScore = response.estimated_new_score || Math.min(97, Math.max(calcOrigScore + 9, calculateDynamicATSScore(optText, selectedJdText)));
 
@@ -1086,6 +1105,7 @@ export default function ResumeOptimizationPage() {
   return (
     <div className="optimizer-wrapper">
       <div className="optimizer-page-content">
+        <SubNav type="resume" />
 
         {/* Hero Section */}
         <motion.section

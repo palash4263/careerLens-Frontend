@@ -10,6 +10,7 @@ import { getResumes, uploadResume } from "../services/resumeService";
 import { getJobDescriptions } from "../services/jobDescriptionService";
 import { analyzeResume } from "../services/atsService";
 import ScanCompletionModal from "../components/resume/ScanCompletionModal";
+import SubNav from "../components/common/SubNav";
 import "../components/resume/ScanCompletionModal.css";
 import "../assets/AtsScoreCalculator.css";
 
@@ -629,6 +630,7 @@ export default function AtsScoreCalculatorPage() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
     >
+      <SubNav type="resume" />
       <div className="ats-calc-header">
         <h1 className="ats-calc-title">ATS Match Score Calculator</h1>
         <p className="ats-calc-subtitle">

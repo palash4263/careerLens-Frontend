@@ -11,6 +11,7 @@ import { JAVA_TOPICS, ALL_JAVA_TOPIC_LIST } from "../utils/javaLearningTopics";
 import { generateInterviewQuestions } from "../utils/interviewQuestionGenerator";
 import { getJobDescriptions } from "../services/jobDescriptionService";
 import CodeEditorSandbox from "../components/CodeEditorSandbox";
+import SubNav from "../components/common/SubNav";
 import "./InterviewPrepPage.css";
 
 export default function InterviewPrepPage() {
@@ -186,6 +187,7 @@ export default function InterviewPrepPage() {
   return (
     <div className="ip-onboarding-wrapper">
       <div className="ip-onboarding-container">
+        <SubNav type="career" />
 
         {/* Global Top Bar & Mode Switcher */}
         <div className="ip-global-top-bar">

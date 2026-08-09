@@ -482,11 +482,13 @@
 .red-canvas-container {
   flex: 1;
   overflow-y: auto;
-  padding: 30px;
+  padding: 80px 40px 40px;
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  background: #0b0f19;
+  background: transparent;
+  position: relative;
+  z-index: 1;
 }
 
 /* A4 Resume Mock Paper Page styling */
@@ -497,9 +499,12 @@
   background: #ffffff;
   color: #1e293b;
   position: relative;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.04),
+    0 20px 60px rgba(0,0,0,0.7),
+    0 6px 20px rgba(0,0,0,0.5);
   padding: 36px 32px;
-  border-radius: 4px;
+  border-radius: 3px;
   transition: all 0.3s ease;
   overflow: visible;
 }
@@ -979,15 +984,15 @@
 
 /* Left Tool Rail */
 .nvo-sidebar-rail {
-  width: 130px;
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(16px);
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  width: 64px;
+  background: rgba(9, 14, 24, 0.95);
+  backdrop-filter: blur(20px);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 16px 8px;
-  gap: 12px;
+  padding: 12px 8px;
+  gap: 4px;
   flex-shrink: 0;
   z-index: 80;
 }
@@ -995,45 +1000,102 @@
 .nvo-brand-logo {
   display: flex;
   align-items: center;
-  gap: 6px;
-  color: #a78bfa;
-  font-family: 'Outfit', sans-serif;
-  font-weight: 800;
-  font-size: 0.95rem;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+  color: #fff;
   margin-bottom: 12px;
   cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.nvo-brand-logo:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.45);
+}
+
+.nvo-brand-logo span {
+  display: none;
 }
 
 .nvo-rail-btn {
-  width: 100%;
+  width: 44px;
+  height: 44px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 12px 6px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  gap: 0;
+  padding: 0;
+  background: transparent;
+  border: 1px solid transparent;
   border-radius: 10px;
-  color: #94a3b8;
-  font-size: 0.7rem;
+  color: #64748b;
+  font-size: 0.65rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.18s ease;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.nvo-rail-btn span {
+  display: none;
+}
+
+/* Tooltip */
+.nvo-rail-btn::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(15, 23, 42, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #f1f5f9;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 7px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+  z-index: 200;
+}
+
+.nvo-rail-btn:hover::after {
+  opacity: 1;
 }
 
 .nvo-rail-btn:hover {
-  background: rgba(124, 58, 237, 0.14);
-  border-color: rgba(124, 58, 237, 0.35);
+  background: rgba(124, 58, 237, 0.12);
+  border-color: rgba(124, 58, 237, 0.28);
   color: #c4b5fd;
-  transform: translateY(-1px);
 }
 
 .nvo-rail-btn.active {
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.25), rgba(79, 70, 229, 0.25));
-  border-color: #7c3aed;
+  background: rgba(124, 58, 237, 0.18);
+  border-color: rgba(124, 58, 237, 0.5);
   color: #a78bfa;
-  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.25);
+  box-shadow: 0 2px 10px rgba(124, 58, 237, 0.22);
+}
+
+/* Active indicator bar on left edge */
+.nvo-rail-btn.active::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 20px;
+  background: #7c3aed;
+  border-radius: 0 3px 3px 0;
 }
 
 /* Central Workspace Area */
@@ -1044,26 +1106,38 @@
   position: relative;
   overflow: hidden;
   background: 
-    radial-gradient(circle at top left, rgba(124, 58, 237, 0.12), transparent 35%),
-    radial-gradient(circle at top right, rgba(79, 70, 229, 0.12), transparent 35%),
-    #020617;
+    radial-gradient(circle at top left, rgba(124, 58, 237, 0.08), transparent 40%),
+    radial-gradient(circle at bottom right, rgba(79, 70, 229, 0.06), transparent 40%),
+    #040812;
+}
+
+/* Subtle dot-grid pattern overlay */
+.nvo-workspace::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle, rgba(255,255,255,0.055) 1px, transparent 1px);
+  background-size: 28px 28px;
+  pointer-events: none;
+  z-index: 0;
 }
 
 /* Novoresume Top Floating Bar */
 .nvo-top-floating-bar {
   position: absolute;
-  top: 14px;
+  top: 16px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 100;
   display: flex;
   align-items: center;
-  gap: 12px;
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(16px);
+  gap: 6px;
+  background: rgba(10, 15, 28, 0.92);
+  backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.25);
-  padding: 6px 14px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4), 0 1px 0 rgba(255,255,255,0.06) inset;
+  padding: 5px 8px;
   border-radius: 99px;
 }
 
@@ -1294,6 +1368,25 @@
   color: #38bdf8;
 }
 
+/* ── PDF Export / Print mode: hide all editor-only UI elements ── */
+@media print {
+  .nvo-drag-handle,
+  .nvo-block-action-bar,
+  .nvo-section-draggable > .nvo-drag-handle,
+  .nvo-top-floating-bar,
+  .nvo-sidebar-rail,
+  .nvo-drawer-panel,
+  .nvo-section-delete-btn {
+    display: none !important;
+  }
+  .nvo-editable-text {
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: transparent !important;
+  }
+}
+
 /* Reduced Motion Accessibility */
 @media (prefers-reduced-motion: reduce) {
   *, ::before, ::after {
@@ -1306,16 +1399,16 @@
 
 /* AI Assistant Side Drawer Panel */
 .nvo-drawer-panel {
-  width: 320px;
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(16px);
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  width: 296px;
+  background: rgba(9, 14, 24, 0.96);
+  backdrop-filter: blur(24px);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
   display: flex;
   flex-direction: column;
   height: 100vh;
   z-index: 75;
   flex-shrink: 0;
-  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.25);
+  box-shadow: 4px 0 30px rgba(0, 0, 0, 0.4);
 }
 
 .nvo-drawer-header {
@@ -2223,3 +2316,257 @@
   }
 }
 
+/* ── EXECUTIVE SPLIT HEADER LAYOUT ── */
+.ecv-split-header-layout {
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  align-items: flex-end !important;
+  border-bottom: 2px solid var(--primary, #00f2fe) !important;
+  padding-bottom: 12px !important;
+  margin-bottom: 16px !important;
+}
+
+.ecv-split-header-layout .ecv-single-name-modern {
+  margin: 0 !important;
+  text-align: left !important;
+  line-height: 1.1 !important;
+}
+
+.ecv-split-header-layout .ecv-single-contacts-modern {
+  text-align: right !important;
+  margin: 0 !important;
+  max-width: 50% !important;
+  justify-content: flex-end !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-end !important;
+  font-size: 0.85em !important;
+}
+
+/* ── CANVAS VIEWPORT ── */
+.nvo-canvas-viewport {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 1;
+}
+
+/* ═══════════════════════════════════════════════════
+   FLAT TEMPLATES DRAWER — grouped settings, no cards
+   ═══════════════════════════════════════════════════ */
+
+.tmpl-drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.tmpl-drawer-body::-webkit-scrollbar { width: 4px; }
+.tmpl-drawer-body::-webkit-scrollbar-track { background: transparent; }
+.tmpl-drawer-body::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.1);
+  border-radius: 4px;
+}
+
+.tmpl-group {
+  padding: 16px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+.tmpl-group:last-child { border-bottom: none; }
+
+.tmpl-group-label {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #475569;
+  margin-bottom: 12px;
+  font-family: 'Fira Code', monospace;
+  display: block;
+}
+
+/* ── Template Layout Cards ── */
+.tmpl-layout-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.tmpl-layout-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 8px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  position: relative;
+}
+
+.tmpl-layout-card:hover {
+  background: rgba(124, 58, 237, 0.1);
+  border-color: rgba(124, 58, 237, 0.35);
+}
+
+.tmpl-layout-card.active {
+  background: rgba(124, 58, 237, 0.16);
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.35);
+}
+
+.tmpl-layout-card.active::after {
+  content: '✓';
+  position: absolute;
+  top: 5px;
+  right: 7px;
+  font-size: 0.6rem;
+  font-weight: 900;
+  color: #a78bfa;
+}
+
+.tmpl-thumb {
+  width: 50px;
+  height: 64px;
+  border-radius: 2px;
+  overflow: hidden;
+  background: #fff;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+
+.tmpl-thumb svg { width: 100%; height: 100%; }
+
+.tmpl-layout-name {
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: #64748b;
+  text-align: center;
+  line-height: 1.3;
+}
+
+.tmpl-layout-card.active .tmpl-layout-name { color: #c4b5fd; }
+
+/* ── Color Swatches Grid ── */
+.tmpl-color-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.tmpl-color-swatch {
+  aspect-ratio: 1;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.18s ease;
+  position: relative;
+  min-height: 32px;
+}
+
+.tmpl-color-swatch:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+.tmpl-color-swatch.active {
+  border-color: rgba(255,255,255,0.85);
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.3), 0 4px 14px rgba(0,0,0,0.5);
+  transform: scale(1.08);
+}
+
+/* ── Flat select control ── */
+.tmpl-select {
+  width: 100%;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  padding: 8px 30px 8px 12px;
+  color: #e2e8f0;
+  font-size: 0.8rem;
+  font-family: inherit;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+
+.tmpl-select:focus {
+  border-color: rgba(124, 58, 237, 0.5);
+}
+
+.tmpl-select option {
+  background: #0f172a;
+  color: #fff;
+}
+
+/* ── Segmented control for spacing/margins ── */
+.tmpl-segments {
+  display: flex;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.tmpl-seg-btn {
+  flex: 1;
+  padding: 8px 0;
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.tmpl-seg-btn:not(:last-child) {
+  border-right: 1px solid rgba(255,255,255,0.06);
+}
+
+.tmpl-seg-btn.active {
+  background: rgba(124, 58, 237, 0.25);
+  color: #c4b5fd;
+}
+
+.tmpl-seg-btn:hover:not(.active) {
+  background: rgba(255,255,255,0.04);
+  color: #cbd5e1;
+}
+
+/* ── Section Delete Button ── */
+.nvo-section-delete-btn {
+  background: transparent;
+  border: none;
+  color: #ef4444;
+  opacity: 0;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  margin-left: 8px;
+}
+
+.ecv-section:hover .nvo-section-delete-btn,
+.ecv-sidebar-section:hover .nvo-section-delete-btn {
+  opacity: 0.6;
+}
+
+.nvo-section-delete-btn:hover {
+  background: rgba(239, 68, 68, 0.15);
+  opacity: 1 !important;
+  color: #f87171;
+}

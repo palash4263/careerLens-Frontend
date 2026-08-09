@@ -80,6 +80,20 @@ const TEMPLATES = [
     layout: "single-column",
     tags: ["ATS-Friendly", "Single Column"],
   },
+  {
+    id: "modern-right-split",
+    name: "Modern Right Split",
+    description: "A distinctive right-sidebar layout. Highlights your core experience on the left while organizing skills and education neatly on the right.",
+    layout: "right-sidebar",
+    tags: ["Top Picks", "Modern", "Double Column"],
+  },
+  {
+    id: "executive-split",
+    name: "Executive Split",
+    description: "Sophisticated single-column format with a split header. Clean, authoritative, and maximizes vertical space for extensive careers.",
+    layout: "split-header",
+    tags: ["Executive", "Single Column", "Modern"],
+  },
 ];
 
 export default function TemplatesPage() {
@@ -100,8 +114,8 @@ export default function TemplatesPage() {
       if (selectedCategory === "Modern" && !tmpl.tags.includes("Modern")) return false;
     }
     // 2. Columns Filter
-    if (selectedColumns === "Single" && tmpl.layout !== "single-column") return false;
-    if (selectedColumns === "Double" && tmpl.layout !== "two-column") return false;
+    if (selectedColumns === "Single" && (tmpl.layout !== "single-column" && tmpl.layout !== "split-header")) return false;
+    if (selectedColumns === "Double" && (tmpl.layout !== "two-column" && tmpl.layout !== "right-sidebar")) return false;
     
     return true;
   });
@@ -229,8 +243,8 @@ export default function TemplatesPage() {
                     <div className="tp-mock-resume" style={{ fontFamily: "Rubik, sans-serif" }}>
                       <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "3px", backgroundColor: selectedColor }} />
                       
-                      {tmpl.layout === "two-column" ? (
-                        <div className="tp-mock-twocol">
+                      {tmpl.layout === "two-column" || tmpl.layout === "right-sidebar" ? (
+                        <div className="tp-mock-twocol" style={{ flexDirection: tmpl.layout === "right-sidebar" ? "row-reverse" : "row" }}>
                           {/* Mock Left Column */}
                           <div className="tp-mock-left">
                             <div style={{ height: "6px", width: "70%", background: "#111", borderRadius: "1px", marginBottom: "3px" }}></div>
@@ -245,7 +259,7 @@ export default function TemplatesPage() {
                             <div style={{ height: "1px", width: "80%", background: "#ddd" }}></div>
                           </div>
                           {/* Mock Right Sidebar */}
-                          <div className="tp-mock-right" style={{ borderLeft: "0.5px solid #eee", paddingLeft: "5px" }}>
+                          <div className="tp-mock-right" style={{ borderLeft: tmpl.layout === "two-column" ? "0.5px solid #eee" : "none", borderRight: tmpl.layout === "right-sidebar" ? "0.5px solid #eee" : "none", paddingLeft: tmpl.layout === "two-column" ? "5px" : "0", paddingRight: tmpl.layout === "right-sidebar" ? "5px" : "0" }}>
                             <div style={{ height: "3px", width: "50%", background: selectedColor, marginBottom: "5px" }}></div>
                             {/* Badges */}
                             <div style={{ display: "flex", flexWrap: "wrap", gap: "2px", marginBottom: "6px" }}>
@@ -260,15 +274,28 @@ export default function TemplatesPage() {
                         </div>
                       ) : (
                         <div className="tp-mock-onecol">
-                          {/* Centered Header */}
-                          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "6px" }}>
-                            <div style={{ height: "6px", width: "50%", background: "#111", borderRadius: "1px", marginBottom: "2px" }}></div>
-                            <div style={{ height: "3px", width: "35%", background: "#777", borderRadius: "1px", marginBottom: "3px" }}></div>
-                            <div style={{ display: "flex", gap: "2px" }}>
-                              <div style={{ height: "2px", width: "10px", background: "#aaa" }}></div>
-                              <div style={{ height: "2px", width: "10px", background: "#aaa" }}></div>
+                          {tmpl.layout === "split-header" ? (
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "6px" }}>
+                              <div style={{ width: "60%" }}>
+                                <div style={{ height: "6px", width: "80%", background: "#111", borderRadius: "1px", marginBottom: "2px" }}></div>
+                                <div style={{ height: "3px", width: "50%", background: selectedColor, borderRadius: "1px" }}></div>
+                              </div>
+                              <div style={{ width: "35%", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "1px" }}>
+                                <div style={{ height: "2px", width: "80%", background: "#777" }}></div>
+                                <div style={{ height: "2px", width: "90%", background: "#777" }}></div>
+                                <div style={{ height: "2px", width: "70%", background: "#777" }}></div>
+                              </div>
                             </div>
-                          </div>
+                          ) : (
+                            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "6px" }}>
+                              <div style={{ height: "6px", width: "50%", background: "#111", borderRadius: "1px", marginBottom: "2px" }}></div>
+                              <div style={{ height: "3px", width: "35%", background: "#777", borderRadius: "1px", marginBottom: "3px" }}></div>
+                              <div style={{ display: "flex", gap: "2px" }}>
+                                <div style={{ height: "2px", width: "10px", background: "#aaa" }}></div>
+                                <div style={{ height: "2px", width: "10px", background: "#aaa" }}></div>
+                              </div>
+                            </div>
+                          )}
                           {/* Full-width Divider */}
                           <div style={{ height: "0.75px", width: "100%", background: selectedColor, marginBottom: "6px" }}></div>
                           {/* Summary */}
@@ -323,7 +350,7 @@ export default function TemplatesPage() {
                   <div className="tp-card-info">
                     <div className="tp-card-info-header">
                       <h3>{tmpl.name}</h3>
-                      <span className="tp-layout-badge">{tmpl.layout === "two-column" ? "Double Column" : "Single Column"}</span>
+                      <span className="tp-layout-badge">{tmpl.layout === "two-column" || tmpl.layout === "right-sidebar" ? "Double Column" : "Single Column"}</span>
                     </div>
                     <p>{tmpl.description}</p>
                   </div>

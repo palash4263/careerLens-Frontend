@@ -387,6 +387,22 @@ export default function ResumeEditorPage() {
     }
   };
 
+  const deleteSection = (sectionKey) => {
+    const newMain = mainSectionOrder.filter(k => k !== sectionKey);
+    const newSide = sideSectionOrder.filter(k => k !== sectionKey);
+    setMainSectionOrder(newMain);
+    setSideSectionOrder(newSide);
+    localStorage.setItem(`cl_main_order_${selectedResume}`, JSON.stringify(newMain));
+    localStorage.setItem(`cl_side_order_${selectedResume}`, JSON.stringify(newSide));
+  };
+
+  const addSection = (sectionKey) => {
+    if (mainSectionOrder.includes(sectionKey) || sideSectionOrder.includes(sectionKey)) return;
+    const newMain = [...mainSectionOrder, sectionKey];
+    setMainSectionOrder(newMain);
+    localStorage.setItem(`cl_main_order_${selectedResume}`, JSON.stringify(newMain));
+  };
+
   // Manipulate entry blocks inside timeline sections (Experience / Projects / Education)
   const addBlockToSection = (sectionKey) => {
     const existing = editedSections[sectionKey] || '';
@@ -691,43 +707,51 @@ export default function ResumeEditorPage() {
       // Export using html2canvas to match preview 100% exactly pixel-for-pixel
       const canvasEl = livePreviewRef.current;
       if (canvasEl) {
-        // Clone the element to render it in an isolated, absolute layout context
-        const clone = canvasEl.cloneNode(true);
-        
-        // Remove contentEditable attributes to prevent outline borders from showing
-        clone.querySelectorAll('[contenteditable]').forEach(el => {
-          el.removeAttribute('contenteditable');
-        });
-
-        // Set absolute styling on the clone to guarantee exact A4 pixel layout and bypass mobile responsive scaling/margins
-        clone.style.setProperty('width', '595px', 'important');
-        clone.style.setProperty('max-width', '595px', 'important');
-        clone.style.setProperty('min-height', '842px', 'important');
-        clone.style.setProperty('position', 'absolute', 'important');
-        clone.style.setProperty('left', '-9999px', 'important');
-        clone.style.setProperty('top', '-9999px', 'important');
-        clone.style.setProperty('box-shadow', 'none', 'important');
-        clone.style.setProperty('background', '#ffffff', 'important');
-        clone.style.setProperty('transform', 'none', 'important');
-        clone.style.setProperty('transform-origin', 'unset', 'important');
-        clone.style.setProperty('margin', '0', 'important');
-        clone.style.setProperty('margin-bottom', '0', 'important');
-
-        // Append clone to body so html2canvas can measure and render it
-        document.body.appendChild(clone);
-
-        const canvas = await html2canvas(clone, {
-          scale: 2.0, // Reduced from 2.5 to ensure PDF remains under 2MB
+        const canvas = await html2canvas(canvasEl, {
+          scale: 2.5,
           useCORS: true,
           allowTaint: true,
           backgroundColor: '#ffffff',
           logging: false,
-          width: 595,
-          windowWidth: 595, // Force html2canvas window layout width to 595px
+          width: canvasEl.scrollWidth,
+          height: canvasEl.scrollHeight,
+          windowWidth: 595,
+          onclone: (clonedDoc, clonedEl) => {
+            // 1. Remove all drag-handle icons (GripVertical UI elements)
+            clonedEl.querySelectorAll('.nvo-drag-handle').forEach(el => el.remove());
+            // 1b. Remove all section delete buttons
+            clonedEl.querySelectorAll('.nvo-section-delete-btn').forEach(el => el.remove());
+            // 2. Remove section block action bars
+            clonedEl.querySelectorAll('.nvo-block-action-bar').forEach(el => el.remove());
+            // 3. Remove all contentEditable attributes + focus outlines
+            clonedEl.querySelectorAll('[contenteditable]').forEach(el => {
+              el.removeAttribute('contenteditable');
+              el.style.outline = 'none';
+              el.style.border = 'none';
+              el.style.background = '';
+              el.style.boxShadow = 'none';
+            });
+            // 4. Remove dragging state borders/backgrounds
+            clonedEl.querySelectorAll('.nvo-section-draggable').forEach(el => {
+              el.style.outline = 'none';
+              el.style.border = 'none';
+              el.style.background = 'transparent';
+              el.style.cursor = 'default';
+            });
+            // 5. Remove nvo-editable-text hover states  
+            clonedEl.querySelectorAll('.nvo-editable-text').forEach(el => {
+              el.style.outline = 'none';
+              el.style.boxShadow = 'none';
+            });
+            // 6. Force exact A4 dimensions on the cloned canvas
+            clonedEl.style.setProperty('width', '595px', 'important');
+            clonedEl.style.setProperty('max-width', '595px', 'important');
+            clonedEl.style.setProperty('box-shadow', 'none', 'important');
+            clonedEl.style.setProperty('transform', 'none', 'important');
+            clonedEl.style.setProperty('border-radius', '0', 'important');
+            clonedEl.style.setProperty('margin', '0', 'important');
+          }
         });
-
-        // Remove the clone immediately
-        document.body.removeChild(clone);
 
         const imgWidth = 595;
         const imgHeight = (canvas.height / canvas.width) * imgWidth;
@@ -954,7 +978,7 @@ const renderSkillsSection = (text, themeColor) => {
 
     const blocks = [];
 
-    const DATE_REGEX = /\b(?:(?:(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sept?(?:ember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?,?\s+)|(?:(?:0?[1-9]|1[0-2])[/\-]\s*))?(?:19|20)\d{2}\s*[-–—]\s*(?:(?:(?:(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sept?(?:ember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?,?\s+)|(?:(?:0?[1-9]|1[0-2])[/\-]\s*))?(?:19|20)\d{2}|Present|Current|Till\s+Date|Now)|\b(?:(?:(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sept?(?:ember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?,?\s+)|(?:(?:0?[1-9]|1[0-2])[/\-]\s*))?(?:19|20)\d{2}\b|\b(?:Present|Current|Till\s+Date|Now)\b/i;
+    const DATE_REGEX = /\b(?:(?:(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sept?(?:ember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?,?\s*)|(?:(?:0?[1-9]|1[0-2])[/\-]\s*))?(?:19|20)\d{2}\s*[-–—]\s*(?:(?:(?:(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sept?(?:ember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?,?\s*)|(?:(?:0?[1-9]|1[0-2])[/\-]\s*))?(?:19|20)\d{2}|Present|Current|Till\s+Date|Now)|\b(?:(?:(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sept?(?:ember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?,?\s*)|(?:(?:0?[1-9]|1[0-2])[/\-]\s*))?(?:19|20)\d{2}\b|\b(?:Present|Current|Till\s+Date|Now)\b/i;
 
     const isJunkLine = (str) => {
       if (!str) return true;
@@ -1248,6 +1272,16 @@ const renderSkillsSection = (text, themeColor) => {
     });
   };
 
+  const renderDeleteButton = (key) => (
+    <button 
+      className="nvo-section-delete-btn" 
+      title={`Delete ${key} section`} 
+      onClick={(e) => { e.stopPropagation(); deleteSection(key); }}
+    >
+      <Trash2 size={12} />
+    </button>
+  );
+
   const renderSectionByKey = (sectionKey, isSidebar = false) => {
     const content = editedSections[sectionKey];
     if (!content || !content.trim()) return null;
@@ -1268,6 +1302,7 @@ const renderSkillsSection = (text, themeColor) => {
             <span className="nvo-drag-handle" title="Drag & drop section"><GripVertical size={14} /></span>
             <span className="ecv-section-title">SUMMARY</span>
             <div className="ecv-section-rule" style={{ backgroundColor: selectedColor }} />
+            {renderDeleteButton('Summary')}
           </div>
           <p 
             className="ecv-body-text nvo-editable-text"
@@ -1286,6 +1321,7 @@ const renderSkillsSection = (text, themeColor) => {
             <span className="nvo-drag-handle" title="Drag & drop section"><GripVertical size={14} /></span>
             <span className="ecv-section-title">EXPERIENCE</span>
             <div className="ecv-section-rule" style={{ backgroundColor: selectedColor }} />
+            {renderDeleteButton('Experience')}
           </div>
           {renderTimelineEntries(editedSections.Experience, selectedColor, 'Experience')}
         </div>
@@ -1299,6 +1335,7 @@ const renderSkillsSection = (text, themeColor) => {
             <span className="nvo-drag-handle" title="Drag & drop section"><GripVertical size={14} /></span>
             <span className="ecv-section-title">PROJECTS</span>
             <div className="ecv-section-rule" style={{ backgroundColor: selectedColor }} />
+            {renderDeleteButton('Projects')}
           </div>
           {renderTimelineEntries(editedSections.Projects, selectedColor, 'Projects')}
         </div>
@@ -1308,14 +1345,13 @@ const renderSkillsSection = (text, themeColor) => {
     if (sectionKey === 'Skills') {
       return (
         <div key={sectionKey} {...dragProps}>
-          <div className={isSidebar ? "ecv-sidebar-heading" : "ecv-section-header"} style={isSidebar ? {} : { color: selectedColor }}>
-            <span className="nvo-drag-handle" title="Drag & drop section"><GripVertical size={14} /></span>
-            {isSidebar ? 'SKILLS' : (
-              <>
-                <span className="ecv-section-title">SKILLS</span>
-                <div className="ecv-section-rule" style={{ backgroundColor: selectedColor }} />
-              </>
-            )}
+          <div className={isSidebar ? "ecv-sidebar-heading" : "ecv-section-header"} style={isSidebar ? { display: 'flex', alignItems: 'center', justifyContent: 'space-between' } : { color: selectedColor }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span className="nvo-drag-handle" title="Drag & drop section"><GripVertical size={14} /></span>
+              {isSidebar ? 'SKILLS' : <span className="ecv-section-title">SKILLS</span>}
+            </div>
+            {!isSidebar && <div className="ecv-section-rule" style={{ backgroundColor: selectedColor }} />}
+            {renderDeleteButton('Skills')}
           </div>
           <div 
             className="nvo-editable-text"
@@ -1332,14 +1368,13 @@ const renderSkillsSection = (text, themeColor) => {
     if (sectionKey === 'Education') {
       return (
         <div key={sectionKey} {...dragProps}>
-          <div className={isSidebar ? "ecv-sidebar-heading" : "ecv-section-header"} style={isSidebar ? {} : { color: selectedColor }}>
-            <span className="nvo-drag-handle" title="Drag & drop section"><GripVertical size={14} /></span>
-            {isSidebar ? 'EDUCATION' : (
-              <>
-                <span className="ecv-section-title">EDUCATION</span>
-                <div className="ecv-section-rule" style={{ backgroundColor: selectedColor }} />
-              </>
-            )}
+          <div className={isSidebar ? "ecv-sidebar-heading" : "ecv-section-header"} style={isSidebar ? { display: 'flex', alignItems: 'center', justifyContent: 'space-between' } : { color: selectedColor }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span className="nvo-drag-handle" title="Drag & drop section"><GripVertical size={14} /></span>
+              {isSidebar ? 'EDUCATION' : <span className="ecv-section-title">EDUCATION</span>}
+            </div>
+            {!isSidebar && <div className="ecv-section-rule" style={{ backgroundColor: selectedColor }} />}
+            {renderDeleteButton('Education')}
           </div>
           {renderTimelineEntries(editedSections.Education, selectedColor, 'Education')}
         </div>
@@ -1349,15 +1384,18 @@ const renderSkillsSection = (text, themeColor) => {
     if (sectionKey === 'Certifications') {
       return (
         <div key={sectionKey} {...dragProps}>
-          <div className={isSidebar ? "ecv-sidebar-heading" : "ecv-section-header"} style={isSidebar ? {} : { color: selectedColor }}>
-            <span className="nvo-drag-handle" title="Drag & drop section"><GripVertical size={14} /></span>
-            {isSidebar ? 'CERTIFICATIONS' : (
-              <>
-                <span className="ecv-section-icon">◈</span>
-                <span className="ecv-section-title">CERTIFICATIONS</span>
-                <div className="ecv-section-rule" style={{ backgroundColor: selectedColor }} />
-              </>
-            )}
+          <div className={isSidebar ? "ecv-sidebar-heading" : "ecv-section-header"} style={isSidebar ? { display: 'flex', alignItems: 'center', justifyContent: 'space-between' } : { color: selectedColor }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span className="nvo-drag-handle" title="Drag & drop section"><GripVertical size={14} /></span>
+              {isSidebar ? 'CERTIFICATIONS' : (
+                <>
+                  <span className="ecv-section-icon" style={{ marginRight: '4px' }}>◈</span>
+                  <span className="ecv-section-title">CERTIFICATIONS</span>
+                </>
+              )}
+            </div>
+            {!isSidebar && <div className="ecv-section-rule" style={{ backgroundColor: selectedColor }} />}
+            {renderDeleteButton('Certifications')}
           </div>
           <div 
             className="nvo-editable-text"
@@ -1763,41 +1801,40 @@ const renderSkillsSection = (text, themeColor) => {
     <div className={`nvo-editor-shell ${isPreviewMode ? 'is-preview' : ''}`} style={{ fontFamily: activeFontFamily }}>
       {/* ── NOVORESUME LEFT SIDEBAR RAIL ── */}
       <aside className="nvo-sidebar-rail">
-        <div className="nvo-brand-logo" onClick={() => navigate("/resume-optimizer")} title="Back to Optimizer">
+        <div className="nvo-brand-logo" onClick={() => navigate("/resume-optimizer")} title="Back to CareerLens">
           <ArrowLeft size={16} />
-          <span>CareerLens</span>
         </div>
 
         <button 
           className={`nvo-rail-btn ${activeRailTab === 'ai' ? 'active' : ''}`}
           onClick={() => setActiveRailTab(activeRailTab === 'ai' ? null : 'ai')}
+          data-tooltip="AI Assistant"
         >
-          <Bot size={18} />
-          <span>AI Assistant</span>
+          <Bot size={20} />
         </button>
 
         <button 
           className={`nvo-rail-btn ${activeRailTab === 'content' ? 'active' : ''}`}
           onClick={() => setActiveRailTab(activeRailTab === 'content' ? null : 'content')}
+          data-tooltip="My Content"
         >
-          <FileText size={18} />
-          <span>My Content</span>
+          <FileText size={20} />
         </button>
 
         <button 
           className={`nvo-rail-btn ${activeRailTab === 'templates' ? 'active' : ''}`}
           onClick={() => setActiveRailTab(activeRailTab === 'templates' ? null : 'templates')}
+          data-tooltip="Templates & Style"
         >
-          <Layers size={18} />
-          <span>Templates</span>
+          <Layers size={20} />
         </button>
 
         <button 
           className="nvo-rail-btn"
           onClick={() => navigate("/resume-optimizer")}
+          data-tooltip="Import PDF"
         >
-          <Upload size={18} />
-          <span>Import PDF</span>
+          <Upload size={20} />
         </button>
       </aside>
 
@@ -1908,6 +1945,51 @@ const renderSkillsSection = (text, themeColor) => {
             </div>
 
             <div className="nvo-drawer-body" style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div className="nvo-ai-card">
+                <span className="nvo-ai-card-title">Manage Resume Sections</span>
+                <p style={{ fontSize: '0.68rem', color: '#64748b', margin: '2px 0 8px', lineHeight: 1.35 }}>
+                  Toggle checkboxes to instantly show/hide sections. Active sections can be dragged to reorder.
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '6px' }}>
+                  {['Summary', 'Skills', 'Experience', 'Projects', 'Education', 'Certifications'].map(key => {
+                    const isActive = mainSectionOrder.includes(key) || sideSectionOrder.includes(key);
+                    return (
+                      <label 
+                        key={key} 
+                        style={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: '6px', 
+                          fontSize: '0.72rem', 
+                          color: isActive ? '#cbd5e1' : '#64748b',
+                          cursor: 'pointer',
+                          padding: '6px 8px',
+                          background: isActive ? 'rgba(255,255,255,0.03)' : 'transparent',
+                          border: '1px solid ' + (isActive ? 'rgba(255,255,255,0.08)' : 'transparent'),
+                          borderRadius: '6px',
+                          transition: 'all 0.2s ease',
+                          userSelect: 'none'
+                        }}
+                      >
+                        <input 
+                          type="checkbox" 
+                          checked={isActive} 
+                          onChange={() => {
+                            if (isActive) {
+                              deleteSection(key);
+                            } else {
+                              addSection(key);
+                            }
+                          }}
+                          style={{ accentColor: '#7c3aed', cursor: 'pointer' }}
+                        />
+                        <span>{key}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+
               <div className="nvo-ai-card" style={{ overflow: 'visible' }}>
                 <span className="nvo-ai-card-title">Select Section to Edit</span>
                 <CustomSectionSelect 
@@ -1960,49 +2042,144 @@ const renderSkillsSection = (text, themeColor) => {
           >
             <div className="nvo-drawer-header">
               <div className="nvo-drawer-title">
-                <Layers size={18} />
-                <span>Templates & Layouts</span>
+                <Layers size={16} />
+                <span>Templates & Style</span>
               </div>
               <button className="nvo-drawer-close" onClick={() => setActiveRailTab(null)}>
                 <X size={16} />
               </button>
             </div>
 
-            <div className="nvo-drawer-body" style={{ display: 'flex', flexDirection: 'column', gap: '14px', overflowY: 'auto' }}>
-              {/* Choose Layout */}
-              <div className="nvo-ai-card">
-                <span className="nvo-ai-card-title">Choose Layout</span>
-                <button 
-                  className={`nvo-ai-action-btn ${selectedTemplate === 'two-column' ? 'active' : ''}`}
-                  onClick={() => {
-                    setSelectedTemplate('two-column');
-                    localStorage.setItem("cl_selected_template", 'two-column');
-                  }}
-                >
-                  <LayoutGrid size={16} />
-                  <span>Double Column (Modern Tech)</span>
-                </button>
-                <button 
-                  className={`nvo-ai-action-btn ${selectedTemplate === 'single-column' ? 'active' : ''}`}
-                  onClick={() => {
-                    setSelectedTemplate('single-column');
-                    localStorage.setItem("cl_selected_template", 'single-column');
-                  }}
-                >
-                  <FileText size={16} />
-                  <span>Single Column (Classic Executive)</span>
-                </button>
+            <div className="tmpl-drawer-body">
+              {/* ── Layout ── */}
+              <div className="tmpl-group">
+                <span className="tmpl-group-label">Layout</span>
+                <div className="tmpl-layout-grid">
+                  {/* Double Column */}
+                  <button
+                    className={`tmpl-layout-card ${selectedTemplate === 'two-column' ? 'active' : ''}`}
+                    onClick={() => { setSelectedTemplate('two-column'); localStorage.setItem("cl_selected_template", 'two-column'); }}
+                  >
+                    <div className="tmpl-thumb">
+                      <svg viewBox="0 0 50 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="50" height="64" fill="white"/>
+                        <rect x="0" y="0" width="16" height="64" fill="#f1f5f9"/>
+                        <rect x="2" y="4" width="12" height="4" rx="1" fill="#cbd5e1"/>
+                        <rect x="2" y="10" width="12" height="2" rx="0.5" fill="#e2e8f0"/>
+                        <rect x="2" y="14" width="12" height="2" rx="0.5" fill="#e2e8f0"/>
+                        <rect x="2" y="20" width="10" height="1.5" rx="0.5" fill="#c084fc"/>
+                        <rect x="2" y="23" width="12" height="1.5" rx="0.5" fill="#e2e8f0"/>
+                        <rect x="2" y="26" width="10" height="1.5" rx="0.5" fill="#e2e8f0"/>
+                        <rect x="2" y="34" width="10" height="1.5" rx="0.5" fill="#c084fc"/>
+                        <rect x="2" y="37" width="12" height="1.5" rx="0.5" fill="#e2e8f0"/>
+                        <rect x="19" y="4" width="28" height="3" rx="0.5" fill="#94a3b8"/>
+                        <rect x="19" y="9" width="20" height="1.5" rx="0.5" fill="#cbd5e1"/>
+                        <rect x="19" y="15" width="12" height="1.5" rx="0.5" fill="#c084fc"/>
+                        <rect x="19" y="18" width="28" height="1" rx="0.5" fill="#e2e8f0"/>
+                        <rect x="19" y="20" width="28" height="1" rx="0.5" fill="#e2e8f0"/>
+                        <rect x="19" y="22" width="20" height="1" rx="0.5" fill="#e2e8f0"/>
+                        <rect x="19" y="28" width="12" height="1.5" rx="0.5" fill="#c084fc"/>
+                        <rect x="19" y="31" width="28" height="1" rx="0.5" fill="#e2e8f0"/>
+                        <rect x="19" y="33" width="22" height="1" rx="0.5" fill="#e2e8f0"/>
+                        <rect x="19" y="40" width="12" height="1.5" rx="0.5" fill="#c084fc"/>
+                        <rect x="19" y="43" width="28" height="1" rx="0.5" fill="#e2e8f0"/>
+                        <rect x="19" y="45" width="24" height="1" rx="0.5" fill="#e2e8f0"/>
+                      </svg>
+                    </div>
+                    <span className="tmpl-layout-name">Double<br/>Column</span>
+                  </button>
+
+                  {/* Single Column */}
+                  <button
+                    className={`tmpl-layout-card ${selectedTemplate === 'single-column' ? 'active' : ''}`}
+                    onClick={() => { setSelectedTemplate('single-column'); localStorage.setItem("cl_selected_template", 'single-column'); }}
+                  >
+                    <div className="tmpl-thumb">
+                      <svg viewBox="0 0 50 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="50" height="64" fill="white"/>
+                        <rect x="5" y="6" width="40" height="5" rx="1" fill="#334155"/>
+                        <rect x="10" y="13" width="30" height="1.5" rx="0.5" fill="#94a3b8"/>
+                        <rect x="5" y="17" width="40" height="0.5" fill="#e2e8f0"/>
+                        <rect x="5" y="21" width="16" height="1.5" rx="0.5" fill="#c084fc"/>
+                        <rect x="5" y="24" width="40" height="1" rx="0.5" fill="#e2e8f0"/>
+                        <rect x="5" y="26" width="36" height="1" rx="0.5" fill="#e2e8f0"/>
+                        <rect x="5" y="32" width="16" height="1.5" rx="0.5" fill="#c084fc"/>
+                        <rect x="5" y="35" width="30" height="1" rx="0.5" fill="#94a3b8"/>
+                        <rect x="5" y="38" width="40" height="1" rx="0.5" fill="#e2e8f0"/>
+                        <rect x="5" y="40" width="34" height="1" rx="0.5" fill="#e2e8f0"/>
+                        <rect x="5" y="42" width="40" height="1" rx="0.5" fill="#e2e8f0"/>
+                        <rect x="5" y="48" width="16" height="1.5" rx="0.5" fill="#c084fc"/>
+                        <rect x="5" y="51" width="40" height="1" rx="0.5" fill="#e2e8f0"/>
+                        <rect x="5" y="53" width="28" height="1" rx="0.5" fill="#e2e8f0"/>
+                      </svg>
+                    </div>
+                    <span className="tmpl-layout-name">Classic<br/>Executive</span>
+                  </button>
+
+                  {/* Right Sidebar */}
+                  <button
+                    className={`tmpl-layout-card ${selectedTemplate === 'right-sidebar' ? 'active' : ''}`}
+                    onClick={() => { setSelectedTemplate('right-sidebar'); localStorage.setItem("cl_selected_template", 'right-sidebar'); }}
+                  >
+                    <div className="tmpl-thumb">
+                      <svg viewBox="0 0 50 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="50" height="64" fill="white"/>
+                        <rect x="34" y="0" width="16" height="64" fill="#f1f5f9"/>
+                        <rect x="3" y="4" width="28" height="3" rx="0.5" fill="#94a3b8"/>
+                        <rect x="3" y="9" width="18" height="1.5" rx="0.5" fill="#cbd5e1"/>
+                        <rect x="3" y="15" width="12" height="1.5" rx="0.5" fill="#c084fc"/>
+                        <rect x="3" y="18" width="28" height="1" rx="0.5" fill="#e2e8f0"/>
+                        <rect x="3" y="20" width="24" height="1" rx="0.5" fill="#e2e8f0"/>
+                        <rect x="3" y="26" width="12" height="1.5" rx="0.5" fill="#c084fc"/>
+                        <rect x="3" y="29" width="28" height="1" rx="0.5" fill="#e2e8f0"/>
+                        <rect x="3" y="31" width="22" height="1" rx="0.5" fill="#e2e8f0"/>
+                        <rect x="36" y="4" width="12" height="3" rx="1" fill="#cbd5e1"/>
+                        <rect x="36" y="10" width="10" height="1.5" rx="0.5" fill="#c084fc"/>
+                        <rect x="36" y="13" width="12" height="1.5" rx="0.5" fill="#e2e8f0"/>
+                        <rect x="36" y="16" width="10" height="1.5" rx="0.5" fill="#e2e8f0"/>
+                      </svg>
+                    </div>
+                    <span className="tmpl-layout-name">Right<br/>Sidebar</span>
+                  </button>
+
+                  {/* Executive Split */}
+                  <button
+                    className={`tmpl-layout-card ${selectedTemplate === 'split-header' ? 'active' : ''}`}
+                    onClick={() => { setSelectedTemplate('split-header'); localStorage.setItem("cl_selected_template", 'split-header'); }}
+                  >
+                    <div className="tmpl-thumb">
+                      <svg viewBox="0 0 50 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="50" height="64" fill="white"/>
+                        <rect x="4" y="5" width="22" height="4" rx="0.5" fill="#334155"/>
+                        <rect x="28" y="7" width="18" height="1" rx="0.5" fill="#94a3b8"/>
+                        <rect x="28" y="9.5" width="14" height="1" rx="0.5" fill="#94a3b8"/>
+                        <rect x="4" y="13" width="42" height="0.5" fill="#c084fc"/>
+                        <rect x="4" y="17" width="14" height="1.5" rx="0.5" fill="#c084fc"/>
+                        <rect x="4" y="20" width="42" height="1" rx="0.5" fill="#e2e8f0"/>
+                        <rect x="4" y="22" width="36" height="1" rx="0.5" fill="#e2e8f0"/>
+                        <rect x="4" y="28" width="14" height="1.5" rx="0.5" fill="#c084fc"/>
+                        <rect x="4" y="31" width="30" height="1" rx="0.5" fill="#94a3b8"/>
+                        <rect x="4" y="34" width="42" height="1" rx="0.5" fill="#e2e8f0"/>
+                        <rect x="4" y="36" width="38" height="1" rx="0.5" fill="#e2e8f0"/>
+                        <rect x="4" y="44" width="14" height="1.5" rx="0.5" fill="#c084fc"/>
+                        <rect x="4" y="47" width="42" height="1" rx="0.5" fill="#e2e8f0"/>
+                        <rect x="4" y="49" width="30" height="1" rx="0.5" fill="#e2e8f0"/>
+                      </svg>
+                    </div>
+                    <span className="tmpl-layout-name">Executive<br/>Split</span>
+                  </button>
+                </div>
               </div>
 
-              {/* Color Themes */}
-              <div className="nvo-ai-card">
-                <span className="nvo-ai-card-title">Theme Color</span>
-                <div className="red-color-circles" style={{ justifyContent: 'flex-start', gap: '8px', padding: '4px 0' }}>
+              {/* ── Theme Color ── */}
+              <div className="tmpl-group">
+                <span className="tmpl-group-label">Theme Color</span>
+                <div className="tmpl-color-grid">
                   {PREMIUM_THEMES.map((theme) => (
                     <button
                       key={theme.hex}
-                      className={`red-color-dot ${selectedColor === theme.hex ? 'active' : ''}`}
-                      style={{ backgroundColor: theme.hex, width: '28px', height: '28px' }}
+                      className={`tmpl-color-swatch ${selectedColor === theme.hex ? 'active' : ''}`}
+                      style={{ backgroundColor: theme.hex }}
                       onClick={() => {
                         setSelectedColor(theme.hex);
                         localStorage.setItem("cl_selected_color", theme.hex);
@@ -2013,17 +2190,16 @@ const renderSkillsSection = (text, themeColor) => {
                 </div>
               </div>
 
-              {/* Typography / Font */}
-              <div className="nvo-ai-card">
-                <span className="nvo-ai-card-title">Typography</span>
+              {/* ── Font ── */}
+              <div className="tmpl-group">
+                <span className="tmpl-group-label">Typography</span>
                 <select 
                   value={selectedFont} 
                   onChange={(e) => {
                     setSelectedFont(e.target.value);
                     localStorage.setItem("cl_selected_font", e.target.value);
                   }} 
-                  className="nvo-ai-input"
-                  style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(255,255,255,0.08)' }}
+                  className="tmpl-select"
                 >
                   {PREMIUM_FONTS.map(f => (
                     <option key={f.name} value={f.name}>{f.name}</option>
@@ -2031,47 +2207,38 @@ const renderSkillsSection = (text, themeColor) => {
                 </select>
               </div>
 
-              {/* Margins */}
-              <div className="nvo-ai-card">
-                <span className="nvo-ai-card-title">Page Margins</span>
-                <select 
-                  value={pageMargins} 
-                  onChange={(e) => {
-                    const val = Number(e.target.value);
-                    setPageMargins(val);
-                    localStorage.setItem("cl_selected_margins", val);
-                  }} 
-                  className="nvo-ai-input"
-                  style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(255,255,255,0.08)' }}
-                >
-                  <option value={1}>Compact (0.3 in)</option>
-                  <option value={2}>Normal (0.5 in)</option>
-                  <option value={3}>Spacious (0.75 in)</option>
-                </select>
+              {/* ── Page Margins ── */}
+              <div className="tmpl-group">
+                <span className="tmpl-group-label">Page Margins</span>
+                <div className="tmpl-segments">
+                  {[{v:1,l:'Compact'},{v:2,l:'Normal'},{v:3,l:'Spacious'}].map(({v,l}) => (
+                    <button
+                      key={v}
+                      className={`tmpl-seg-btn ${pageMargins === v ? 'active' : ''}`}
+                      onClick={() => { setPageMargins(v); localStorage.setItem("cl_selected_margins", v); }}
+                    >{l}</button>
+                  ))}
+                </div>
               </div>
 
-              {/* Section Spacing */}
-              <div className="nvo-ai-card">
-                <span className="nvo-ai-card-title">Section Spacing</span>
-                <select 
-                  value={sectionSpacing} 
-                  onChange={(e) => {
-                    const val = Number(e.target.value);
-                    setSectionSpacing(val);
-                    localStorage.setItem("cl_selected_spacing", val);
-                  }} 
-                  className="nvo-ai-input"
-                  style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(255,255,255,0.08)' }}
-                >
-                  <option value={1}>Tight</option>
-                  <option value={3}>Normal</option>
-                  <option value={5}>Relaxed</option>
-                </select>
+              {/* ── Section Spacing ── */}
+              <div className="tmpl-group">
+                <span className="tmpl-group-label">Section Spacing</span>
+                <div className="tmpl-segments">
+                  {[{v:1,l:'Tight'},{v:3,l:'Normal'},{v:5,l:'Relaxed'}].map(({v,l}) => (
+                    <button
+                      key={v}
+                      className={`tmpl-seg-btn ${sectionSpacing === v ? 'active' : ''}`}
+                      onClick={() => { setSectionSpacing(v); localStorage.setItem("cl_selected_spacing", v); }}
+                    >{l}</button>
+                  ))}
+                </div>
               </div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
+
 
       {/* ── NOVORESUME WORKSPACE CANVAS ── */}
       <main className="nvo-workspace">
@@ -2155,9 +2322,9 @@ const renderSkillsSection = (text, themeColor) => {
                 '--bullet-margin': `${sectionSpacing * 1.2}px`,
               }}
             >
-              {/* ENHANCV-STYLE TWO-COLUMN */}
-              {selectedTemplate === 'two-column' ? (
-                <div className="ecv-layout">
+              {/* TWO-COLUMN & RIGHT-SIDEBAR */}
+              {selectedTemplate === 'two-column' || selectedTemplate === 'right-sidebar' ? (
+                <div className="ecv-layout" style={{ flexDirection: selectedTemplate === 'right-sidebar' ? 'row-reverse' : 'row' }}>
 
                   {/* ── DARK SIDEBAR ── */}
                   <div className="ecv-sidebar" style={{ background: 'transparent' }}>
@@ -2215,9 +2382,9 @@ const renderSkillsSection = (text, themeColor) => {
                 </div>
 
               ) : (
-                /* ── SINGLE COLUMN ELEGANT EXECUTIVE ── */
+                /* ── SINGLE COLUMN ELEGANT EXECUTIVE & SPLIT HEADER ── */
                 <div className="ecv-single">
-                  <div className="ecv-single-header-modern" style={getSectionFontSize('Header')}>
+                  <div className={`ecv-single-header-modern ${selectedTemplate === 'split-header' ? 'ecv-split-header-layout' : ''}`} style={getSectionFontSize('Header')}>
                     <h2 
                       className="ecv-single-name-modern nvo-editable-text"
                       contentEditable

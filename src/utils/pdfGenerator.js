@@ -291,7 +291,7 @@ const parseResumeSections = (text, userData = {}) => {
   return sections;
 };
 
-const DATE_PATTERN = /((?:[A-Za-z]{3,9}\.?\s+)?\d{4})\s*(?:[-–—]\s*((?:[A-Za-z]{3,9}\.?\s+)?\d{4}|Present|Current))?/i;
+const DATE_PATTERN = /((?:[A-Za-z]{3,9}\.?\s*)?\d{4})\s*(?:[-–—]\s*((?:[A-Za-z]{3,9}\.?\s*)?\d{4}|Present|Current))?/i;
 
 const splitLabelAndDate = (text) => {
   const t = safeText(text).trim();
@@ -474,7 +474,8 @@ class Column {
   entryHeader(label, date, { entrySpace = 2, sizeEntryHeader, sizeSubtitle, lhEntryHeader, minGap = 10 }) {
     this.y -= entrySpace;
     this.ensure(minGap);
-    const dateW = date ? this.dh.tw(date, sizeSubtitle, { italic: true }) : 0;
+    // Add 4 points to dateW to account for italic character overhang which causes clipping at the absolute right margin
+    const dateW = date ? this.dh.tw(date, sizeSubtitle, { italic: true }) + 4 : 0;
     
     if (date) {
       this.text(date, this.x + this.width - dateW, sizeSubtitle, { italic: true, color: GRAY });
@@ -1056,17 +1057,19 @@ export async function generateResumePDF({
     entrySpace: Math.max(6, Number(sectionSpacing) * 1.5 * fontScale),
   };
 
-  if (templateType === 'two-column') {
+  if (templateType === 'two-column' || templateType === 'right-sidebar') {
+    const isRight = templateType === 'right-sidebar';
     const SIDEBAR_W = 165;
-    const MAIN_X = 182;
-    const MAIN_W = PAGE_WIDTH - MAIN_X - 20;
+    const SIDEBAR_X = isRight ? PAGE_WIDTH - SIDEBAR_W : 0;
+    const MAIN_X = isRight ? 20 : 182;
+    const MAIN_W = PAGE_WIDTH - SIDEBAR_W - 37;
 
     // Dark sleek sidebar background (#121722)
     const SIDEBAR_BG = rgb(0.07, 0.09, 0.13);
-    p.drawRectangle({ x: 0, y: 0, width: SIDEBAR_W, height: PAGE_HEIGHT, color: SIDEBAR_BG });
+    p.drawRectangle({ x: SIDEBAR_X, y: 0, width: SIDEBAR_W, height: PAGE_HEIGHT, color: SIDEBAR_BG });
 
-    // Accent line on sidebar right border
-    p.drawLine({ start: { x: SIDEBAR_W, y: 0 }, end: { x: SIDEBAR_W, y: PAGE_HEIGHT }, thickness: 1, color: PRIMARY });
+    // Accent line on sidebar border
+    p.drawLine({ start: { x: isRight ? SIDEBAR_X : SIDEBAR_W, y: 0 }, end: { x: isRight ? SIDEBAR_X : SIDEBAR_W, y: PAGE_HEIGHT }, thickness: 1, color: PRIMARY });
 
     let sideY = PAGE_HEIGHT - 32;
 
@@ -1074,7 +1077,7 @@ export async function generateResumePDF({
     const initials = (id.name || 'U').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
     const avatarBoxW = 42;
     const avatarBoxH = 26;
-    const avatarX = (SIDEBAR_W - avatarBoxW) / 2;
+    const avatarX = SIDEBAR_X + (SIDEBAR_W - avatarBoxW) / 2;
 
     p.drawRectangle({
       x: avatarX,
@@ -1097,7 +1100,7 @@ export async function generateResumePDF({
     const nameLines = dh.wrapText(fullName, nameMaxW, nameSize, { bold: true });
     for (const nl of nameLines) {
       const nlW = dh.tw(nl, nameSize, { bold: true });
-      dh.drawText(p, nl, (SIDEBAR_W - nlW) / 2, sideY, nameSize, { bold: true, color: WHITE });
+      dh.drawText(p, nl, SIDEBAR_X + (SIDEBAR_W - nlW) / 2, sideY, nameSize, { bold: true, color: WHITE });
       sideY -= 14;
     }
 
@@ -1105,8 +1108,8 @@ export async function generateResumePDF({
     // Role omitted from PDF output
 
     // Sidebar Contact removed per user request
-    // Left Sidebar Column for Skills, Education, Certifications
-    const sideCol = new Column(pdf, dh, WHITE, { x: 14, width: SIDEBAR_W - 28, y: sideY, sidebarBg: SIDEBAR_BG, sidebarW: SIDEBAR_W, pageMode: 'multi-page' });
+    // Sidebar Column for Skills, Education, Certifications
+    const sideCol = new Column(pdf, dh, WHITE, { x: SIDEBAR_X + 14, width: SIDEBAR_W - 28, y: sideY, sidebarBg: SIDEBAR_BG, sidebarW: SIDEBAR_W, pageMode: 'multi-page' });
     sideCol.page = p;
 
     // Render Side Sections
@@ -1154,13 +1157,18 @@ export async function generateResumePDF({
     }
 
   } else {
-    // SINGLE-COLUMN ELEGANT EXECUTIVE LAYOUT
+    // SINGLE-COLUMN & SPLIT-HEADER LAYOUTS
+    const isSplit = templateType === 'split-header';
     let cursorY = PAGE_HEIGHT - 32;
 
     const nameStr = id.name.toUpperCase();
     const nameW = dh.tw(nameStr, sizes.sizeName, { bold: true });
-    dh.drawText(p, nameStr, (PAGE_WIDTH - nameW) / 2, cursorY, sizes.sizeName, { bold: true, color: PRIMARY });
-    cursorY -= 16;
+    const nameX = isSplit ? 36 : (PAGE_WIDTH - nameW) / 2;
+    dh.drawText(p, nameStr, nameX, cursorY, sizes.sizeName, { bold: true, color: PRIMARY });
+    
+    if (!isSplit) {
+      cursorY -= 16;
+    }
 
     const isRoleLine = (l) => /\b(developer|engineer|analyst|architect|manager|designer|consultant|specialist|lead|intern|fullstack|backend|frontend|sde|software)\b/i.test(l);
     
@@ -1179,7 +1187,7 @@ export async function generateResumePDF({
     const MAX_CONTACT_W = PAGE_WIDTH - 72;
     let fullContactStr = formattedParts.join(' | ');
 
-    if (dh.tw(fullContactStr, sizes.sizeContact) > MAX_CONTACT_W && formattedParts.length > 2) {
+    if (dh.tw(fullContactStr, sizes.sizeContact) > MAX_CONTACT_W && formattedParts.length > 2 && !isSplit) {
       const mid = Math.ceil(formattedParts.length / 2);
       const parts1 = formattedParts.slice(0, mid);
       const parts2 = formattedParts.slice(mid);
@@ -1195,10 +1203,21 @@ export async function generateResumePDF({
       dh.drawText(p, str2, Math.max(36, (PAGE_WIDTH - w2) / 2), cursorY, sizes.sizeContact, { color: DARK_GRAY });
       cursorY -= 12;
     } else if (fullContactStr) {
-      const contactW = dh.tw(fullContactStr, sizes.sizeContact);
-      const drawX = Math.max(36, (PAGE_WIDTH - contactW) / 2);
-      dh.drawText(p, fullContactStr, drawX, cursorY, sizes.sizeContact, { color: DARK_GRAY });
-      cursorY -= 12;
+      if (isSplit) {
+        // Split header logic: Draw multiple lines right-aligned if it's long, or just one line
+        const lines = dh.wrapText(fullContactStr, PAGE_WIDTH / 2 - 36, sizes.sizeContact);
+        for (const line of lines) {
+           const lineW = dh.tw(line, sizes.sizeContact);
+           dh.drawText(p, line, PAGE_WIDTH - 36 - lineW, cursorY, sizes.sizeContact, { color: DARK_GRAY });
+           cursorY -= 10;
+        }
+        cursorY -= 6; // extra padding after split header
+      } else {
+        const contactW = dh.tw(fullContactStr, sizes.sizeContact);
+        const drawX = Math.max(36, (PAGE_WIDTH - contactW) / 2);
+        dh.drawText(p, fullContactStr, drawX, cursorY, sizes.sizeContact, { color: DARK_GRAY });
+        cursorY -= 12;
+      }
     }
 
     p.drawLine({

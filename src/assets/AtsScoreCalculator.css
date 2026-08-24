@@ -575,3 +575,22 @@
   color: #9ca3af;
   max-width: 320px;
 }
+
+@media (max-width: 640px) {
+  .ats-calc-container {
+    padding: 5.5rem 12px 40px;
+  }
+  .ats-calc-card {
+    padding: 20px 16px;
+    border-radius: 16px;
+  }
+  .ats-calc-header {
+    margin-bottom: 24px;
+  }
+  .ats-calc-title {
+    font-size: 1.8rem;
+  }
+  .ats-calc-subtitle {
+    font-size: 0.9rem;
+  }
+}

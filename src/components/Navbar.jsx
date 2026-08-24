@@ -90,7 +90,9 @@ export default function Navbar() {
 
   const navLinks = [
     { path: "/dashboard", label: "Dashboard" },
+    { path: "/resume-builder", label: "Resume Builder" },
     { path: "/resumes", label: "Resume Studio" },
+    { path: "/job-extractor", label: "Job Extractor" },
     { path: "/jobs", label: "Career Hub" },
   ];
 
@@ -154,10 +156,10 @@ export default function Navbar() {
               if (link.path === "/resumes" && (location.pathname.includes("resume") || location.pathname.includes("template") || location.pathname.includes("ats"))) {
                 active = true;
               }
-              if (link.path === "/jobs" && (location.pathname.includes("job") || location.pathname.includes("interview") || location.pathname.includes("roadmap"))) {
+              if (link.path === "/jobs" && ((location.pathname.includes("job") && !location.pathname.includes("job-extractor")) || location.pathname.includes("interview") || location.pathname.includes("roadmap"))) {
                 active = true;
               }
-              
+
               return (
                 <Link key={link.path} to={link.path} className={`nb-link${active ? " nb-active" : ""}`}>
                   <span className="nb-link-label">{link.label}</span>
@@ -294,7 +296,7 @@ export default function Navbar() {
               if (link.path === "/resumes" && (location.pathname.includes("resume") || location.pathname.includes("template") || location.pathname.includes("ats"))) {
                 active = true;
               }
-              if (link.path === "/jobs" && (location.pathname.includes("job") || location.pathname.includes("interview") || location.pathname.includes("roadmap"))) {
+              if (link.path === "/jobs" && ((location.pathname.includes("job") && !location.pathname.includes("job-extractor")) || location.pathname.includes("interview") || location.pathname.includes("roadmap"))) {
                 active = true;
               }
               return (
@@ -303,6 +305,28 @@ export default function Navbar() {
                 </Link>
               );
             })}
+
+            {/* Mobile Pro Upgrade Link */}
+            <button 
+              className="nb-sidebar-pro-btn" 
+              onClick={() => { setSidebarOpen(false); setPricingOpen(true); }}
+              style={{
+                marginTop: '16px',
+                width: '100%',
+                padding: '12px',
+                borderRadius: '12px',
+                background: proStatus.isPro ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                color: '#ffffff',
+                fontWeight: '800',
+                fontSize: '0.86rem',
+                cursor: 'pointer',
+                textAlign: 'center',
+                boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)',
+              }}
+            >
+              {proStatus.isPro ? "👑 Pro Active" : "💎 Upgrade to Pro"}
+            </button>
           </nav>
         </div>
         <div className="nb-sidebar-footer">

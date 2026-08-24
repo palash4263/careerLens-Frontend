@@ -481,19 +481,22 @@
 }
 
 .rb-sidebar-title {
-  font-size: 1.2rem;
-  font-weight: 800;
+  font-size: 1.1rem;
+  font-weight: 700;
   color: #0f172a;
   text-align: center;
-  margin-bottom: 2px;
+  letter-spacing: -0.01em;
+  margin-bottom: 3px;
 }
 
 .rb-sidebar-subtitle {
-  font-size: 0.8rem;
+  font-size: 0.72rem;
   font-weight: 600;
-  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--doc-theme, #6366f1);
   text-align: center;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .rb-sidebar-section {
@@ -503,20 +506,22 @@
 }
 
 .rb-sidebar-section-title {
-  font-size: 0.72rem;
-  font-weight: 800;
+  font-size: 0.68rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  padding-bottom: 4px;
-  border-bottom: 1px solid #e2e8f0;
+  letter-spacing: 0.1em;
+  color: var(--doc-theme, #6366f1);
+  padding-bottom: 5px;
+  border-bottom: 1.5px solid var(--doc-theme, #6366f1);
 }
 
 .rb-sidebar-contact-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  font-size: 0.76rem;
-  color: #334155;
+  gap: 7px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #475569;
   word-break: break-all;
 }
 
@@ -1136,51 +1141,70 @@
   font-size: calc(1rem * var(--doc-scale, 1));
 }
 
+.rb-resume-doc [contenteditable="true"] {
+  cursor: text;
+  border-radius: 3px;
+  outline: none;
+}
+.rb-resume-doc [contenteditable="true"]:hover {
+  background: rgba(99, 102, 241, 0.08);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.12);
+}
+.rb-resume-doc [contenteditable="true"]:focus {
+  background: rgba(99, 102, 241, 0.1);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.35);
+}
+
 .rb-doc-name {
-  font-size: calc(1.5rem * var(--doc-scale, 1));
-  font-weight: 900;
+  font-size: calc(1.45rem * var(--doc-scale, 1));
+  font-weight: 800;
   color: #0f172a;
-  margin: 0 0 3px;
-  letter-spacing: -0.02em;
+  margin: 0 0 2px;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
 }
 .rb-doc-title {
-  font-size: calc(0.9rem * var(--doc-scale, 1));
-  font-weight: 700;
+  font-size: calc(0.82rem * var(--doc-scale, 1));
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   color: var(--doc-theme, #6366f1);
-  margin: 0 0 10px;
+  margin: 0 0 11px;
 }
 .rb-doc-contact {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 14px;
-  font-size: calc(0.78rem * var(--doc-scale, 1));
-  color: #475569;
-  margin-bottom: 18px;
-  padding-bottom: 14px;
-  border-bottom: 2px solid var(--doc-theme, #6366f1);
+  gap: 5px 12px;
+  font-size: calc(0.72rem * var(--doc-scale, 1));
+  font-weight: 500;
+  color: #64748b;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e2e8f0;
 }
 .rb-doc-contact span { display: inline-flex; align-items: center; gap: 4px; }
 
-.rb-doc-section { margin-top: 16px; }
+.rb-doc-section { margin-top: 15px; }
 .rb-doc-section-title {
-  font-size: calc(0.75rem * var(--doc-scale, 1));
-  font-weight: 800;
+  font-size: calc(0.68rem * var(--doc-scale, 1));
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
   color: var(--doc-theme, #6366f1);
-  padding-bottom: 4px;
-  border-bottom: 1.5px solid #cbd5e1;
-  margin-bottom: 10px;
+  padding-bottom: 5px;
+  margin-bottom: 11px;
+  border-bottom: 1.5px solid var(--doc-theme, #6366f1);
 }
-.rb-doc-summary { font-size: calc(0.84rem * var(--doc-scale, 1)); color: #334155; line-height: 1.6; }
+.rb-doc-summary { font-size: calc(0.82rem * var(--doc-scale, 1)); color: #334155; line-height: 1.55; }
 
-.rb-doc-entry { margin-bottom: 12px; }
-.rb-doc-entry-header { display: flex; justify-content: space-between; align-items: baseline; }
-.rb-doc-entry-title { font-size: calc(0.88rem * var(--doc-scale, 1)); font-weight: 800; color: #0f172a; }
-.rb-doc-entry-date { font-size: calc(0.74rem * var(--doc-scale, 1)); color: #64748b; white-space: nowrap; font-weight: 600; }
-.rb-doc-entry-sub { font-size: calc(0.8rem * var(--doc-scale, 1)); color: var(--doc-theme, #6366f1); font-weight: 700; margin-bottom: 4px; }
-.rb-doc-bullets { margin: 0; padding-left: 18px; }
-.rb-doc-bullets li { font-size: calc(0.8rem * var(--doc-scale, 1)); color: #334155; margin-bottom: 3px; }
+.rb-doc-entry { margin-bottom: 13px; }
+.rb-doc-entry-header { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.rb-doc-entry-title { font-size: calc(0.86rem * var(--doc-scale, 1)); font-weight: 700; color: #0f172a; letter-spacing: -0.005em; }
+.rb-doc-entry-date { font-size: calc(0.7rem * var(--doc-scale, 1)); color: #94a3b8; white-space: nowrap; font-weight: 500; font-style: italic; }
+.rb-doc-entry-sub { font-size: calc(0.76rem * var(--doc-scale, 1)); color: #475569; font-weight: 600; margin-bottom: 5px; }
+.rb-doc-bullets { margin: 0; padding-left: 16px; }
+.rb-doc-bullets li { font-size: calc(0.78rem * var(--doc-scale, 1)); color: #334155; line-height: 1.5; margin-bottom: 4px; }
+.rb-doc-bullets li::marker { color: var(--doc-theme, #6366f1); }
 
 .rb-doc-skills-grid {
   display: flex;

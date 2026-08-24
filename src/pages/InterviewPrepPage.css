@@ -1243,3 +1243,88 @@
   background: #8b5cf6;
   color: #fff;
 }
+
+@media (max-width: 768px) {
+  .ip-onboarding-wrapper,
+  .ip-workspace-wrapper {
+    padding: 5.5rem 12px 40px;
+  }
+  .ip-global-top-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .ip-mode-switcher-pills {
+    width: 100%;
+    justify-content: center;
+  }
+  .ip-hero-card {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 16px;
+    padding: 20px 16px;
+  }
+  .ip-hero-stats {
+    width: 100%;
+    justify-content: center;
+  }
+  .ip-ws-topbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    text-align: center;
+  }
+  .ip-ws-topic-title {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+@media (max-width: 640px) {
+  .ip-resume-card {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    text-align: center;
+  }
+  .ip-resume-left {
+    flex-direction: column;
+    align-items: center;
+  }
+  .ip-resume-prog-bar {
+    width: 100%;
+  }
+  .ip-resume-right {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+  .ip-resume-btn {
+    width: 100%;
+    justify-content: center;
+  }
+  .ip-ai-tutor-banner {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 16px;
+  }
+  .ip-tutor-avatar {
+    margin-bottom: 8px;
+  }
+  .ip-next-topic-recommendation {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+    text-align: center;
+  }
+  .ip-rec-left {
+    flex-direction: column;
+    align-items: center;
+  }
+  .ip-rec-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

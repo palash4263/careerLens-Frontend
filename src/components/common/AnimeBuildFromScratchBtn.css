@@ -131,3 +131,17 @@
   transform: translateX(4px);
   background: rgba(255, 255, 255, 0.28);
 }
+
+@media (max-width: 768px) {
+  .anime-scratch-btn-wrapper {
+    width: 100%;
+  }
+  .anime-scratch-btn {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .anime-scratch-content {
+    flex: 1;
+    justify-content: flex-start;
+  }
+}

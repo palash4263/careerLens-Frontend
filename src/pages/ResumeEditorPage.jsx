@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   ArrowLeft, Copy, Check, Sparkles, Download, X, Sliders, Maximize2,
   Trash2, LayoutGrid, CheckSquare, Plus, ArrowUp, ArrowDown, GripVertical,
+  Edit2,
   FileText, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight,
   Award, Globe, Briefcase, GraduationCap, ChevronRight, Undo2, Redo2, Type, Layers, Bot, Upload, Palette,
   Eye, EyeOff, User, Lightbulb, Save, Box
@@ -15,7 +16,7 @@ import { getResumes } from "../services/resumeService";
 import { getJobDescriptions } from "../services/jobDescriptionService";
 import { optimizeSection } from "../services/resumeOptimizationService";
 import { generateResumePDF } from "../utils/pdfGenerator";
-import { parseSections } from "../utils/resumeOptimizer";
+import { parseSections, extractKeywords } from "../utils/resumeOptimizer";
 import ScanCompletionModal from "../components/resume/ScanCompletionModal";
 import Resume3DViewer from "../components/resume/Resume3DViewer";
 import CustomSectionSelect from "../components/resume/CustomSectionSelect";
@@ -262,12 +263,20 @@ export default function ResumeEditorPage() {
 
   const [mainSectionOrder, setMainSectionOrder] = useState(() => {
     const saved = localStorage.getItem(`cl_main_order_${selectedResume}`);
-    return saved ? JSON.parse(saved) : DEFAULT_MAIN_SECTIONS;
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      return Array.isArray(parsed) && parsed.length > 0 ? parsed : DEFAULT_MAIN_SECTIONS;
+    }
+    return DEFAULT_MAIN_SECTIONS;
   });
 
   const [sideSectionOrder, setSideSectionOrder] = useState(() => {
     const saved = localStorage.getItem(`cl_side_order_${selectedResume}`);
-    return saved ? JSON.parse(saved) : DEFAULT_SIDE_SECTIONS;
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      return Array.isArray(parsed) ? parsed : DEFAULT_SIDE_SECTIONS;
+    }
+    return DEFAULT_SIDE_SECTIONS;
   });
 
   const [draggedSectionKey, setDraggedSectionKey] = useState(null);
@@ -275,6 +284,68 @@ export default function ResumeEditorPage() {
   const handleDragStart = (e, sectionKey) => {
     e.dataTransfer.setData("text/plain", sectionKey);
     setDraggedSectionKey(sectionKey);
+  };
+
+  const updateBlockBullet = (sectionKey, blockIndex, bulletIndex, newText) => {
+    const original = editedSections[sectionKey] || '';
+    const blocks = parseEntryBlocks(original);
+    if (!blocks[blockIndex]) return;
+    blocks[blockIndex].bullets[bulletIndex] = (newText || '').trim();
+
+    const reconstructed = blocks.map(b => {
+      const lines = [];
+      if (b.header) {
+        let headerLine = b.header;
+        if (b.subtitle || b.date) {
+          const subParts = [];
+          if (b.subtitle) subParts.push(b.subtitle);
+          if (b.date) subParts.push(b.date);
+          headerLine += ` | ${subParts.join(' | ')}`;
+        }
+        lines.push(headerLine);
+      }
+      if (b.bullets && b.bullets.length > 0) {
+        b.bullets.forEach(bt => lines.push(`• ${bt}`));
+      }
+      return lines.join('\n');
+    }).filter(Boolean).join('\n\n');
+
+    updateSectionsWithHistory({ ...editedSections, [sectionKey]: reconstructed });
+  };
+
+  const updateBlockField = (sectionKey, blockIndex, field, newText) => {
+    const original = editedSections[sectionKey] || '';
+    const blocks = parseEntryBlocks(original);
+    if (!blocks[blockIndex]) return;
+    blocks[blockIndex][field] = (newText || '').trim();
+
+    const reconstructed = blocks.map(b => {
+      const lines = [];
+      if (b.header) {
+        let headerLine = b.header;
+        if (b.subtitle || b.date) {
+          const subParts = [];
+          if (b.subtitle) subParts.push(b.subtitle);
+          if (b.date) subParts.push(b.date);
+          headerLine += ` | ${subParts.join(' | ')}`;
+        }
+        lines.push(headerLine);
+      }
+      if (b.bullets && b.bullets.length > 0) {
+        b.bullets.forEach(bt => lines.push(`• ${bt}`));
+      }
+      return lines.join('\n');
+    }).filter(Boolean).join('\n\n');
+
+    updateSectionsWithHistory({ ...editedSections, [sectionKey]: reconstructed });
+  };
+
+  const updateCertBullet = (index, newText) => {
+    const bullets = parseBulletPoints(editedSections.Certifications);
+    if (index < 0 || index >= bullets.length) return;
+    bullets[index] = (newText || '').trim();
+    const reconstructed = bullets.map(b => `• ${b}`).join('\n');
+    updateSectionsWithHistory({ ...editedSections, Certifications: reconstructed });
   };
 
   const handleDragOver = (e) => {
@@ -333,6 +404,7 @@ export default function ResumeEditorPage() {
   const [show3DViewer, setShow3DViewer] = useState(false);
   const [activeRailTab, setActiveRailTab] = useState("content");
   const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [inplaceEdit, setInplaceEdit] = useState(false);
   const [mobileSelectedSection, setMobileSelectedSection] = useState("Summary");
   const [isMobileView, setIsMobileView] = useState(() => window.innerWidth <= 768);
   const [mobileActiveTab, setMobileActiveTab] = useState("edit"); // "edit" or "preview"
@@ -575,6 +647,33 @@ export default function ResumeEditorPage() {
     }
   }, [result]);
 
+  // Update matched_keywords dynamically based on selected job description
+  useEffect(() => {
+    if (!selectedJobDescription || jobDescriptions.length === 0) return;
+    
+    const selectedJob = jobDescriptions.find(j => String(j.id) === String(selectedJobDescription));
+    if (!selectedJob || !selectedJob.description) return;
+
+    // Extract keywords from the selected job description
+    const matchedKeywords = extractKeywords(selectedJob.description);
+    
+    // Update result with the new matched_keywords
+    setResult(prevResult => {
+      if (!prevResult) {
+        // If there's no result yet, create one with matched keywords
+        return {
+          matched_keywords: matchedKeywords,
+          estimated_new_score: 88,
+        };
+      }
+      // Update existing result with new matched keywords
+      return {
+        ...prevResult,
+        matched_keywords: matchedKeywords,
+      };
+    });
+  }, [selectedJobDescription, jobDescriptions]);
+
   useEffect(() => {
     if (!selectedResume) return;
     // Save sections under a per-resume key so switching resumes never leaks data
@@ -585,6 +684,23 @@ export default function ResumeEditorPage() {
   useEffect(() => {
     if (!selectedResume || resumes.length === 0) return;
     const resumeId = String(selectedResume);
+
+    // Reload section order for this resume (with fallback to defaults)
+    const savedMain = localStorage.getItem(`cl_main_order_${resumeId}`);
+    if (savedMain) {
+      const parsedMain = JSON.parse(savedMain);
+      setMainSectionOrder(Array.isArray(parsedMain) && parsedMain.length > 0 ? parsedMain : DEFAULT_MAIN_SECTIONS);
+    } else {
+      setMainSectionOrder(DEFAULT_MAIN_SECTIONS);
+    }
+    const savedSide = localStorage.getItem(`cl_side_order_${resumeId}`);
+    if (savedSide) {
+      const parsedSide = JSON.parse(savedSide);
+      setSideSectionOrder(Array.isArray(parsedSide) ? parsedSide : DEFAULT_SIDE_SECTIONS);
+    } else {
+      setSideSectionOrder(DEFAULT_SIDE_SECTIONS);
+    }
+
     const cached = localStorage.getItem(`cl_edited_sections_${resumeId}`);
     if (cached) {
       const parsed = JSON.parse(cached);
@@ -614,15 +730,39 @@ export default function ResumeEditorPage() {
         const targetId = selectedResume || localStorage.getItem("cl_selected_resume") || String(resumeResponse[0]?.id);
         if (!selectedResume && targetId) setSelectedResume(targetId);
 
-        // Only populate sections from raw text if there is no cached data for this resume
+        // Priority 1: Use optimized text from the optimizer page (cl_optimization_result)
+        const savedResult = localStorage.getItem("cl_optimization_result");
+        if (savedResult) {
+          const parsedResult = JSON.parse(savedResult);
+          const optText = parsedResult?.optimizedText;
+          if (optText && optText.trim()) {
+            const sections = parseSections(optText);
+            const sanitized = sanitizeSections(sections);
+            const hasContent = Object.values(sanitized).some(v => v && v.trim());
+            if (hasContent) {
+              setEditedSections(sanitized);
+              // Cache it under the resume key so future loads are instant
+              if (targetId) {
+                localStorage.setItem(`cl_edited_sections_${targetId}`, JSON.stringify(sanitized));
+              }
+              return;
+            }
+          }
+        }
+
+        // Priority 2: Use cached edited sections for this resume
         const cached = localStorage.getItem(`cl_edited_sections_${targetId}`);
         const hasCachedContent = cached && Object.values(JSON.parse(cached)).some(v => v && v.trim());
-        if (!hasCachedContent) {
-          const targetResume = resumeResponse.find(r => String(r.id) === String(targetId)) || resumeResponse[0];
-          if (targetResume && targetResume.extracted_text) {
-            const parsed = parseSections(targetResume.extracted_text);
-            setEditedSections(sanitizeSections(parsed));
-          }
+        if (hasCachedContent) {
+          setEditedSections(sanitizeSections(JSON.parse(cached)));
+          return;
+        }
+
+        // Priority 3: Parse from the resume's extracted_text
+        const targetResume = resumeResponse.find(r => String(r.id) === String(targetId)) || resumeResponse[0];
+        if (targetResume && targetResume.extracted_text) {
+          const parsed = parseSections(targetResume.extracted_text);
+          setEditedSections(sanitizeSections(parsed));
         }
       } catch (err) {
         console.error("Failed to load metadata inside full-page editor", err);
@@ -707,51 +847,43 @@ export default function ResumeEditorPage() {
       // Export using html2canvas to match preview 100% exactly pixel-for-pixel
       const canvasEl = livePreviewRef.current;
       if (canvasEl) {
-        const canvas = await html2canvas(canvasEl, {
-          scale: 2.5,
-          useCORS: true,
-          allowTaint: true,
-          backgroundColor: '#ffffff',
-          logging: false,
-          width: canvasEl.scrollWidth,
-          height: canvasEl.scrollHeight,
-          windowWidth: 595,
-          onclone: (clonedDoc, clonedEl) => {
-            // 1. Remove all drag-handle icons (GripVertical UI elements)
-            clonedEl.querySelectorAll('.nvo-drag-handle').forEach(el => el.remove());
-            // 1b. Remove all section delete buttons
-            clonedEl.querySelectorAll('.nvo-section-delete-btn').forEach(el => el.remove());
-            // 2. Remove section block action bars
-            clonedEl.querySelectorAll('.nvo-block-action-bar').forEach(el => el.remove());
-            // 3. Remove all contentEditable attributes + focus outlines
-            clonedEl.querySelectorAll('[contenteditable]').forEach(el => {
-              el.removeAttribute('contenteditable');
-              el.style.outline = 'none';
-              el.style.border = 'none';
-              el.style.background = '';
-              el.style.boxShadow = 'none';
-            });
-            // 4. Remove dragging state borders/backgrounds
-            clonedEl.querySelectorAll('.nvo-section-draggable').forEach(el => {
-              el.style.outline = 'none';
-              el.style.border = 'none';
-              el.style.background = 'transparent';
-              el.style.cursor = 'default';
-            });
-            // 5. Remove nvo-editable-text hover states  
-            clonedEl.querySelectorAll('.nvo-editable-text').forEach(el => {
-              el.style.outline = 'none';
-              el.style.boxShadow = 'none';
-            });
-            // 6. Force exact A4 dimensions on the cloned canvas
-            clonedEl.style.setProperty('width', '595px', 'important');
-            clonedEl.style.setProperty('max-width', '595px', 'important');
-            clonedEl.style.setProperty('box-shadow', 'none', 'important');
-            clonedEl.style.setProperty('transform', 'none', 'important');
-            clonedEl.style.setProperty('border-radius', '0', 'important');
-            clonedEl.style.setProperty('margin', '0', 'important');
+        // Add a temporary class to the document to hide interactive UI while capturing
+        try {
+          document.documentElement.classList.add('cloning');
+          const canvas = await html2canvas(canvasEl, {
+            scale: 2.5,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: '#ffffff',
+            logging: false,
+            width: canvasEl.scrollWidth,
+            height: canvasEl.scrollHeight,
+            windowWidth: 595,
+          });
+
+          const imgWidth = 595;
+          const imgHeight = (canvas.height / canvas.width) * imgWidth;
+          const pageHeight = 842;
+          let heightLeft = imgHeight;
+
+          // Dynamic multi-page sliding window PDF generation using jsPDF with compression enabled
+          const pdf = new jsPDF({ orientation: 'p', unit: 'pt', format: 'a4', compress: true });
+          let position = 0;
+
+          pdf.addImage(canvas, 'JPEG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+          heightLeft -= pageHeight;
+
+          while (heightLeft > 0) {
+            position = heightLeft - imgHeight;
+            pdf.addPage();
+            pdf.addImage(canvas, 'JPEG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+            heightLeft -= pageHeight;
           }
-        });
+
+          pdf.save(`${customFileName}.pdf`);
+        } finally {
+          document.documentElement.classList.remove('cloning');
+        }
 
         const imgWidth = 595;
         const imgHeight = (canvas.height / canvas.width) * imgWidth;
@@ -934,7 +1066,7 @@ const renderSkillsSection = (text, themeColor) => {
     background: isWhite ? 'rgba(255,255,255,0.12)' : 'rgba(124, 58, 237, 0.08)',
     border: isWhite ? '1px solid rgba(255,255,255,0.25)' : '1px solid rgba(124, 58, 237, 0.28)',
     color: isWhite ? '#ffffff' : '#5b21b6',
-    fontSize: '0.62em',
+    fontSize: '0.78em',
     fontWeight: '600',
     display: 'inline-block',
   };
@@ -944,7 +1076,7 @@ const renderSkillsSection = (text, themeColor) => {
       <div>
         {categories.slice(0, 8).map((group, idx) => (
           <div key={idx} className="ecv-skill-group" style={{ marginBottom: '8px' }}>
-            <strong style={{ fontSize: '0.65em', color: isWhite ? '#ffffff' : '#6d28d9', display: 'block', marginBottom: '4px' }}>
+            <strong style={{ fontSize: '0.80em', color: isWhite ? '#ffffff' : '#6d28d9', display: 'block', marginBottom: '4px' }}>
               {group.cat}:
             </strong>
             <div style={{ display: 'flex', flexWrap: 'wrap' }}>
@@ -1048,8 +1180,11 @@ const renderSkillsSection = (text, themeColor) => {
 
       const dateMatch = trimmed.match(DATE_REGEX);
       const hasPipe = !isBulletChar && trimmed.includes('|');
+      const isActionVerb = ACTION_VERBS.test(cleanLine);
+      const isCapitalizedHeader = /^[A-Z0-9"'(]/.test(cleanLine);
 
-      const isNewEntryHeader = (hasPipe || dateMatch) && (currentBlock.bullets.length > 0 || (currentBlock.header && currentBlock.subtitle));
+      const isNonBulletHeader = !isBulletChar && !isActionVerb && currentBlock.bullets.length > 0 && isCapitalizedHeader;
+      const isNewEntryHeader = (hasPipe || dateMatch || isNonBulletHeader) && (currentBlock.bullets.length > 0 || (currentBlock.header && currentBlock.subtitle));
       if (isNewEntryHeader) {
         flush();
       }
@@ -1096,8 +1231,6 @@ const renderSkillsSection = (text, themeColor) => {
         }
         continue;
       }
-
-      const isActionVerb = ACTION_VERBS.test(cleanLine);
 
       if (isBulletChar || isActionVerb) {
         currentBlock.bullets.push(cleanLine);
@@ -1241,18 +1374,53 @@ const renderSkillsSection = (text, themeColor) => {
             </div>
           ) : (
             <>
-              {/* Company Name and Date - Two Column Layout */}
-              <div className="experience-header-row">
+              {/* Company / Project Title and Subtitle / Date */}
+                  <div className="experience-header-row">
                 <div className="experience-company-info">
                   {blk.header && (
-                    <span className="experience-company-name">{blk.header}</span>
+                    <span
+                      className="experience-company-name"
+                      contentEditable
+                      suppressContentEditableWarning
+                      onBlur={(e) => updateBlockField(sectionKey, idx, 'header', e.target.innerText)}
+                    >{blk.header}</span>
                   )}
-                  {blk.subtitle && (
-                    <span className="experience-job-title">{blk.subtitle}</span>
-                  )}
+                  {blk.subtitle && (() => {
+                    const cleanSub = blk.subtitle.replace(/^\[|\]$/g, '').trim();
+                    const isUrl = /^https?:\/\//i.test(cleanSub) || /^www\./i.test(cleanSub) || /\.(tech|com|io|dev|org|net|app|co)\b/i.test(cleanSub);
+                    if (isUrl) {
+                      const href = cleanSub.startsWith('http') ? cleanSub : `https://${cleanSub}`;
+                      return (
+                        <a 
+                          href={href} 
+                          target="_blank" 
+                          rel="noreferrer" 
+                          className="project-link-badge"
+                          style={{ color: themeColor }}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Globe size={11} style={{ marginRight: 3, display: 'inline-block', verticalAlign: 'middle' }} />
+                          {cleanSub.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')}
+                        </a>
+                      );
+                    }
+                    return (
+                      <span
+                        className="experience-job-title"
+                        contentEditable
+                        suppressContentEditableWarning
+                        onBlur={(e) => updateBlockField(sectionKey, idx, 'subtitle', e.target.innerText)}
+                      >{blk.subtitle}</span>
+                    );
+                  })()} 
                 </div>
                 {blk.date && (
-                  <span className="experience-date">{blk.date}</span>
+                  <span
+                    className="experience-date"
+                    contentEditable
+                    suppressContentEditableWarning
+                    onBlur={(e) => updateBlockField(sectionKey, idx, 'date', e.target.innerText)}
+                  >{blk.date}</span>
                 )}
               </div>
               
@@ -1261,7 +1429,18 @@ const renderSkillsSection = (text, themeColor) => {
                 {blk.bullets.map((bullet, bIdx) => (
                   <div key={bIdx} className="experience-bullet-row">
                     <span className="experience-bullet-dot" style={{ backgroundColor: themeColor }} />
-                    <span className="experience-bullet-text">{bullet}</span>
+                    <span
+                      className="experience-bullet-text"
+                      contentEditable
+                      suppressContentEditableWarning
+                      onBlur={(e) => updateBlockBullet(sectionKey, idx, bIdx, e.target.innerText)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); }
+                        if (e.key === 'Escape') e.currentTarget.blur();
+                      }}
+                    >
+                      {bullet}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -1404,7 +1583,17 @@ const renderSkillsSection = (text, themeColor) => {
             onBlur={(e) => updateSectionsWithHistory({ ...editedSections, Certifications: e.target.innerText })}
           >
             {parseBulletPoints(editedSections.Certifications).map((line, i) => (
-              <p key={i} className={isSidebar ? "ecv-sidebar-line" : "ecv-body-text"}>{line}</p>
+              <div key={i} className="experience-bullet-row">
+                <span className="experience-bullet-dot" style={{ backgroundColor: isSidebar ? '#ffffff' : selectedColor }} />
+                <span
+                  className={isSidebar ? "ecv-sidebar-line" : "experience-bullet-text"}
+                  contentEditable
+                  suppressContentEditableWarning
+                  onBlur={(e) => updateCertBullet(i, e.target.innerText)}
+                >
+                  {line}
+                </span>
+              </div>
             ))}
           </div>
         </div>
@@ -1798,7 +1987,7 @@ const renderSkillsSection = (text, themeColor) => {
   }
 
   return (
-    <div className={`nvo-editor-shell ${isPreviewMode ? 'is-preview' : ''}`} style={{ fontFamily: activeFontFamily }}>
+    <div className={`nvo-editor-shell ${isPreviewMode ? 'is-preview' : ''} ${inplaceEdit ? 'inplace-edit' : ''}`} style={{ fontFamily: activeFontFamily }}>
       {/* ── NOVORESUME LEFT SIDEBAR RAIL ── */}
       <aside className="nvo-sidebar-rail">
         <div className="nvo-brand-logo" onClick={() => navigate("/resume-optimizer")} title="Back to CareerLens">
@@ -1838,15 +2027,15 @@ const renderSkillsSection = (text, themeColor) => {
         </button>
       </aside>
 
-      {/* ── SIDE DRAWER PANELS ── */}
+      {/* ── RIGHT SIDE DRAWER PANELS ── */}
       <AnimatePresence>
         {activeRailTab === 'ai' && (
           <motion.div 
-            className="nvo-drawer-panel"
-            initial={{ opacity: 0, x: -20 }}
+            className="nvo-drawer-panel nvo-drawer-right"
+            initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-          >
+            exit={{ opacity: 0, x: 20 }}>
+
             <div className="nvo-drawer-header">
               <div className="nvo-drawer-title">
                 <Bot size={18} />
@@ -1856,6 +2045,7 @@ const renderSkillsSection = (text, themeColor) => {
                 <X size={16} />
               </button>
             </div>
+
 
             <div className="nvo-drawer-body">
               {/* ATS Score Card */}
@@ -1929,10 +2119,10 @@ const renderSkillsSection = (text, themeColor) => {
 
         {activeRailTab === 'content' && (
           <motion.div 
-            className="nvo-drawer-panel"
-            initial={{ opacity: 0, x: -20 }}
+            className="nvo-drawer-panel nvo-drawer-right"
+            initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
+            exit={{ opacity: 0, x: 20 }}
           >
             <div className="nvo-drawer-header">
               <div className="nvo-drawer-title">
@@ -2035,10 +2225,10 @@ const renderSkillsSection = (text, themeColor) => {
 
         {activeRailTab === 'templates' && (
           <motion.div 
-            className="nvo-drawer-panel"
-            initial={{ opacity: 0, x: -20 }}
+            className="nvo-drawer-panel nvo-drawer-right"
+            initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
+            exit={{ opacity: 0, x: 20 }}
           >
             <div className="nvo-drawer-header">
               <div className="nvo-drawer-title">
@@ -2291,6 +2481,18 @@ const renderSkillsSection = (text, themeColor) => {
             {downloading ? <span className="red-spinner" /> : <Download size={14} />}
             <span>{downloading ? 'Exporting...' : 'Download PDF (Ctrl+S)'}</span>
           </button>
+          <button
+            className="nvo-bar-btn"
+            onClick={() => {
+              if (!isPreviewMode) setIsPreviewMode(true);
+              setInplaceEdit(prev => !prev);
+            }}
+            title="Toggle inline editing in preview"
+            style={{ border: inplaceEdit ? '1px solid #7c3aed' : undefined }}
+          >
+            {inplaceEdit ? <Check size={14} /> : <Edit2 size={14} />}
+            <span>{inplaceEdit ? 'Inline Editing' : 'Enable Editing'}</span>
+          </button>
         </header>
 
         {/* ── CENTERED CANVAS VIEWPORT ── */}
@@ -2430,6 +2632,8 @@ const renderSkillsSection = (text, themeColor) => {
         </div>
 
       </main>
+
+
 
       <ScanCompletionModal
         isOpen={showCompletionModal}

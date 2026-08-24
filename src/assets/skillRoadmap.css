@@ -2,7 +2,7 @@
 
 .roadmap-page {
   min-height: 100vh;
-  padding: 40px 20px;
+  padding: 6.5rem 20px 60px;
   background-color: #020617; /* Deep Midnight Slate */
   font-family: 'Inter', sans-serif;
   color: #f8fafc;
@@ -294,5 +294,27 @@
 
 .rm-spacer {
   height: 12px;
+}
+
+@media (max-width: 640px) {
+  .roadmap-page {
+    padding: 5.5rem 12px 30px;
+  }
+  .glass-card {
+    padding: 20px 16px;
+    border-radius: 12px;
+  }
+  .roadmap-header h1 {
+    font-size: 1.8rem;
+  }
+  .roadmap-header p {
+    font-size: 0.95rem;
+  }
+  .rm-h1 {
+    font-size: 1.6rem;
+  }
+  .rm-h2 {
+    font-size: 1.25rem;
+  }
 }
 

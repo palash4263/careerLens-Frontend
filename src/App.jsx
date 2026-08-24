@@ -24,6 +24,7 @@ import AtsScoreCalculatorPage from "./pages/AtsScoreCalculatorPage";
 import InterviewPrepPage from "./pages/InterviewPrepPage";
 import ResumeBuilderPage from "./pages/ResumeBuilderPage";
 import SkillRoadmapPage from "./pages/SkillRoadmapPage";
+import JobExtractionPage from "./pages/JobExtractionPage";
 import api from "./api/axiosConfig";
 
 function ProtectedRoute({ children }) {
@@ -127,7 +128,7 @@ function Layout() {
             path="/resume-optimizer"
             element={
               <ProtectedRoute>
-                <ResumeOptimizationPage />
+                <Navigate to="/resume-builder" replace />
               </ProtectedRoute>
             }
           />
@@ -136,16 +137,7 @@ function Layout() {
             path="/optimizer"
             element={
               <ProtectedRoute>
-                <ResumeOptimizationPage />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/skill-roadmap"
-            element={
-              <ProtectedRoute>
-                <SkillRoadmapPage />
+                <Navigate to="/resume-builder" replace />
               </ProtectedRoute>
             }
           />
@@ -154,7 +146,7 @@ function Layout() {
             path="/resume-editor"
             element={
               <ProtectedRoute>
-                <ResumeEditorPage />
+                <Navigate to="/resume-builder" replace />
               </ProtectedRoute>
             }
           />
@@ -164,6 +156,15 @@ function Layout() {
             element={
               <ProtectedRoute>
                 <ResumeBuilderPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/skill-roadmap"
+            element={
+              <ProtectedRoute>
+                <SkillRoadmapPage />
               </ProtectedRoute>
             }
           />
@@ -190,6 +191,15 @@ function Layout() {
             element={
               <ProtectedRoute>
                 <ProfilePage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/job-extractor"
+            element={
+              <ProtectedRoute>
+                <JobExtractionPage />
               </ProtectedRoute>
             }
           />

@@ -87,14 +87,31 @@ const TECH_KEYWORDS = [
   "Jenkins", "Linux", "Bash", "Go", "Rust", "Swift", "Kotlin", "Flutter",
 ];
 
-function extractKeywords(jobDescriptionText = "") {
+export function extractKeywords(jobDescriptionText = "") {
   if (!jobDescriptionText) return [];
   const found = new Set();
-  for (const kw of TECH_KEYWORDS) {
+
+  // Sort by length (longest first) to match compound keywords like "Spring Boot" before "Spring"
+  const sortedKeywords = [...TECH_KEYWORDS].sort((a, b) => b.length - a.length);
+
+  for (const kw of sortedKeywords) {
     const escaped = kw.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
-    const re = new RegExp(`\\b${escaped}\\b`, "i");
-    if (re.test(jobDescriptionText)) found.add(kw);
+
+    // Try word boundary match first (handles normal spacing)
+    const boundaryRegex = new RegExp(`\\b${escaped}\\b`, "i");
+    if (boundaryRegex.test(jobDescriptionText)) {
+      found.add(kw);
+      continue;
+    }
+
+    // Try case-insensitive substring match (handles concatenated text like "FullstackDjangoReact")
+    const caseInsensitiveRegex = new RegExp(escaped, "i");
+    if (caseInsensitiveRegex.test(jobDescriptionText)) {
+      found.add(kw);
+      continue;
+    }
   }
+
   return [...found];
 }
 

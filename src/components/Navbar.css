@@ -480,11 +480,25 @@
 }
 
 .nb-toggle-line {
+  display: block;
   width: 100%;
   height: 2px;
   background: #f8fafc;
   border-radius: 99px;
-  transition: transform 0.2s ease;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+}
+
+/* Active Hamburger Animating to X */
+.nb-mobile-toggle.active .line-1 {
+  transform: translateY(8px) rotate(45deg);
+}
+
+.nb-mobile-toggle.active .line-2 {
+  opacity: 0;
+}
+
+.nb-mobile-toggle.active .line-3 {
+  transform: translateY(-8px) rotate(-45deg);
 }
 
 .nb-sidebar-overlay {
@@ -646,12 +660,12 @@
   }
 }
 
-@media (max-width: 992px) {
+@media (max-width: 1024px) {
   .nb-links {
     display: none;
   }
   .nb-mobile-toggle {
-    display: flex;
+    display: flex !important;
   }
   .nb-user-info {
     display: none;
@@ -662,8 +676,10 @@
   .nb-wrap {
     padding: 0 16px;
   }
-  .nb-divider {
-    display: none;
+  .nb-divider,
+  .nb-pro-btn,
+  .nb-logout {
+    display: none !important;
   }
 }
 

@@ -12,7 +12,6 @@ import { generateResumePDF } from "../utils/pdfGenerator";
 import { useScrollReveal } from "../hooks/useScrollReveal";
 import AnimeHeroAnimation from "../components/common/AnimeHeroAnimation";
 import AiNeuralTerminalConsole from "../components/common/AiNeuralTerminalConsole";
-import AnimeBuildFromScratchBtn from "../components/common/AnimeBuildFromScratchBtn";
 import AiCareerToolsQuickBar from "../components/common/AiCareerToolsQuickBar";
 import JobMatchModal from "../components/JobMatchModal";
 import SubNav from "../components/common/SubNav";
@@ -115,14 +114,19 @@ function ResumePage() {
   const loadResumes = async () => {
     try {
       const data = await getResumes();
-      const enhancedData = data.map(r => ({
-        ...r,
-        atsScore: r.atsScore || Math.floor(65 + ((r.id * 23) % 33)) // Generates a consistent score between 65 and 97 based on ID
-      }));
-      setResumes(enhancedData);
+      if (Array.isArray(data)) {
+        const enhancedData = data.map(r => ({
+          ...r,
+          atsScore: r.atsScore || Math.floor(65 + ((r.id * 23) % 33)) // Generates a consistent score between 65 and 97 based on ID
+        }));
+        setResumes(enhancedData);
+      } else {
+        setResumes([]);
+      }
     } catch (error) {
       console.error(error);
       showToast("Failed to load resumes", "error");
+      setResumes([]);
     }
   };
 
@@ -199,6 +203,49 @@ function ResumePage() {
     } catch (error) {
       console.error(error);
       showToast("Failed to delete resume.", "error");
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    if (resumes.length === 0) {
+      showToast("No resumes to delete", "error");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `⚠️ This will permanently delete all ${resumes.length} resume(s). This action cannot be undone. Continue?`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setLoading(true);
+      let successCount = 0;
+      let failureCount = 0;
+
+      for (const resume of resumes) {
+        try {
+          await deleteResume(resume.id);
+          successCount++;
+        } catch (err) {
+          console.error(err);
+          failureCount++;
+        }
+      }
+
+      if (successCount > 0) {
+        showToast(`${successCount} resume(s) deleted successfully!`, "success");
+      }
+      if (failureCount > 0) {
+        showToast(`Failed to delete ${failureCount} resume(s).`, "error");
+      }
+
+      await loadResumes();
+    } catch (error) {
+      console.error(error);
+      showToast("Failed to delete resumes.", "error");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -307,7 +354,6 @@ function ResumePage() {
               <span className="header-stat-value">{totalResumes}</span>
               <span className="header-stat-label">Total Resumes</span>
             </div>
-            <AnimeBuildFromScratchBtn onClick={() => navigate("/resume-builder")} />
           </div>
         </div>
 
@@ -477,8 +523,45 @@ function ResumePage() {
         {/* Resume Inventory List */}
         <section className="resume-list-premium scroll-reveal-3d">
           <div className="resume-list-header">
-            <h2>Uploaded Resumes</h2>
-            <span className="resume-count">{filteredResumes.length} of {resumes.length} resumes</span>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
+              <div>
+                <h2>Uploaded Resumes</h2>
+                <span className="resume-count">{filteredResumes.length} of {resumes.length} resumes</span>
+              </div>
+              {resumes.length > 0 && (
+                <button
+                  onClick={handleDeleteAll}
+                  disabled={loading}
+                  style={{
+                    padding: "8px 14px",
+                    background: "rgba(239,68,68,0.15)",
+                    color: "#fca5a5",
+                    border: "1px solid rgba(239,68,68,0.3)",
+                    borderRadius: "8px",
+                    fontSize: "0.85rem",
+                    fontWeight: 600,
+                    cursor: loading ? "not-allowed" : "pointer",
+                    opacity: loading ? 0.6 : 1,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    transition: "all 0.2s"
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!loading) {
+                      e.target.style.background = "rgba(239,68,68,0.25)";
+                      e.target.style.borderColor = "rgba(239,68,68,0.5)";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.background = "rgba(239,68,68,0.15)";
+                    e.target.style.borderColor = "rgba(239,68,68,0.3)";
+                  }}
+                >
+                  🗑️ Delete All
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="resume-search-filter-row">
@@ -509,12 +592,6 @@ function ResumePage() {
               <h3>No matching resumes found</h3>
               <p>Upload an existing PDF or build one from scratch with our guided builder.</p>
               <div className="empty-state-actions">
-                <button
-                  className="empty-state-build-btn"
-                  onClick={() => navigate("/resume-builder")}
-                >
-                  ✦ Build from Scratch
-                </button>
                 <button
                   className="empty-state-upload-btn"
                   onClick={() => document.getElementById('resumeFile')?.click()}

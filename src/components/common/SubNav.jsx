@@ -9,9 +9,9 @@ export default function SubNav({ type }) {
 
   const resumeLinks = [
     { path: "/resumes", label: "My Resumes", icon: "📄", desc: "Manage your resumes and check their core parsability." },
+    { path: "/resume-builder", label: "Build from Scratch", icon: "⚡", desc: "Create a new resume with AI-powered step-by-step guidance." },
     { path: "/templates", label: "Templates", icon: "🎨", desc: "Choose an ATS-friendly, professional design layout." },
     { path: "/ats-calculator", label: "ATS Score", icon: "📊", desc: "Audit your resume against a specific job description." },
-    { path: "/resume-optimizer", label: "AI Optimizer", icon: "✨", desc: "Instantly tailor your content to match any target role." },
   ];
 
   const careerLinks = [
@@ -22,7 +22,7 @@ export default function SubNav({ type }) {
 
   const links = type === 'resume' ? resumeLinks : careerLinks;
   
-  const activeLink = links.find(l => location.pathname === l.path || (l.path === '/resumes' && location.pathname === '/resume-builder')) || links[0];
+  const activeLink = links.find(l => location.pathname === l.path) || links[0];
   const activeDesc = hoveredPath ? links.find(l => l.path === hoveredPath)?.desc : activeLink?.desc;
 
   return (
@@ -31,16 +31,16 @@ export default function SubNav({ type }) {
         {links.map((link) => {
           const isActive = location.pathname === link.path || (link.path === '/resumes' && location.pathname === '/resume-builder');
           return (
-            <Link 
-              key={link.path} 
-              to={link.path} 
-              className={`subnav-tab ${isActive ? 'active' : ''}`}
+            <Link
+              key={link.path}
+              to={link.path}
+              className={`subnav-tab ${location.pathname === link.path ? 'active' : ''}`}
               onMouseEnter={() => setHoveredPath(link.path)}
               onMouseLeave={() => setHoveredPath(null)}
             >
               <span className="subnav-icon">{link.icon}</span>
               <span className="subnav-label">{link.label}</span>
-              {isActive && <div className="subnav-indicator" />}
+              {location.pathname === link.path && <div className="subnav-indicator" />}
             </Link>
           );
         })}

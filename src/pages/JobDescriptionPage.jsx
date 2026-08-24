@@ -10,7 +10,6 @@ import { extractJobFromUrl } from "../services/groqService";
 import { useScrollReveal } from "../hooks/useScrollReveal";
 import { motion } from "framer-motion";
 import { Search } from "lucide-react";
-import InterviewQuestionsModal from "../components/jobs/InterviewQuestionsModal";
 import AnimeLayoutGrid from "../components/common/AnimeLayoutGrid";
 import CtaFooter from "../components/CtaFooter";
 import SubNav from "../components/common/SubNav";
@@ -38,60 +37,93 @@ function JobDescriptionPage() {
   const [isExtractingUrl, setIsExtractingUrl] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Curated technology dictionary: label -> alternation of regex-safe match patterns.
+  // Matching is done with strict \b...\b word boundaries so substrings (e.g. "java"
+  // inside "javascript", "sql" inside "postgresql") never produce false positives.
+  const TECH_DICTIONARY = [
+    ["React", ["react(?:\\.js|js)?"]],
+    ["Next.js", ["next(?:\\.js|js)?"]],
+    ["Vue.js", ["vue(?:\\.js|js)?"]],
+    ["Angular", ["angular(?:js)?"]],
+    ["TypeScript", ["typescript"]],
+    ["JavaScript", ["javascript"]],
+    ["Node.js", ["node(?:\\.js|js)?"]],
+    ["Express.js", ["express(?:\\.js|js)?"]],
+    ["Redux", ["redux"]],
+    ["GraphQL", ["graphql"]],
+    ["REST APIs", ["rest(?:ful)?\\s*api(?:s)?"]],
+    ["Webpack", ["webpack"]],
+    ["Babel", ["babel"]],
+    ["Vite", ["vite"]],
+    ["Jest", ["jest"]],
+    ["Mocha", ["mocha"]],
+    ["Cypress", ["cypress"]],
+    ["Tailwind CSS", ["tailwind(?:\\s*css)?"]],
+    ["Sass/SCSS", ["sass", "scss"]],
+    ["CSS", ["css3?"]],
+    ["HTML", ["html5?"]],
+    ["WCAG/Accessibility", ["wcag", "accessibility", "a11y"]],
+    ["Python", ["python"]],
+    ["Java", ["java"]],
+    ["C++", ["c\\+\\+"]],
+    ["C#", ["c#"]],
+    ["Ruby", ["ruby"]],
+    ["Go", ["go(?:lang)?"]],
+    ["Rust", ["rust"]],
+    ["Spring Boot", ["spring\\s*boot", "spring"]],
+    [".NET", ["\\.net", "dotnet"]],
+    ["PostgreSQL", ["postgresql", "postgres"]],
+    ["MySQL", ["mysql"]],
+    ["MongoDB", ["mongodb", "mongo"]],
+    ["NoSQL", ["nosql"]],
+    ["SQL", ["sql"]],
+    ["Redis", ["redis"]],
+    ["AWS", ["aws", "amazon\\s*web\\s*services"]],
+    ["Azure", ["azure"]],
+    ["GCP", ["gcp", "google\\s*cloud"]],
+    ["Docker", ["docker"]],
+    ["Kubernetes", ["kubernetes", "k8s"]],
+    ["Git", ["git(?:hub|lab)?"]],
+    ["CI/CD", ["ci\\/cd", "cicd", "continuous\\s*integration", "continuous\\s*deployment"]],
+    ["Microservices", ["microservices?"]],
+    ["System Design", ["system\\s*design"]],
+    ["Machine Learning", ["machine\\s*learning", "\\bml\\b"]],
+    ["Artificial Intelligence", ["artificial\\s*intelligence"]],
+    ["Data Structures & Algorithms", ["data\\s*structures", "algorithms?"]],
+    ["Linux", ["linux", "unix"]],
+    ["JUnit", ["junit"]],
+    ["TestNG", ["testng"]],
+    ["Jenkins", ["jenkins"]],
+  ];
+
   // Extract tech keywords dynamically for live analyzer panel
   const getExtractedKeywords = (text) => {
     if (!text) return [];
-    const techKeywords = [
-      "react", "javascript", "typescript", "node", "python", "java", "sql", "aws", 
-      "docker", "kubernetes", "git", "rest api", "graphql", "css", "html", "mongodb",
-      "postgresql", "c++", "c#", "ruby", "go", "rust", "cicd", "agile", "scrum", "cloud",
-      "tcp/ip", "databases", "usb", "ethernet", "operating systems", "computer networks",
-      "serial communication", "linux", "unix", "windows", "machine learning", "ai", 
-      "artificial intelligence", "data structures", "algorithms", "system design",
-      "troubleshooting", "analytical", "backend", "frontend", "fullstack", "devops",
-      "spring boot", "microservices", "angular", "nosql", "gcp", "azure", "mysql", "junit", "testng",
-      "programming", "software development", "software engineering", "software design",
-      "software engineer", "software solutions", "research"
-    ];
-    
-    const lowerText = text.toLowerCase();
-    const strictBoundaryWords = ['go', 'c', 'c++', 'c#', 'ai'];
-
-    return techKeywords.filter(kw => {
-      if (strictBoundaryWords.includes(kw)) {
-        const escapedKw = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const regex = new RegExp(`(^|[^a-zA-Z0-9_])(${escapedKw})([^a-zA-Z0-9_]|$)`, 'i');
-        return regex.test(text);
-      }
-      return lowerText.includes(kw);
-    }).map(kw => {
-      if (kw === "rest api") return "REST API";
-      if (kw === "aws") return "AWS";
-      if (kw === "sql") return "SQL";
-      if (kw === "c++") return "C++";
-      if (kw === "c#") return "C#";
-      if (kw === "go") return "Go";
-      if (kw === "css") return "CSS";
-      if (kw === "html") return "HTML";
-      if (kw === "cicd") return "CI/CD";
-      if (kw === "tcp/ip") return "TCP/IP";
-      if (kw === "usb") return "USB";
-      if (kw === "ai") return "AI";
-      return kw.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-    });
+    return TECH_DICTIONARY
+      .filter(([, patterns]) => patterns.some(p => new RegExp(`(?<![\\w])(?:${p})(?!\\w)`, 'i').test(text)))
+      .map(([label]) => label);
   };
 
   // Extract soft skills dynamically for live analyzer panel
   const getExtractedSoftSkills = (text) => {
     if (!text) return [];
     const softSkills = [
-      "leadership", "communication", "collaboration", "teamwork", "problem solving",
-      "critical thinking", "creativity", "adaptability", "mentorship", "agile"
+      ["Leadership", ["leadership"]],
+      ["Communication", ["communication"]],
+      ["Collaboration", ["collaboration", "collaborative"]],
+      ["Teamwork", ["teamwork", "team\\s*player"]],
+      ["Problem Solving", ["problem[\\s-]solving"]],
+      ["Critical Thinking", ["critical\\s*thinking"]],
+      ["Creativity", ["creativity", "creative"]],
+      ["Adaptability", ["adaptability", "adaptable"]],
+      ["Mentorship", ["mentorship", "mentoring"]],
+      ["Agile/Scrum", ["agile", "scrum"]],
+      ["Analytical", ["analytical"]],
+      ["Debugging", ["debugging"]],
     ];
-    const words = text.toLowerCase();
-    return softSkills.filter(kw => words.includes(kw)).map(kw => {
-      return kw.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-    });
+    return softSkills
+      .filter(([, patterns]) => patterns.some(p => new RegExp(`(?<![\\w])(?:${p})(?!\\w)`, 'i').test(text)))
+      .map(([label]) => label);
   };
 
 
@@ -104,10 +136,17 @@ function JobDescriptionPage() {
   const loadJobDescriptions = async () => {
     try {
       const data = await getJobDescriptions();
-      setJobDescriptions(data);
-      setFilteredJobs(data);
+      if (Array.isArray(data)) {
+        setJobDescriptions(data);
+        setFilteredJobs(data);
+      } else {
+        setJobDescriptions([]);
+        setFilteredJobs([]);
+      }
     } catch (error) {
       console.error(error);
+      setJobDescriptions([]);
+      setFilteredJobs([]);
     }
   };
 
@@ -194,12 +233,14 @@ function JobDescriptionPage() {
     e.preventDefault();
     try {
       setLoading(true);
-      const savedJob = await createJobDescription(formData);
-      showToast("Job description created successfully!", "success");
-      const jobForModal = savedJob || { ...formData, id: Date.now() };
+      await createJobDescription(formData);
+      const savedTitle = formData.title?.trim();
       setFormData({ title: "", company: "", description: "" });
       await loadJobDescriptions();
-      setInterviewModalJob(jobForModal);
+      showToast(
+        savedTitle ? `"${savedTitle}" saved` : "Job description saved",
+        "success"
+      );
     } catch (error) {
       console.error(error);
       showToast("Failed to create job description.", "error");
@@ -246,10 +287,10 @@ function JobDescriptionPage() {
   };
 
   const toggleAllJobs = () => {
-    if (selectedJobs.length === filteredJobs.length) {
+    if (selectedJobs.length === (filteredJobs || []).length) {
       setSelectedJobs([]);
     } else {
-      setSelectedJobs(filteredJobs.map(j => j.id));
+      setSelectedJobs((filteredJobs || []).map(j => j.id));
     }
   };
 
@@ -277,8 +318,8 @@ function JobDescriptionPage() {
     showToast(selectedJobs.length > 0 ? `Exported ${selectedJobs.length} selected jobs!` : "Exported all jobs!", "success");
   };
 
-  const companyCount = new Set(jobDescriptions.map((job) => job.company)).size;
-  const atsReadyCount = jobDescriptions.length;
+  const companyCount = new Set((jobDescriptions || []).map((job) => job.company)).size;
+  const atsReadyCount = (jobDescriptions || []).length;
 
   // Get top company
   const getTopCompany = () => {
@@ -619,7 +660,7 @@ function JobDescriptionPage() {
               onChange={(e) => setFilterCompany(e.target.value)}
             >
               <option value="all">All Companies</option>
-              {[...new Set(jobDescriptions.map(j => j.company).filter(Boolean))].map(c => (
+              {[...new Set((jobDescriptions || []).map(j => j.company).filter(Boolean))].map(c => (
                 <option key={c} value={c}>{c}</option>
               ))}
             </select>
@@ -925,13 +966,6 @@ function JobDescriptionPage() {
           </div>
         </div>
       )}
-
-      {/* AI Interview Questions Modal */}
-      <InterviewQuestionsModal
-        isOpen={!!interviewModalJob}
-        onClose={() => setInterviewModalJob(null)}
-        job={interviewModalJob}
-      />
 
       {/* Toast Notification */}
       {toast && (

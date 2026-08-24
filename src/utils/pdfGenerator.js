@@ -291,7 +291,7 @@ const parseResumeSections = (text, userData = {}) => {
   return sections;
 };
 
-const DATE_PATTERN = /((?:[A-Za-z]{3,9}\.?\s*)?\d{4})\s*(?:[-–—]\s*((?:[A-Za-z]{3,9}\.?\s*)?\d{4}|Present|Current))?/i;
+const DATE_PATTERN = /((?:[A-Za-z]{3,9}\.?\s*)?\d{4}(?:\/(?:0?[1-9]|1[0-2]))?)\s*(?:[-–—]\s*((?:[A-Za-z]{3,9}\.?\s*)?\d{4}(?:\/(?:0?[1-9]|1[0-2]))?|Present|Current))?/i;
 
 const splitLabelAndDate = (text) => {
   const t = safeText(text).trim();
@@ -510,15 +510,23 @@ class Column {
   }
 }
 
-const DATE_REGEX = /\b(?:(?:(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sept?(?:ember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?,?\s+)|(?:(?:0?[1-9]|1[0-2])[/\-]\s*))?(?:19|20)\d{2}\s*[-–—]\s*(?:(?:(?:(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sept?(?:ember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?,?\s+)|(?:(?:0?[1-9]|1[0-2])[/\-]\s*))?(?:19|20)\d{2}|Present|Current|Till\s+Date|Now)|\b(?:(?:(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sept?(?:ember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?,?\s+)|(?:(?:0?[1-9]|1[0-2])[/\-]\s*))?(?:19|20)\d{2}\b|\b(?:Present|Current|Till\s+Date|Now)\b/i;
+const DATE_REGEX = /\b(?:(?:(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sept?(?:ember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?,?\s*)|(?:(?:0?[1-9]|1[0-2])[/\-]\s*))?(?:19|20)\d{2}\s*[-–—]\s*(?:(?:(?:(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sept?(?:ember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?,?\s*)|(?:(?:0?[1-9]|1[0-2])[/\-]\s*))?(?:19|20)\d{2}|Present|Current|Till\s+Date|Now)|\b(?:(?:(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sept?(?:ember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?,?\s*)|(?:(?:0?[1-9]|1[0-2])[/\-]\s*))?(?:19|20)\d{2}\b|\b(?:Present|Current|Till\s+Date|Now)\b/i;
 
 const formatDateRange = (str) => {
   if (!str) return '';
-  let formatted = str.replace(/\b(\d{4})-(\d{2})\b/g, (_, y, m) => {
+  // Convert YYYY/MM format to Month YYYY
+  let formatted = str.replace(/(\d{4})\/(\d{1,2})\b/g, (_, y, m) => {
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const idx = parseInt(m, 10) - 1;
     return (months[idx] || m) + " " + y;
   });
+  // Convert YYYY-MM format to Month YYYY
+  formatted = formatted.replace(/\b(\d{4})-(\d{2})\b/g, (_, y, m) => {
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const idx = parseInt(m, 10) - 1;
+    return (months[idx] || m) + " " + y;
+  });
+  // Convert MM/YYYY format to Month YYYY
   formatted = formatted.replace(/\b(0?[1-9]|1[0-2])[\/](\d{4})\b/g, (_, m, y) => {
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const idx = parseInt(m, 10) - 1;
@@ -948,7 +956,15 @@ async function generateSingleColumnPDF({
   }
 
   const pdfBytes = await pdf.save();
-  saveAs(new Blob([pdfBytes], { type: 'application/pdf' }), `${cleanFile}_optimized.pdf`);
+  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${cleanFile}_optimized.pdf`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }
 
 const sanitizeSections = (sectionsObj) => {
@@ -1257,6 +1273,14 @@ export async function generateResumePDF({
   }
 
   const pdfBytes = await pdf.save();
-  saveAs(new Blob([pdfBytes], { type: 'application/pdf' }), `${cleanFile}.pdf`);
+  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${cleanFile}.pdf`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
   return pdfBytes;
 }

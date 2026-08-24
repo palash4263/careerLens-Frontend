@@ -816,10 +816,22 @@
 
 /* Responsive Grid layouts */
 @media (max-width: 768px) {
+  .profile-page-wrapper {
+    padding: 5.5rem 12px 3rem;
+  }
+  .profile-card {
+    padding: 1.5rem 1.25rem;
+    border-radius: 20px;
+  }
   .profile-header {
     flex-direction: column;
     align-items: center;
     text-align: center;
+    gap: 1.25rem;
+  }
+  .profile-header-bg {
+    left: -1.25rem;
+    right: -1.25rem;
   }
   .profile-meta-row {
     justify-content: center;

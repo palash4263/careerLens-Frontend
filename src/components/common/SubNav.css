@@ -70,12 +70,18 @@
 }
 
 @media (max-width: 640px) {
+  .subnav-container {
+    padding: 0 8px;
+    margin-bottom: 20px;
+  }
   .subnav-track {
     justify-content: flex-start;
+    padding: 6px 16px;
+    gap: 6px;
   }
   .subnav-tab {
-    padding: 8px 16px;
-    font-size: 0.85rem;
+    padding: 8px 14px;
+    font-size: 0.82rem;
   }
 }
 

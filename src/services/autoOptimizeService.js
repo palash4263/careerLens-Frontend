@@ -58,7 +58,8 @@ export function atsScore(resumeText = "", keywords = []) {
   return Math.min(97, Math.max(52, Math.round(45 + ratio * 45) + structureBonus));
 }
 
-async function resolveKeywords(jdText) {
+/** JD keywords: Groq extraction merged with the local tech dictionary, de-duplicated. */
+export async function resolveKeywords(jdText) {
   const local = extractKeywords(jdText);
   let ai = [];
   try {

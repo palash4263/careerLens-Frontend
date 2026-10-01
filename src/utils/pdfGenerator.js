@@ -1038,6 +1038,7 @@ export async function generateResumePDF({
   fontFamily = 'inter',
   mainSectionOrder = ['Summary', 'Experience', 'Projects'],
   sideSectionOrder = ['Skills', 'Education', 'Certifications'],
+  returnBytes = false,     // true → skip the download and return { bytes, pageCount }
 }) {
   if (editedSections) {
     editedSections = sanitizeSections(editedSections);
@@ -1273,7 +1274,13 @@ export async function generateResumePDF({
   }
 
   const pdfBytes = await pdf.save();
-  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+  if (returnBytes) return { bytes: pdfBytes, pageCount: pdf.getPageCount() };
+  downloadPdfBytes(pdfBytes, cleanFile);
+  return pdfBytes;
+}
+
+function downloadPdfBytes(bytes, cleanFile) {
+  const blob = new Blob([bytes], { type: 'application/pdf' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
@@ -1282,5 +1289,27 @@ export async function generateResumePDF({
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
-  return pdfBytes;
+}
+
+// Font sizes to try, largest first. The first one that fits on a single page wins,
+// which is also the one that fills the page the most. The `sizes` table above floors
+// most metrics around 8pt, so going lower than 8 wouldn't shrink anything further.
+const ONE_PAGE_FONT_LADDER = [11.5, 11, 10.5, 10, 9.5, 9, 8.5, 8];
+
+/**
+ * Render the resume at the largest font size that still fits on one page, then download.
+ * Falls back to the smallest size (possibly multi-page) if nothing fits.
+ * @returns {{ fontSize: number, pageCount: number, fitted: boolean }}
+ */
+export async function generateOnePageResumePDF(opts) {
+  const spacing = Number(opts.sectionSpacing) || 3;
+  let last = null;
+  for (const fontSize of ONE_PAGE_FONT_LADDER) {
+    // Tighten section spacing along with the font so long resumes get a second lever.
+    const sectionSpacing = fontSize >= 10 ? spacing : Math.max(2, spacing - 1);
+    last = { fontSize, ...(await generateResumePDF({ ...opts, baseFontSize: fontSize, sectionSpacing, returnBytes: true })) };
+    if (last.pageCount === 1) break;
+  }
+  downloadPdfBytes(last.bytes, safeText(opts.fileName || 'resume').replace(/\.pdf$/i, ''));
+  return { fontSize: last.fontSize, pageCount: last.pageCount, fitted: last.pageCount === 1 };
 }

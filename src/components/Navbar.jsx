@@ -92,7 +92,6 @@ export default function Navbar() {
     { path: "/dashboard", label: "Dashboard" },
     { path: "/resume-builder", label: "Resume Builder" },
     { path: "/resumes", label: "Resume Studio" },
-    { path: "/job-extractor", label: "Job Extractor" },
     { path: "/jobs", label: "Career Hub" },
   ];
 
@@ -156,7 +155,7 @@ export default function Navbar() {
               if (link.path === "/resumes" && (location.pathname.includes("resume") || location.pathname.includes("template") || location.pathname.includes("ats"))) {
                 active = true;
               }
-              if (link.path === "/jobs" && ((location.pathname.includes("job") && !location.pathname.includes("job-extractor")) || location.pathname.includes("interview") || location.pathname.includes("roadmap"))) {
+              if (link.path === "/jobs" && (location.pathname.includes("job") || location.pathname.includes("interview") || location.pathname.includes("roadmap"))) {
                 active = true;
               }
 
@@ -296,7 +295,7 @@ export default function Navbar() {
               if (link.path === "/resumes" && (location.pathname.includes("resume") || location.pathname.includes("template") || location.pathname.includes("ats"))) {
                 active = true;
               }
-              if (link.path === "/jobs" && ((location.pathname.includes("job") && !location.pathname.includes("job-extractor")) || location.pathname.includes("interview") || location.pathname.includes("roadmap"))) {
+              if (link.path === "/jobs" && (location.pathname.includes("job") || location.pathname.includes("interview") || location.pathname.includes("roadmap"))) {
                 active = true;
               }
               return (

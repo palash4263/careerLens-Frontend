@@ -3,7 +3,7 @@
 import api from "../api/axiosConfig";
 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const GROQ_MODEL   = 'llama-3.3-70b-versatile'; // fast and high quality
+const GROQ_MODEL   = 'qwen/qwen3.8-27b'; // llama-3.3-70b-versatile was decommissioned by Groq (404); this is the current fast JSON-following chat model on the account's key
 
 /**
  * Build the system prompt for section optimization.
@@ -521,7 +521,9 @@ ${customPrompt ? `\n⚡ CRITICAL USER DIRECTION:\n${customPrompt}` : 'Generate a
     }
   ];
 
-  const idx = index % sampleProjects.length;
+  // Randomized rather than index-based, so repeated clicks on the same project
+  // card (same index) don't always land on the same canned fallback.
+  const idx = Math.floor(Math.random() * sampleProjects.length);
   return sampleProjects[idx];
 }
 
@@ -580,12 +582,12 @@ export async function generateAiProjectBullets(projectName = 'Project', tech = '
               role: 'system',
               content: `You are an elite FAANG tech recruiter and resume strategist. Generate 3 UNIQUE, DIVERSE, high-impact resume bullet points for a SPECIFIC project. Each bullet MUST:
 1. Start with a STRONG ACTION VERB (e.g., Architected, Engineered, Optimized, Pioneered, Accelerated, Scaled, Deployed, Automated, Refactored)
-2. Include a MEASURABLE METRIC or business impact (%, ms latency, throughput, cost savings, users reached, lines reduced)
+2. NOT every bullet needs a number. Across the 3 bullets, roughly 1-2 should include a single measurable metric (%, ms latency, throughput, cost savings, users reached) where it's genuinely impressive — the rest should be purely qualitative, describing the technical decision and its impact in words. Never stack two or more numbers in one bullet.
 3. Reference a CONCRETE technical detail (architecture pattern, specific tech, algorithm, integration)
-4. Follow the formula: [Action Verb] [what you built] [using X technology] [resulting in Y% improvement / Z ms latency / N users]
+4. Follow the formula: [Action Verb] [what you built] [using X technology] [impact — with a metric only if it earns its place]
 5. Be 1 sentence only, 15-25 words
 6. Avoid: "Designed and implemented", "Worked on", "Helped with", vague terms like "improved"
-7. Be DIVERSE in verb usage and metrics (one about performance, one about scale, one about reliability/automation)
+7. Be DIVERSE in verb usage, in whether a metric appears at all, and in the kind of metric when one does (performance, scale, reliability/automation)
 8. Avoid duplicate structures or phrasing from existing bullets
 9. ⛔ NEVER write the project name inside a bullet. The resume already displays it as the heading directly above these bullets — repeating it wastes space and reads as padding. Write about WHAT was built and HOW, not about "the project". Say "Architected a modular caching layer..." NOT "Architected [Project Name] using...".
 ${customPrompt ? `10. CRITICAL: ${customPrompt}` : ''}
@@ -856,7 +858,7 @@ export async function generateProjectBulletsWithClaude(projectName = 'Project', 
       tech,
       existingBullets: existingBullets.filter(Boolean),
       customPrompt,
-      instruction: "Generate 5 unique, high-impact resume bullet points. IMPORTANT: Do NOT mention the project name in any bullet. Focus on technical achievements, metrics, and impact. Start each bullet with a strong action verb."
+      instruction: "Generate 5 unique, high-impact resume bullet points. IMPORTANT: Do NOT mention the project name in any bullet. Focus on technical achievements and impact, with a strong action verb starting each bullet. NOT every bullet needs a number — mix purely qualitative bullets (describing the technical decision and its effect in words) with just 1-2 bullets that carry a single genuinely impressive metric. Never stack two or more numbers in the same bullet."
     });
 
     if (response?.data?.bullets && Array.isArray(response.data.bullets)) {

@@ -24,7 +24,8 @@ import AtsScoreCalculatorPage from "./pages/AtsScoreCalculatorPage";
 import InterviewPrepPage from "./pages/InterviewPrepPage";
 import ResumeBuilderPage from "./pages/ResumeBuilderPage";
 import SkillRoadmapPage from "./pages/SkillRoadmapPage";
-import JobExtractionPage from "./pages/JobExtractionPage";
+import AutoOptimizePage from "./pages/AutoOptimizePage";
+import PromptRewritePage from "./pages/PromptRewritePage";
 import api from "./api/axiosConfig";
 
 function ProtectedRoute({ children }) {
@@ -128,7 +129,7 @@ function Layout() {
             path="/resume-optimizer"
             element={
               <ProtectedRoute>
-                <Navigate to="/resume-builder" replace />
+                <Navigate to="/optimizer" replace />
               </ProtectedRoute>
             }
           />
@@ -137,7 +138,16 @@ function Layout() {
             path="/optimizer"
             element={
               <ProtectedRoute>
-                <Navigate to="/resume-builder" replace />
+                <AutoOptimizePage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/resume-rewrite"
+            element={
+              <ProtectedRoute>
+                <PromptRewritePage />
               </ProtectedRoute>
             }
           />
@@ -191,15 +201,6 @@ function Layout() {
             element={
               <ProtectedRoute>
                 <ProfilePage />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/job-extractor"
-            element={
-              <ProtectedRoute>
-                <JobExtractionPage />
               </ProtectedRoute>
             }
           />

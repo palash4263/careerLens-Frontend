@@ -9,7 +9,8 @@ export default function SubNav({ type }) {
 
   const resumeLinks = [
     { path: "/resumes", label: "My Resumes", icon: "📄", desc: "Manage your resumes and check their core parsability." },
-    { path: "/resume-builder", label: "Build from Scratch", icon: "⚡", desc: "Create a new resume with AI-powered step-by-step guidance." },
+    { path: "/optimizer", label: "AI Optimize", icon: "⚡", desc: "One click: tailor your resume to a job and download a one-page PDF." },
+    { path: "/resume-rewrite", label: "Prompt Rewrite", icon: "✍️", desc: "Rewrite an uploaded resume with your own prompt and download it as a PDF." },
     { path: "/templates", label: "Templates", icon: "🎨", desc: "Choose an ATS-friendly, professional design layout." },
     { path: "/ats-calculator", label: "ATS Score", icon: "📊", desc: "Audit your resume against a specific job description." },
   ];

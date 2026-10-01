@@ -15,6 +15,15 @@ import { generateResumePDF } from "../utils/pdfGenerator";
 import { uploadResume, getResumes } from "../services/resumeService";
 import { getJobDescriptions } from "../services/jobDescriptionService";
 import { extractKeywords, parseSections } from "../utils/resumeOptimizer";
+import {
+  loadSkillLibrary,
+  registerSkills,
+  getKnownSkills,
+  canonicalizeSkill,
+  isKnownSkill,
+  normalizeSkill,
+  parseSkillBlob,
+} from "../utils/skillLibrary";
 import AiPromptModal from "../components/AiPromptModal";
 import CustomMonthPicker from "../components/CustomMonthPicker";
 import CustomYearPicker from "../components/CustomYearPicker";
@@ -28,6 +37,18 @@ import {
   ProjectsStep,
 } from "../components/resume-builder-steps";
 import "./ResumeBuilderPage.css";
+
+// AI responses (esp. the backend Claude endpoint) sometimes pack several bullets into
+// one array element separated by a raw newline instead of returning separate elements.
+// The live editor still renders each array entry as its own box, so this looks fine
+// in-app — but the PDF re-joins bullets into one text block and re-splits by line, so an
+// un-prefixed embedded line gets silently merged onto the previous bullet in the export.
+// Split those back apart wherever bullets enter state, including a previously saved draft.
+const flattenBullets = (bullets) =>
+  (bullets || [])
+    .flatMap(b => String(b || "").split(/\r?\n+/))
+    .map(b => b.replace(/^[•\-\*\d.)\s]+/, "").trim())
+    .filter(Boolean);
 
 /* ─── Step config ─── */
 const STEPS = [
@@ -84,10 +105,16 @@ export default function ResumeBuilderPage() {
     name: "", title: "", email: "", phone: "", location: "", linkedin: "", portfolio: "",
   });
   const [summary, setSummary] = useState(savedData?.summary ?? "");
-  const [experiences, setExperiences] = useState(savedData?.experiences || [defaultExperience(), defaultExperience()]);
+  const [experiences, setExperiences] = useState(
+    (savedData?.experiences || [defaultExperience(), defaultExperience()])
+      .map(e => ({ ...e, bullets: flattenBullets(e.bullets).length ? flattenBullets(e.bullets) : (e.bullets || [""]) }))
+  );
   const [educations, setEducations] = useState(savedData?.educations || [defaultEducation()]);
   const [skills, setSkills] = useState(savedData?.skills || []);
-  const [projects, setProjects] = useState(savedData?.projects || [defaultProject(), defaultProject()]);
+  const [projects, setProjects] = useState(
+    (savedData?.projects || [defaultProject(), defaultProject()])
+      .map(p => ({ ...p, bullets: flattenBullets(p.bullets).length ? flattenBullets(p.bullets) : (p.bullets || [""]) }))
+  );
   const [docFontSize, setDocFontSize] = useState(savedData?.docFontSize || 10);
   const [docThemeColor, setDocThemeColor] = useState(savedData?.docThemeColor || "#6366f1");
   const [docFontFamily, setDocFontFamily] = useState(savedData?.docFontFamily || "inter");
@@ -99,6 +126,74 @@ export default function ResumeBuilderPage() {
   const [customJdText, setCustomJdText] = useState("");
   const [jdSkillsExtracted, setJdSkillsExtracted] = useState([]);
   const [jdExtractSuccess, setJdExtractSuccess] = useState("");
+
+  /* ─── Locally remembered skills (persists across JDs and sessions) ─── */
+  const [skillLibrary, setSkillLibrary] = useState(() => loadSkillLibrary());
+  const [newSkillNotice, setNewSkillNotice] = useState("");
+
+  // Remember every skill that lands on the resume, whatever added it.
+  const rememberSkills = (incoming) => {
+    setSkillLibrary(registerSkills(incoming));
+  };
+
+  /* ─── Skill picker: staged candidates the user ticks before they hit the resume ─── */
+  const [skillCandidates, setSkillCandidates] = useState([]);
+  const [selectedCandidates, setSelectedCandidates] = useState([]);
+
+  // Stage a batch of skills for review. Everything parsed is shown — including
+  // skills already on the resume, so the user can see the overlap — but only the
+  // new ones arrive pre-ticked.
+  const stageSkillCandidates = (incoming) => {
+    const fresh = incoming.filter(
+      c => !skills.some(s => normalizeSkill(s) === normalizeSkill(c))
+    );
+    setSkillCandidates(prev => {
+      const merged = [...prev];
+      incoming.forEach(c => {
+        if (!merged.some(m => normalizeSkill(m) === normalizeSkill(c))) merged.push(c);
+      });
+      return merged;
+    });
+    setSelectedCandidates(prev =>
+      Array.from(new Set([...prev, ...fresh.map(normalizeSkill)]))
+    );
+    return fresh;
+  };
+
+  const toggleCandidate = (candidate) => {
+    const key = normalizeSkill(candidate);
+    setSelectedCandidates(prev =>
+      prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+    );
+  };
+
+  const addSelectedCandidates = () => {
+    const chosen = skillCandidates.filter(c => selectedCandidates.includes(normalizeSkill(c)));
+    if (chosen.length === 0) return;
+
+    setSkills(prev => {
+      const next = [...prev];
+      chosen.forEach(c => {
+        if (!next.some(s => normalizeSkill(s) === normalizeSkill(c))) next.push(c);
+      });
+      return next;
+    });
+    rememberSkills(chosen);
+
+    // Keep whatever the user left unticked, in case they want a second pass.
+    setSkillCandidates(prev =>
+      prev.filter(c => !selectedCandidates.includes(normalizeSkill(c)))
+    );
+    setSelectedCandidates([]);
+    setNewSkillNotice(`Added ${chosen.length} skill(s) to your resume.`);
+    setTimeout(() => setNewSkillNotice(""), 4000);
+  };
+
+  // Seed the library from a restored draft so previously typed skills are known too.
+  useEffect(() => {
+    if (skills.length > 0) setSkillLibrary(registerSkills(skills));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     getJobDescriptions()
@@ -468,10 +563,37 @@ export default function ResumeBuilderPage() {
 
   const addSkill = () => {
     const trimmed = skillInput.trim();
-    if (trimmed && !skills.includes(trimmed)) {
-      setSkills(s => [...s, trimmed]);
+    if (!trimmed) return;
+
+    // A paste of many skills goes to the picker rather than becoming one giant tag.
+    const parsed = parseSkillBlob(trimmed, skillLibrary);
+    if (parsed.length > 1) {
+      stageSkillCandidates(parsed);
       setSkillInput("");
+      setNewSkillNotice(`Found ${parsed.length} skills — pick the ones you want above.`);
+      setTimeout(() => setNewSkillNotice(""), 4000);
+      return;
     }
+
+    // Reuse the spelling we already remember, so "aws" becomes the stored "AWS"
+    // instead of sitting next to it as a second tag.
+    const known = isKnownSkill(trimmed, skillLibrary);
+    const skill = canonicalizeSkill(trimmed, skillLibrary);
+
+    if (skills.some(s => normalizeSkill(s) === normalizeSkill(skill))) {
+      setSkillInput("");
+      return;
+    }
+
+    setSkills(s => [...s, skill]);
+    rememberSkills(skill);
+    setSkillInput("");
+    setNewSkillNotice(
+      known
+        ? `"${skill}" recognized from your saved skills.`
+        : `"${skill}" saved — it'll be suggested for your next job description.`
+    );
+    setTimeout(() => setNewSkillNotice(""), 4000);
   };
   const removeSkill = (sk) => setSkills(s => s.filter(x => x !== sk));
 
@@ -551,17 +673,27 @@ export default function ResumeBuilderPage() {
     }
   };
 
-  const executeGroqProjectWithJdSkills = async (targetId, cardIdx = 0) => {
+  /* Download file name = candidate name + role applied to, e.g. Palash_Mishra_Backend_Engineer_Resume */
+  const buildResumeFileName = () => {
+    const sanitize = (v) =>
+      String(v || "").trim().replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_]/g, "");
+
+    const jdRole =
+      selectedJdId && selectedJdId !== "custom"
+        ? jobDescriptions.find(j => String(j.id) === String(selectedJdId))?.title
+        : "";
+
+    const name = sanitize(personal.name) || "Candidate";
+    const role = sanitize(jdRole) || sanitize(personal.title) || "Software_Engineer";
+
+    return `${name}_${role}_Resume`;
+  };
+
+  const executeGroqProjectWithJdSkills = async (targetId, cardIdx = 0, focusSkill = "") => {
     const key = targetId ? `proj_${targetId}` : "project";
     setAiKeyLoading(key, true);
     try {
-      let targetJdText = "";
-      if (selectedJdId === "custom") {
-        targetJdText = customJdText;
-      } else if (selectedJdId) {
-        const found = jobDescriptions.find(j => String(j.id) === String(selectedJdId));
-        targetJdText = found?.description || found?.title || "";
-      }
+      const targetJdText = getTargetJdText();
 
       // 1. Gather active extracted JD skills + candidate's skills
       let activeSkills = jdSkillsExtracted;
@@ -579,9 +711,10 @@ MANDATORY REQUIREMENTS:
 1. The tech stack MUST prominently feature the target JD skills listed above
 2. The description MUST explicitly name at least 3-4 of those skills in context (not just list them)
 3. Follow Google's XYZ formula: "Accomplished [X] as measured by [Y] by doing [Z]"
-4. Include at least 2 concrete metrics (latency in ms, throughput req/sec, % improvement, user scale)
+4. Include exactly ONE concrete metric (latency in ms, throughput req/sec, % improvement, or user scale) — do not stack multiple numbers in the description
 5. Show ARCHITECTURAL depth — mention specific patterns (caching, queuing, microservices, indexing) that a senior engineer would recognize
 6. Every skill mentioned should be tied to a real technical decision, not name-dropped
+${focusSkill ? `7. PRIORITIZE "${focusSkill}" specifically — it must appear in both the tech stack and the description, tied to a concrete technical decision.` : ""}
 
 The goal is maximum ATS keyword match while remaining technically credible to a hiring engineer.`;
 
@@ -605,6 +738,85 @@ The goal is maximum ATS keyword match while remaining technically credible to a 
     }
   };
 
+  // Resolve whatever the user has set as the target job — selected upload or pasted text.
+  const getTargetJdText = () => {
+    if (selectedJdId === "custom") return customJdText;
+    if (selectedJdId) {
+      const found = jobDescriptions.find(j => String(j.id) === String(selectedJdId));
+      return found?.description || found?.title || "";
+    }
+    return "";
+  };
+
+  /**
+   * Invents a brand-new project from scratch, grounded in the target JD's actual
+   * domain (responsibilities, business context) — not just its skill keywords.
+   * Unlike "Weave JD Skills", this never overwrites an existing project; it always
+   * adds a new card (or fills the first empty one).
+   */
+  const executeGroqProjectFromJd = async (userPrompt = "") => {
+    const targetJdText = getTargetJdText();
+    if (!targetJdText.trim()) {
+      alert("Select an uploaded Job Description or paste job text in the Skills step first.");
+      return;
+    }
+
+    setAiKeyLoading("proj_from_jd", true);
+    try {
+      let activeSkills = jdSkillsExtracted;
+      if (!activeSkills || activeSkills.length === 0) activeSkills = extractKeywords(targetJdText);
+      const skillsListStr = activeSkills.slice(0, 10).join(", ");
+
+      const domainPrompt = `TARGET JOB DESCRIPTION (use this for domain, business context and responsibilities — not just keywords):
+"""
+${targetJdText.slice(0, 1800)}
+"""
+
+TARGET JD SKILLS TO WEAVE IN: [${skillsListStr || "React, Node.js, PostgreSQL, Docker, AWS"}]
+
+MANDATORY REQUIREMENTS:
+1. Invent a project that plausibly solves a real problem IN THIS JOB'S DOMAIN — mirror the business context of the JD above (e.g. if it's about logistics, build a routing/fleet project; if it's fintech, build a payments/ledger project), not a generic CRUD app.
+2. The tech stack MUST prominently feature the target JD skills listed above.
+3. The description MUST explicitly name at least 3-4 of those skills in context (not just list them).
+4. Follow Google's XYZ formula: "Accomplished [X] as measured by [Y] by doing [Z]".
+5. Include exactly ONE concrete metric (latency in ms, throughput req/sec, % improvement, or user/data scale) — do not stack multiple numbers in the description.
+6. Show architectural depth relevant to the JD's domain — mention specific patterns a senior engineer in that domain would recognize.
+
+${userPrompt ? `ADDITIONAL USER DIRECTION: ${userPrompt}` : ""}
+
+The goal is a project that reads as if it were built for exactly this role.`;
+
+      const existingNames = projects.map(p => p.name).filter(Boolean);
+      const proj = await generateAiProject(personal.title || "Full Stack Developer", projects.length, existingNames, domainPrompt);
+
+      setProjects(prev => {
+        const hasEmpty = prev.some(p => !p.name);
+        if (hasEmpty) return prev.map(p => !p.name ? { ...p, ...proj } : p);
+        return [...prev, { id: Date.now() + Math.random(), ...proj }];
+      });
+    } catch (e) {
+      console.error(e);
+      alert("Failed to generate a project from the target JD. Please try again.");
+    } finally {
+      setAiKeyLoading("proj_from_jd", false);
+    }
+  };
+
+  // Clicking a missing-skill chip: inside a project card, re-weave that project around
+  // the skill; from the section-wide banner (no project in scope), generate a fresh
+  // project whose whole point is covering that gap.
+  const handleAddSkillToProject = (skill, projectId) => {
+    if (projectId) {
+      const idx = projects.findIndex(p => p.id === projectId);
+      executeGroqProjectWithJdSkills(projectId, idx >= 0 ? idx : 0, skill);
+    } else {
+      executeGroqProjectFromJd(`Make sure this project prominently covers the skill "${skill}".`);
+    }
+  };
+
+  // One click, no modal — generates straight from the target JD already on file.
+  const handleAiProjectFromJd = () => executeGroqProjectFromJd();
+
   const executeGroqProjectBullets = async (projId, userPrompt = "") => {
     setAiKeyLoading(`proj_bullets_${projId}`, true);
     try {
@@ -613,7 +825,7 @@ The goal is maximum ATS keyword match while remaining technically credible to a 
       const projectName = targetProj?.name?.trim() || "this project";
       const tech = targetProj?.tech || "";
 
-      const newBullets = await generateProjectBulletsWithClaude(projectName, tech, existingClean, userPrompt);
+      const newBullets = flattenBullets(await generateProjectBulletsWithClaude(projectName, tech, existingClean, userPrompt));
 
       const freshBullets = newBullets.filter(
         nb => !existingClean.some(eb => eb.toLowerCase().trim() === nb.toLowerCase().trim())
@@ -654,12 +866,12 @@ The goal is maximum ATS keyword match while remaining technically credible to a 
       const effectiveRole = role || targetExp?.role || fallback.role;
       const effectiveCompany = company || targetExp?.company || fallback.company;
 
-      const newBullets = await generateAiExperienceBullets(
+      const newBullets = flattenBullets(await generateAiExperienceBullets(
         effectiveRole,
         effectiveCompany,
         existingClean,
         userPrompt
-      );
+      ));
 
       const freshBullets = newBullets.filter(
         nb => !existingClean.some(eb => eb.toLowerCase().trim() === nb.toLowerCase().trim())
@@ -693,7 +905,7 @@ The goal is maximum ATS keyword match while remaining technically credible to a 
     setAiKeyLoading("skills", true);
     try {
       const recs = await generateAiSkills(personal.title || "Full Stack Developer", userPrompt);
-      setSkills(prev => Array.from(new Set([...prev, ...recs])));
+      stageSkillCandidates(recs);
     } catch (e) {
       console.error(e);
     } finally {
@@ -735,9 +947,20 @@ The goal is maximum ATS keyword match while remaining technically credible to a 
       const combinedExtracted = Array.from(new Set([...extractedLocal, ...extractedAi])).filter(Boolean);
 
       if (combinedExtracted.length > 0) {
-        setSkills(prev => Array.from(new Set([...prev, ...combinedExtracted])));
         setJdSkillsExtracted(combinedExtracted);
-        setJdExtractSuccess(`Success! Added ${combinedExtracted.length} skills matching your target Job Description.`);
+
+        // Stage them in the picker so the user chooses what actually goes on the
+        // resume, rather than dumping every keyword the JD mentioned.
+        const staged = stageSkillCandidates(combinedExtracted);
+        const freshOnes = combinedExtracted.filter(s => !isKnownSkill(s, skillLibrary));
+
+        setJdExtractSuccess(
+          `Found ${combinedExtracted.length} skills in your target Job Description — pick the ones to add below.` +
+          (freshOnes.length > 0 ? ` ${freshOnes.length} are new to you.` : "") +
+          (staged.length < combinedExtracted.length
+            ? ` ${combinedExtracted.length - staged.length} already on your resume.`
+            : "")
+        );
         setTimeout(() => setJdExtractSuccess(""), 5000);
       } else {
         alert("No specific technical skills detected in the provided Job Description text.");
@@ -912,7 +1135,7 @@ The goal is maximum ATS keyword match while remaining technically credible to a 
 
       return await generateResumePDF({
         editedSections,
-        fileName: `${(personal.name || "Candidate").replace(/\s+/g, "_")}_${(personal.title || "Software_Engineer").replace(/\s+/g, "_")}_Resume`,
+        fileName: buildResumeFileName(),
         templateType: docTemplateType,
         primaryColor: docThemeColor,
         pageMargins: 1,
@@ -1112,7 +1335,7 @@ The goal is maximum ATS keyword match while remaining technically credible to a 
   const handleSubmitSuccess = async () => {
     setSubmitSuccess(true);
     try {
-      const fileName = `${(personal.name || "Resume").replace(/\s+/g, "_")}_Resume.pdf`;
+      const fileName = `${buildResumeFileName()}.pdf`;
       const pdfBytes = await handlePrint();
       if (pdfBytes) {
         const blob = new Blob([pdfBytes], { type: "application/pdf" });
@@ -1412,13 +1635,36 @@ The goal is maximum ATS keyword match while remaining technically credible to a 
             aiLoading={aiLoading}
             personal={personal}
             jdSkillsExtracted={jdSkillsExtracted}
+            knownSkills={getKnownSkills(skillLibrary)}
+            newSkillNotice={newSkillNotice}
+            skillCandidates={skillCandidates}
+            selectedCandidates={selectedCandidates}
+            onToggleCandidate={toggleCandidate}
+            onAddSelectedCandidates={addSelectedCandidates}
+            onSelectAllCandidates={() =>
+              setSelectedCandidates(
+                skillCandidates
+                  .filter(c => !skills.some(s => normalizeSkill(s) === normalizeSkill(c)))
+                  .map(normalizeSkill)
+              )
+            }
+            onClearCandidateSelection={() => setSelectedCandidates([])}
+            onDismissCandidates={() => { setSkillCandidates([]); setSelectedCandidates([]); }}
+            onParseBulkSkills={(text) => {
+              const parsed = parseSkillBlob(text, skillLibrary);
+              const staged = stageSkillCandidates(parsed);
+              return { parsed: parsed.length, staged: staged.length };
+            }}
             onSkillInputChange={setSkillInput}
             onAddSkill={addSkill}
             onRemoveSkill={removeSkill}
             onRemoveAllSkills={() => {
               if (window.confirm(`Remove all ${skills.length} skills?`)) setSkills([]);
             }}
-            onQuickAddSkill={(skill) => setSkills(sk => [...sk, skill])}
+            onQuickAddSkill={(skill) => {
+              setSkills(sk => sk.some(s => normalizeSkill(s) === normalizeSkill(skill)) ? sk : [...sk, skill]);
+              rememberSkills(skill);
+            }}
             onGenerateSkills={handleAiSkills}
             onExtractJdSkills={handleExtractSkillsFromJd}
             onJobDescriptionChange={(e) => setSelectedJdId(e.target.value)}
@@ -1448,12 +1694,9 @@ The goal is maximum ATS keyword match while remaining technically credible to a 
             }}
             onGenerateBullets={(id) => executeGroqProjectBullets(id)}
             onWeaveJdSkills={(id, idx) => executeGroqProjectWithJdSkills(id, idx)}
-            onAddSkillToPrompt={(skill) => {
-              setInlinePrompts(prev => ({
-                ...prev,
-                projects: prev.projects ? `${prev.projects}, ${skill}` : `Weave skill: ${skill}`
-              }));
-            }}
+            onAddSkillToPrompt={handleAddSkillToProject}
+            onGenerateProjectFromJd={handleAiProjectFromJd}
+            hasTargetJd={Boolean(getTargetJdText().trim())}
           />
         );
       case 7:

@@ -15,6 +15,21 @@ import CtaFooter from "../components/CtaFooter";
 import SubNav from "../components/common/SubNav";
 import "../assets/jobDescription.css";
 
+// Common role titles offered alongside whatever the user has already saved,
+// so the Role title field suggests options as soon as they start typing.
+const COMMON_ROLE_TITLES = [
+  "Software Engineer", "Senior Software Engineer", "Staff Software Engineer", "Principal Engineer",
+  "Frontend Engineer", "Backend Engineer", "Full Stack Engineer", "Full Stack Developer",
+  "Senior Backend Engineer", "Senior Frontend Engineer", "Senior Full Stack Engineer",
+  "Mobile Engineer", "iOS Engineer", "Android Engineer",
+  "DevOps Engineer", "Site Reliability Engineer", "Cloud Engineer", "Platform Engineer",
+  "Data Engineer", "Data Scientist", "Data Analyst", "Machine Learning Engineer", "AI Engineer",
+  "QA Engineer", "Test Automation Engineer", "SDET",
+  "Product Manager", "Technical Product Manager", "Product Designer", "UX Designer", "UI/UX Designer",
+  "Engineering Manager", "Technical Lead", "Solutions Architect", "Security Engineer",
+  "Business Analyst", "Project Manager", "Scrum Master",
+];
+
 function JobDescriptionPage() {
   const navigate = useNavigate();
   const [jobDescriptions, setJobDescriptions] = useState([]);
@@ -27,6 +42,14 @@ function JobDescriptionPage() {
   const [sortBy, setSortBy] = useState("newest");
   const [filterCompany, setFilterCompany] = useState("all");
   const [selectedSkill, setSelectedSkill] = useState(null);
+
+  // Titles you've already saved, deduped, ahead of the common-role list.
+  const roleTitleOptions = [
+    ...new Set([
+      ...jobDescriptions.map(j => j.title).filter(Boolean),
+      ...COMMON_ROLE_TITLES,
+    ]),
+  ];
   const [activeTab, setActiveTab] = useState("ai");
   const [formData, setFormData] = useState({
     title: "",
@@ -472,7 +495,12 @@ function JobDescriptionPage() {
                     onChange={handleChange}
                     required
                     className="jobs-input"
+                    list="jobs-role-title-options"
+                    autoComplete="off"
                   />
+                  <datalist id="jobs-role-title-options">
+                    {roleTitleOptions.map(t => <option key={t} value={t} />)}
+                  </datalist>
                 </div>
 
                 <div className="jobs-field">
